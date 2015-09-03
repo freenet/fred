@@ -340,7 +340,15 @@ public final class CHKInsertSender extends BaseSender implements PrioRunnable, A
 	}
 	
     // Constants
+	/* Time for a node to accept an insert */
     static final long ACCEPTED_TIMEOUT = SECONDS.toMillis(10);
+    /* We have a fixed timeout. This causes some problems, since if the last node on the
+     * chain fails, the first node to reach its timeout will be the originator (htl 18),
+     * because it started counting first! In 0.5 the timeout depended on the HTL, but the
+     * HTL does not strictly decrease (we spend several hops at HTL 18 and HTL 1). 
+     * FIXME Reconsider.
+     * 
+     * There are related complexities in CHKInsertHandler. */
     static final long TRANSFER_COMPLETION_ACK_TIMEOUT_REALTIME = MINUTES.toMillis(1);
     static final long TRANSFER_COMPLETION_ACK_TIMEOUT_BULK = MINUTES.toMillis(5);
 

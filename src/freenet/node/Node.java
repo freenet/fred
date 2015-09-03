@@ -4416,7 +4416,7 @@ public class Node implements TimeSkewDetectorCallback {
 	 * Connect this node to another node (for purposes of testing)
 	 */
 	public void connectToSeednode(SeedServerTestPeerNode node) throws OpennetDisabledException, FSParseException, PeerParseException, ReferenceSignatureVerificationException {
-		peers.addPeer(node,false,false);
+		peers.addPeer(node,false);
 	}
 	public void connect(Node node, FRIEND_TRUST trust, FRIEND_VISIBILITY visibility) throws FSParseException, PeerParseException, ReferenceSignatureVerificationException {
 		peers.connect(node.darknetCrypto.exportPublicFieldSet(), darknetCrypto.packetMangler, trust, visibility);

@@ -592,6 +592,7 @@ public class NodeCrypto {
 		for(PeerNode pn : possibleMatches) {
 			if(pn == peerNode) continue;
 			if(pn.equals(peerNode)) continue;
+			if(logMINOR) Logger.minor(this, "Booting connection "+peerNode+" because have "+pn+" on same IP");
 			if(pn.crypto.config.oneConnectionPerAddress()) {
 				if(pn instanceof DarknetPeerNode) {
 					if(!(peerNode instanceof DarknetPeerNode)) {

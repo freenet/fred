@@ -252,7 +252,7 @@ public class PeerManager {
 					    else
 					        opennet.addOldOpennetNode((OpennetPeerNode)pn);
 					} else
-						addPeer(pn, true, false);
+						addPeer(pn, true);
 					gotSome = true;
 				} catch(FSParseException e2) {
 					Logger.error(this, "Could not parse peer: " + e2 + '\n' + fs.toString(), e2);
@@ -305,7 +305,7 @@ public class PeerManager {
 	}
 
 	public boolean addPeer(PeerNode pn) {
-		return addPeer(pn, false, false);
+		return addPeer(pn, false);
 	}
 
 	/**
@@ -317,10 +317,10 @@ public class PeerManager {
 	 * @return True if the node was successfully added. False if it was already present, or if we tried to add
 	 * an opennet peer when opennet was disabled.
 	 */
-	boolean addPeer(PeerNode pn, boolean ignoreOpennet, boolean reactivate) {
+	boolean addPeer(PeerNode pn, boolean ignoreOpennet) {
 		assert (pn != null);
-		if(reactivate)
-			pn.forceCancelDisconnecting();
+		// Call onAdded() first for the case where it is present but disconnecting.
+        pn.onAdded();
 		synchronized(this) {
 			for(PeerNode myPeer: myPeers) {
 				if(myPeer.equals(pn)) {
@@ -333,9 +333,6 @@ public class PeerManager {
 			myPeers[myPeers.length - 1] = pn;
 			Logger.normal(this, "Added " + pn);
 		}
-		if(pn.recordStatus())
-			addPeerNodeStatus(pn.getPeerNodeStatus(), pn, false);
-		pn.setPeerNodeStatus(System.currentTimeMillis());
 		if((!ignoreOpennet) && pn instanceof OpennetPeerNode) {
 			OpennetManager opennet = node.getOpennet();
 			if(opennet != null)
@@ -1800,11 +1797,9 @@ public class PeerManager {
 	
 	public void changePeerNodeStatus(PeerNode peerNode, int oldPeerNodeStatus,
 			int peerNodeStatus, boolean noLog) {
-		Integer newStatus = Integer.valueOf(peerNodeStatus);
-		Integer oldStatus = Integer.valueOf(oldPeerNodeStatus);
-		this.allPeersStatuses.changePeerNodeStatus(peerNode, oldStatus, newStatus, noLog);
+		this.allPeersStatuses.changePeerNodeStatus(peerNode, oldPeerNodeStatus, peerNodeStatus, noLog);
 		if(!peerNode.isOpennet())
-			this.darknetPeersStatuses.changePeerNodeStatus(peerNode, oldStatus, newStatus, noLog);
+			this.darknetPeersStatuses.changePeerNodeStatus(peerNode, oldPeerNodeStatus, peerNodeStatus, noLog);
 		node.executor.execute(new Runnable() {
 
 			@Override

@@ -444,7 +444,22 @@ public class CHKInsertHandler implements PrioRunnable, ByteCounter {
         			// Ignore.
         		}
         		
-        		Logger.error(this, "Insert took too long, telling downstream that it's finished and reassigning to self on "+this);
+        		/* Our predecessor expects us to timeout within the fixed timeout time. However
+        		 * it takes some time to forward the request, and we might have sent it to several
+        		 * nodes, so it's possible that CHKInsertSender is still waiting for downstream
+        		 * nodes to reply even though our predecessor has timed out. This will happen any
+        		 * time the last node fails to respond.
+        		 * 
+        		 * Also, for load management purposes, it is important to know exactly how many
+        		 * of our requests are running, regardless of timeouts (especially with NLM).
+        		 * 
+        		 * The solution implemented here is to take ownership of the insert ourself and
+        		 * tell our predecessor that we've timed out.
+        		 * 
+        		 * FIXME Reconsider.
+        		 * 
+        		 * See comments on TRANSFER_COMPLETION_ACK_TIMEOUT_BULK etc. */
+        		Logger.normal(this, "Insert took too long, telling downstream that it's finished and reassigning to self on "+this);
         		
         		// Still waiting.
         		while(true) {

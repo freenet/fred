@@ -320,7 +320,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 	/** The time at which we last completed a connection setup. */
 	private long connectedTime;
 	/** The status of this peer node in terms of Node.PEER_NODE_STATUS_* */
-	public int peerNodeStatus = PeerManager.PEER_NODE_STATUS_DISCONNECTED;
+	private int peerNodeStatus = PeerManager.PEER_NODE_STATUS_DISCONNECTED;
 
 	static final long CHECK_FOR_SWAPPED_TRACKERS_INTERVAL = FNPPacketMangler.SESSION_KEY_REKEYING_INTERVAL / 30;
 
@@ -453,6 +453,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 	* @param node2 The running Node we are part of.
 	*/
 	public PeerNode(SimpleFieldSet fs, Node node2, NodeCrypto crypto, PeerManager peers, boolean fromLocal, boolean fromAnonymousInitiator, OutgoingPacketMangler mangler, boolean isOpennet) throws FSParseException, PeerParseException, ReferenceSignatureVerificationException {
+	    removed = true;
 		boolean noSig = false;
 		if(fromLocal || fromAnonymousInitiator) noSig = true;
 		myRef = new WeakReference<PeerNode>(this);
@@ -1490,19 +1491,21 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 	public boolean shouldSendHandshake() {
 		long now = System.currentTimeMillis();
 		boolean tempShouldSendHandshake = false;
+		boolean disconnected;
 		synchronized(this) {
 			if(disconnecting) return false;
-			tempShouldSendHandshake = ((now > sendHandshakeTime) && (handshakeIPs != null) && (isRekeying || !isConnected()));
+			disconnected = !isConnected();
+			tempShouldSendHandshake = ((now > sendHandshakeTime) && (handshakeIPs != null) && (isRekeying || disconnected));
 		}
 		if(logMINOR) Logger.minor(this, "shouldSendHandshake(): initial = "+tempShouldSendHandshake);
 		if(tempShouldSendHandshake && (hasLiveHandshake(now)))
 			tempShouldSendHandshake = false;
 		if(tempShouldSendHandshake) {
-			if(isBurstOnly()) {
+			if(disconnected && isBurstOnly()) {
 				synchronized(this) {
 					isBursting = true;
 				}
-				setPeerNodeStatus(System.currentTimeMillis());
+			    setPeerNodeStatus(System.currentTimeMillis());
 			} else
 				return true;
 		}
@@ -1539,7 +1542,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 	 * Set sendHandshakeTime, and return whether to fetch the ARK.
 	 */
 	protected boolean innerCalcNextHandshake(boolean successfulHandshakeSend, boolean dontFetchARK, long now) {
-		if(isBurstOnly())
+		if((!isConnected()) && isBurstOnly())
 			return calcNextHandshakeBurstOnly(now);
 		synchronized(this) {
 			long delay;
@@ -1824,7 +1827,10 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 			// Not urgent. This makes up the majority of the total writes.
 			// Writing it on shutdown is sufficient.
 			node.peers.writePeers(isOpennet());
-		setPeerNodeStatus(System.currentTimeMillis());
+		synchronized(this) {
+		    if(!isConnected()) return; // Race condition.
+	        setPeerNodeStatus(System.currentTimeMillis());
+		}
 	}
 
 	/**
@@ -3480,9 +3486,16 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 			return "peer_unknown_status";
 	}
 
-	protected synchronized int getPeerNodeStatus(long now, long routingBackedOffUntilRT, long localRoutingBackedOffUntilBulk, boolean overPingTime, boolean noLoadStats) {
+	/** Calculate the current status. Does not update peerNodeStatus itself, nor does it update
+	 * the various listeners and trackers interested in peer statuses; see 
+	 * setPeerNodeStatus(long, boolean) for that. Override this method to implement special peer
+	 * statuses that are specific to your PeerNode implementation (e.g. DarknetPeerNode).
+	 * You should generally call this method and then adjust the return value in special cases.
+	 * Note that this method updates the backoff statistics. */
+	protected synchronized int calculatePeerNodeStatus(long now, long routingBackedOffUntilRT, long localRoutingBackedOffUntilBulk, boolean overPingTime, boolean noLoadStats) {
 		if(disconnecting)
 			return PeerManager.PEER_NODE_STATUS_DISCONNECTING;
+		int peerNodeStatus; // Caller's responsibility to update this.peerNodeStatus.
 		boolean isConnected = isConnected();
 		if(isRoutable()) {  // Function use also updates timeLastConnected and timeLastRoutable
 			if(noLoadStats)
@@ -3543,13 +3556,15 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 			return PeerManager.PEER_NODE_STATUS_BURSTING;
 		else
 			peerNodeStatus = PeerManager.PEER_NODE_STATUS_DISCONNECTED;
-		if(!isConnected && (previousRoutingBackoffReasonRT != null)) {
-			peers.removePeerNodeRoutingBackoffReason(previousRoutingBackoffReasonRT, this, true);
-			previousRoutingBackoffReasonRT = null;
-		}
-		if(!isConnected && (previousRoutingBackoffReasonBulk != null)) {
-			peers.removePeerNodeRoutingBackoffReason(previousRoutingBackoffReasonBulk, this, false);
-			previousRoutingBackoffReasonBulk = null;
+		if(!removed) {
+		    if(!isConnected && (previousRoutingBackoffReasonRT != null)) {
+		        peers.removePeerNodeRoutingBackoffReason(previousRoutingBackoffReasonRT, this, true);
+		        previousRoutingBackoffReasonRT = null;
+		    }
+		    if(!isConnected && (previousRoutingBackoffReasonBulk != null)) {
+		        peers.removePeerNodeRoutingBackoffReason(previousRoutingBackoffReasonBulk, this, false);
+		        previousRoutingBackoffReasonBulk = null;
+		    }
 		}
 		return peerNodeStatus;
 	}
@@ -3558,7 +3573,12 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 		return setPeerNodeStatus(now, false);
 	}
 
-	public int setPeerNodeStatus(long now, boolean noLog) {
+	/* Calls calculatePeerNodeStatus() to calculate the current status, and then updates everyone
+	 * who needs to know. In particular the PeerStatusTracker but also load management stuff and
+	 * UI listeners. Should not be overridden in general. 
+	 * @param now The current time.
+	 * @param noLog If true don't complain if a peer status e.g. isn't in the tracker. */
+	public final int setPeerNodeStatus(long now, boolean noLog) {
 		long localRoutingBackedOffUntilRT = getRoutingBackedOffUntil(true);
 		long localRoutingBackedOffUntilBulk = getRoutingBackedOffUntil(true);
 		int oldPeerNodeStatus;
@@ -3566,9 +3586,9 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 		boolean noLoadStats = noLoadStats();
 		synchronized(this) {
 			oldPeerNodeStatus = peerNodeStatus;
-			peerNodeStatus = getPeerNodeStatus(now, localRoutingBackedOffUntilRT, localRoutingBackedOffUntilBulk, averagePingTime() > threshold, noLoadStats);
+			peerNodeStatus = calculatePeerNodeStatus(now, localRoutingBackedOffUntilRT, localRoutingBackedOffUntilBulk, averagePingTime() > threshold, noLoadStats);
 
-			if(peerNodeStatus != oldPeerNodeStatus && recordStatus()) {
+			if(peerNodeStatus != oldPeerNodeStatus && recordStatus() && !removed) {
 				peers.changePeerNodeStatus(this, oldPeerNodeStatus, peerNodeStatus, noLog);
 			}
 
@@ -3935,11 +3955,9 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 
 	/** Called to cancel a delayed disconnect. Always succeeds even if the node was not being
 	 * disconnected. */
-	public void forceCancelDisconnecting() {
+	public void onAdded() {
 		synchronized(this) {
 			removed = false;
-			if(!disconnecting)
-				return;
 			disconnecting = false;
 		}
 		setPeerNodeStatus(System.currentTimeMillis(), true);
