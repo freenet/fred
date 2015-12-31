@@ -1681,9 +1681,8 @@ class CSSTokenizerFilter {
 	 */
 	public static String HTMLelementVerifier(String elementString)
 	{
-//		if(logDEBUG) Logger.debug(this, "varifying element/selector: \""+elementString+"\"");
+		if(logDEBUG) Logger.debug(CSSTokenizerFilter.class, "varifying element/selector: \""+elementString+"\"");
 		String HTMLelement="",pseudoClass="",className="",id="";
-		boolean isValid=true;
 		StringBuilder fBuffer=new StringBuilder();
 		ArrayList<String> attSelections = null;
 		while(elementString.indexOf('[')!=-1 && elementString.indexOf(']')!=-1 && (elementString.indexOf('[')<elementString.indexOf(']')))
@@ -1692,7 +1691,7 @@ class CSSTokenizerFilter {
 			StringBuilder buf=new StringBuilder(elementString);
 			buf.delete(elementString.indexOf('['), elementString.indexOf(']')+1);
 			elementString=buf.toString();
-//			if(logDEBUG) Logger.debug(this, "attSelection="+attSelection+"  elementString="+elementString);
+			if(logDEBUG) Logger.debug(CSSTokenizerFilter.class, "attSelection="+attSelection+"  elementString="+elementString);
 			if(attSelections == null) attSelections = new ArrayList<String>();
 			attSelections.add(attSelection);
 		}
@@ -1703,7 +1702,7 @@ class CSSTokenizerFilter {
 			{
 				pseudoClass=elementString.substring(index+1,elementString.length()).trim();
 				HTMLelement=elementString.substring(0,index).trim();
-//				if(logDEBUG) Logger.debug(this, "pseudoclass="+pseudoClass+" HTMLelement="+HTMLelement);
+				if(logDEBUG) Logger.debug(CSSTokenizerFilter.class, "pseudoclass="+pseudoClass+" HTMLelement="+HTMLelement);
 			}
 			else
 			{
@@ -1720,7 +1719,7 @@ class CSSTokenizerFilter {
 			{
 				className=HTMLelement.substring(index+1,HTMLelement.length()).trim();
 				HTMLelement=HTMLelement.substring(0,index).trim();
-//				if(logDEBUG) Logger.debug(this, "class="+className+" HTMLelement="+HTMLelement);
+				if(logDEBUG) Logger.debug(CSSTokenizerFilter.class, "class="+className+" HTMLelement="+HTMLelement);
 			}
 
 		}
@@ -1731,113 +1730,110 @@ class CSSTokenizerFilter {
 			{
 				id=HTMLelement.substring(index+1,HTMLelement.length()).trim();
 				HTMLelement=HTMLelement.substring(0,index).trim();
-//				if(logDEBUG) Logger.debug(this, "id="+id+" element="+HTMLelement);
+				if(logDEBUG) Logger.debug(CSSTokenizerFilter.class, "id="+id+" element="+HTMLelement);
 			}
 
 		}
-
-		if("*".equals(HTMLelement) || (ElementInfo.isValidHTMLTag(HTMLelement.toLowerCase())) || 
-				("".equals(HTMLelement.trim()) && 
-						((!className.equals("")) || (!id.equals("")) || attSelections!=null || !pseudoClass.equals(""))))
-		{
-			if(!className.equals(""))
-			{
-				// Note that the definition of isValidName() allows chained classes because it allows . in class names.
-				if(!ElementInfo.isValidName(className))
-					isValid=false;
-			}
-			else if(!id.equals(""))
-			{
-				if(!ElementInfo.isValidName(id))
-					isValid=false;
-			}
-
-			if(isValid && !pseudoClass.equals(""))
-			{
-				if(!ElementInfo.isValidPseudoClass(pseudoClass)) {
-					isValid=false;
-				} else if(ElementInfo.isBannedPseudoClass(pseudoClass)) {
-					return "";
-				}
-			}
-
-			if(isValid && attSelections!=null)
-			{
-				String[] attSelectionParts;
-
-				for(String attSelection : attSelections) {
-					if(attSelection.indexOf("|=")!=-1)
-					{
-						attSelectionParts=new String[2];
-						attSelectionParts[0]=attSelection.substring(0,attSelection.indexOf("|="));
-						attSelectionParts[1]=attSelection.substring(attSelection.indexOf("|=")+2,attSelection.length());
-					}
-					else if(attSelection.indexOf("~=")!=-1) {
-						attSelectionParts=new String[2];
-						attSelectionParts[0]=attSelection.substring(0,attSelection.indexOf("~="));
-						attSelectionParts[1]=attSelection.substring(attSelection.indexOf("~=")+2,attSelection.length());
-					} else if(attSelection.indexOf('=') != -1){
-						attSelectionParts=new String[2];
-						attSelectionParts[0]=attSelection.substring(0,attSelection.indexOf('='));
-						attSelectionParts[1]=attSelection.substring(attSelection.indexOf('=')+1,attSelection.length());
-					} else {
-						attSelectionParts=new String[] { attSelection };
-					}
-
-					//Verifying whether each character is alphanumeric or _
-//					if(logDEBUG) Logger.debug(this, "HTMLelementVerifier length of attSelectionParts="+attSelectionParts.length);
-
-					if(attSelectionParts[0].length()==0)
-						isValid=false;
-					else
-					{
-						char c=attSelectionParts[0].charAt(0);
-						if(!((c>='a' && c<='z') || (c>='A' && c<='Z')))
-							isValid=false;
-						for(int i=1;i<attSelectionParts[0].length();i++)
-						{
-							if(!((c>='a' && c<='z') || (c>='A' && c<='Z') || c=='_' || c=='-'))
-								isValid=false;
-						}
-					}
-
-					if(attSelectionParts.length > 1) {
-						// What about the right hand side?
-						// The grammar says it's an IDENT.
-//						if(logDEBUG) Logger.debug(this, "RHS is \""+attSelectionParts[1]+"\"");
-						if(!(ElementInfo.isValidIdentifier(attSelectionParts[1]) || ElementInfo.isValidStringWithQuotes(attSelectionParts[1]))) isValid = false;
-					}
-				}
-			}
-
-
-			if(isValid)
-			{
-				fBuffer.append(HTMLelement);
-				if(!className.equals("")) {
-					fBuffer.append('.');
-					fBuffer.append(className);
-				} else if(!id.equals("")) {
-					fBuffer.append('#');
-					fBuffer.append(id);
-				}
-				if(!pseudoClass.equals("")) {
-					fBuffer.append(':');
-					fBuffer.append(pseudoClass);
-				}
-				if(attSelections!=null) {
-					for(String attSelection:attSelections) {
-						fBuffer.append('[');
-						fBuffer.append(attSelection);
-						fBuffer.append(']');
-					}
-				}
-				return fBuffer.toString();
-			}
+		
+		boolean elementValid =
+		    "*".equals(HTMLelement) ||
+		    (ElementInfo.isValidHTMLTag(HTMLelement.toLowerCase())) ||
+		    ("".equals(HTMLelement.trim()) && 
+                    ((!className.equals("")) || (!id.equals("")) || attSelections!=null || 
+                            !pseudoClass.equals("")));
+		if(!elementValid) return null;
+		
+		if(!className.equals("")) {
+		    // Note that the definition of isValidName() allows chained classes because it allows . in class names.
+		    if(!ElementInfo.isValidName(className))
+		        return null;
+		} else if(!id.equals("")) {
+		    if(!ElementInfo.isValidName(id))
+		        return null;
 		}
-
-		return null;
+		
+		if(!pseudoClass.equals("")) {
+		    if(!ElementInfo.isValidPseudoClass(pseudoClass)) {
+		        return null;
+		    } else if(ElementInfo.isBannedPseudoClass(pseudoClass)) {
+		        return "";
+		    }
+		}
+		
+		if(attSelections!=null) {
+		    String[] attSelectionParts;
+		    
+		    for(String attSelection : attSelections) {
+		        if(attSelection.indexOf("|=")!=-1) {
+		            attSelectionParts=new String[2];
+		            attSelectionParts[0]=attSelection.substring(0,attSelection.indexOf("|="));
+		            attSelectionParts[1]=attSelection.substring(attSelection.indexOf("|=")+2,
+		                    attSelection.length());
+		        } else if(attSelection.indexOf("~=")!=-1) {
+		            attSelectionParts=new String[2];
+		            attSelectionParts[0]=attSelection.substring(0,attSelection.indexOf("~="));
+		            attSelectionParts[1]=attSelection.substring(attSelection.indexOf("~=")+2,
+		                    attSelection.length());
+		        } else if(attSelection.indexOf('=') != -1){
+		            attSelectionParts=new String[2];
+		            attSelectionParts[0]=attSelection.substring(0,attSelection.indexOf('='));
+		            attSelectionParts[1]=attSelection.substring(attSelection.indexOf('=')+1,
+		                    attSelection.length());
+		        } else {
+		            attSelectionParts=new String[] { attSelection };
+		        }
+		        
+		        //Verifying whether each character is alphanumeric or _
+		        if(logDEBUG) Logger.debug(CSSTokenizerFilter.class, 
+		                "HTMLelementVerifier length of attSelectionParts="+
+		                attSelectionParts.length);
+		        
+		        if(attSelectionParts[0].length()==0)
+		            return null;
+		        else {
+		            char c=attSelectionParts[0].charAt(0);
+		            if(!((c>='a' && c<='z') || (c>='A' && c<='Z')))
+		                return null;
+		            for(int i=1;i<attSelectionParts[0].length();i++) {
+		                if(!((c>='a' && c<='z') || (c>='A' && c<='Z') || c=='_' || c=='-'))
+		                    return null;
+		            }
+		        }
+		        
+		        if(attSelectionParts.length > 1) {
+		            // What about the right hand side?
+		            // The grammar says it's an IDENT.
+		            if(logDEBUG) Logger.debug(CSSTokenizerFilter.class, "RHS is \""+
+		                    attSelectionParts[1]+"\"");
+		            if(!(ElementInfo.isValidIdentifier(attSelectionParts[1]) || 
+		                    ElementInfo.isValidStringWithQuotes(attSelectionParts[1]))) 
+		                return null;
+		        }
+		    }
+		}
+		
+		fBuffer.append(HTMLelement);
+		if(!className.equals("")) {
+		    fBuffer.append('.');
+		    fBuffer.append(className);
+		} else if(!id.equals("")) {
+		    fBuffer.append('#');
+		    fBuffer.append(id);
+		}
+		if(!pseudoClass.equals("")) {
+		    fBuffer.append(':');
+		    fBuffer.append(pseudoClass);
+		}
+		if(attSelections!=null) {
+		    for(String attSelection:attSelections) {
+		        fBuffer.append('[');
+		        fBuffer.append(attSelection);
+		        fBuffer.append(']');
+		    }
+		}
+		return fBuffer.toString();
 	}
+	
 	/*
 	 * This function works with different operators, +, >, " " and verifies each HTML element with HTMLelementVerifier(String elementString)
 	 * e.g. div > p:first-child
