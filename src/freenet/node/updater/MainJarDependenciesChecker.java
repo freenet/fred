@@ -1166,7 +1166,7 @@ outer:	for(String propName : props.stringPropertyNames()) {
         @Override
         public void onFailure(FetchException e) {
             System.out.println("Failed to fetch "+filename+" from "+key);
-            getDeployer().onFailure(this, e);
+            getDeployer().onFailure(this);
         }
 
         private synchronized AtomicDeployer getDeployer() {
@@ -1311,7 +1311,7 @@ outer:	for(String propName : props.stringPropertyNames()) {
             }
         }
 
-        public void onFailure(AtomicDependency dep, FetchException e) {
+        public void onFailure(AtomicDependency dep) {
             synchronized(this) {
                 failed = true;
                 dependenciesWaiting.remove(dep);

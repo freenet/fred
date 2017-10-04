@@ -63,6 +63,7 @@ public class PproxyToadlet extends Toadlet {
 		return true;
 	}
 
+	@SuppressWarnings("UnusedParameters")
 	public void handleMethodPOST(URI uri, final HTTPRequest request, ToadletContext ctx)
 	throws ToadletContextClosedException, IOException {
 

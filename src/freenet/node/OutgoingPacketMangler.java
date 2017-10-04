@@ -32,7 +32,7 @@ public interface OutgoingPacketMangler {
 	/**
 	 * List of supported negotiation types in preference order (best last)
 	 */
-	public int[] supportedNegTypes(boolean forPublic);
+	public int[] supportedNegTypes();
 	
 	/**
 	 * The SocketHandler we are connected to.

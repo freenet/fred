@@ -25,8 +25,7 @@ public class OfferReplyTag extends UIDTag {
 	}
 
 	@Override
-	public int expectedTransfersIn(boolean ignoreLocalVsRemote,
-			int outwardTransfersPerInsert, boolean forAccept) {
+	public int expectedTransfersIn(boolean ignoreLocalVsRemote) {
 		return 0;
 	}
 

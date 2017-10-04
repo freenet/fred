@@ -96,7 +96,7 @@ public class TextModeClientInterface implements Runnable {
     	this.n = server.n;
     	this.core = server.n.clientCore;
     	this.r = server.r;
-        client = core.makeClient(RequestStarter.INTERACTIVE_PRIORITY_CLASS, true, false);
+        client = core.makeClient(RequestStarter.INTERACTIVE_PRIORITY_CLASS, false);
     	this.downloadsDir = server.downloadsDir;
     	this.in = in;
         try {

@@ -35,13 +35,13 @@ public interface KeyListener {
 	 * @return -1 if we don't want the key, otherwise the priority of the request
 	 * interested in the key.
 	 */
-	public short definitelyWantKey(Key key, byte[] saltedKey, ClientContext context);
+	public short definitelyWantKey(Key key);
 
 	/**
 	 * Find the requests related to a specific key, used in retrying after cooldown.
 	 * Caller should call probablyWantKey() first.
 	 */
-	public SendableGet[] getRequestsForKey(Key key, byte[] saltedKey, ClientContext context);
+	public SendableGet[] getRequestsForKey(Key key);
 	
 	/**
 	 * Handle the found data, if we really want it.

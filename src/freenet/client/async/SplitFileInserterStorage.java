@@ -378,7 +378,7 @@ public class SplitFileInserterStorage {
         keyLength = SplitFileInserterSegmentStorage.getKeyLength(this);
         this.consecutiveRNFsCountAsSuccess = ctx.consecutiveRNFsCountAsSuccess;
         segments = makeSegments(segmentSize, segs, totalDataBlocks, crossCheckBlocks,
-                deductBlocksFromSegments, persistent,
+                deductBlocksFromSegments,
                 cmode, random, keysFetching, consecutiveRNFsCountAsSuccess);
         randomSegmentIterator = new RandomArrayIterator<SplitFileInserterSegmentStorage>(segments);
         for (SplitFileInserterSegmentStorage segment : segments) {
@@ -404,7 +404,7 @@ public class SplitFileInserterStorage {
                 }
 
                 SplitFileInserterCrossSegmentStorage seg = new SplitFileInserterCrossSegmentStorage(
-                        this, i, persistent, segLen, crossCheckBlocks);
+                        this, i, segLen, crossCheckBlocks);
                 crossSegments[i] = seg;
                 for (int j = 0; j < segLen; j++) {
                     // Allocate random data blocks
@@ -995,7 +995,7 @@ public class SplitFileInserterStorage {
         for (int i = 0; i < 10; i++) {
             x = xsRandom.nextInt(segments.length);
             SplitFileInserterSegmentStorage seg = segments[x];
-            int blockNum = seg.allocateCrossDataBlock(segment, xsRandom);
+            int blockNum = seg.allocateCrossDataBlock(xsRandom);
             if (blockNum >= 0) {
                 segment.addDataBlock(seg, blockNum);
                 return;
@@ -1006,7 +1006,7 @@ public class SplitFileInserterStorage {
             if (x == segments.length)
                 x = 0;
             SplitFileInserterSegmentStorage seg = segments[x];
-            int blockNum = seg.allocateCrossDataBlock(segment, xsRandom);
+            int blockNum = seg.allocateCrossDataBlock(xsRandom);
             if (blockNum >= 0) {
                 segment.addDataBlock(seg, blockNum);
                 return;
@@ -1043,14 +1043,14 @@ public class SplitFileInserterStorage {
     }
 
     private SplitFileInserterSegmentStorage[] makeSegments(int segmentSize, int segCount,
-            int dataBlocks, int crossCheckBlocks, int deductBlocksFromSegments, boolean persistent,
+            int dataBlocks, int crossCheckBlocks, int deductBlocksFromSegments,
             CompatibilityMode cmode, Random random, KeysFetchingLocally keysFetching, 
             int consecutiveRNFsCountAsSuccess) {
         SplitFileInserterSegmentStorage[] segments = new SplitFileInserterSegmentStorage[segCount];
         if (segCount == 1) {
             // Single segment
             int checkBlocks = codec.getCheckBlocks(dataBlocks + crossCheckBlocks, cmode);
-            segments[0] = new SplitFileInserterSegmentStorage(this, 0, persistent, dataBlocks,
+            segments[0] = new SplitFileInserterSegmentStorage(this, 0, dataBlocks,
                     checkBlocks, crossCheckBlocks, keyLength, splitfileCryptoAlgorithm, splitfileCryptoKey, random, 
                     maxRetries, consecutiveRNFsCountAsSuccess, keysFetching);
         } else {
@@ -1069,7 +1069,7 @@ public class SplitFileInserterStorage {
                     check = codec.getCheckBlocks(data + crossCheckBlocks, cmode);
                 }
                 j = i;
-                segments[segNo] = new SplitFileInserterSegmentStorage(this, segNo, persistent,
+                segments[segNo] = new SplitFileInserterSegmentStorage(this, segNo,
                         data, check, crossCheckBlocks, keyLength, splitfileCryptoAlgorithm, splitfileCryptoKey, 
                         random, maxRetries, consecutiveRNFsCountAsSuccess, keysFetching);
 
@@ -1149,9 +1149,8 @@ public class SplitFileInserterStorage {
 
     /** Called when a cross-segment finishes encoding blocks. Can be called inside locks as it runs
      * off-thread.
-     * @param completed
      */
-    public void onFinishedEncoding(SplitFileInserterCrossSegmentStorage completed) {
+    public void onFinishedEncoding() {
         jobRunner.queueNormalOrDrop(new PersistentJob() {
 
             @Override
@@ -1235,16 +1234,11 @@ public class SplitFileInserterStorage {
         callback.onFinishedEncode();
     }
     
-    public void onHasKeys(SplitFileInserterSegmentStorage splitFileInserterSegmentStorage) {
+    public void onHasKeys() {
         for (SplitFileInserterSegmentStorage segment : segments) {
             if (!segment.hasKeys())
                 return;
         }
-        onHasKeys();
-    }
-
-    /** Called when we have keys for every block. */
-    private void onHasKeys() {
         callback.onHasKeys();
     }
     
@@ -1692,7 +1686,7 @@ public class SplitFileInserterStorage {
         return raf;
     }
 
-    public void onResume(ClientContext context) throws ResumeFailedException {
+    public void onResume() throws ResumeFailedException {
         if(crossSegments != null && status != Status.ENCODED_CROSS_SEGMENTS) {
             this.startCrossSegmentEncode();
         } else {
@@ -1763,7 +1757,7 @@ public class SplitFileInserterStorage {
     }
 
     /** @return -1 if the insert has finished, 0 if has blocks to send, otherwise Long.MAX_VALUE. */
-    public long getWakeupTime(ClientContext context, long now) {
+    public long getWakeupTime() {
         // LOCKING: hasFinished() uses (this), separate from cooldownLock.
         // It is safe to use both here (on the request selection thread), one after the other.
         if (hasFinished()) 

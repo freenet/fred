@@ -271,10 +271,10 @@ public class Message {
 	}
 
 	public byte[] encodeToPacket() {
-		return encodeToPacket(true, false);
+		return encodeToPacket(true);
 	}
 
-	private byte[] encodeToPacket(boolean includeSubMessages, boolean isSubMessage) {
+	private byte[] encodeToPacket(boolean includeSubMessages) {
 
 		if (logDEBUG) Logger.debug(this, "My spec code: "+_spec.getName().hashCode()+" for "+_spec.getName());
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -292,7 +292,7 @@ public class Message {
 
 		if (_subMessages != null && includeSubMessages) {
 			for (Message _subMessage : _subMessages) {
-				byte[] temp = _subMessage.encodeToPacket(false, true);
+				byte[] temp = _subMessage.encodeToPacket(false);
 				try {
 					dos.writeShort(temp.length);
 					dos.write(temp);

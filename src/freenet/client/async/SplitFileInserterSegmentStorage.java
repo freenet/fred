@@ -85,7 +85,7 @@ public class SplitFileInserterSegmentStorage {
     private boolean cancelled;
     
     public SplitFileInserterSegmentStorage(SplitFileInserterStorage parent, int segNo, 
-            boolean persistent, int dataBlocks, int checkBlocks, int crossCheckBlocks, int keyLength,
+            int dataBlocks, int checkBlocks, int crossCheckBlocks, int keyLength,
             byte splitfileCryptoAlgorithm, byte[] splitfileCryptoKey, Random random, int maxRetries,
             int consecutiveRNFsCountAsSuccess, KeysFetchingLocally keysFetching) {
         this.parent = parent;
@@ -166,12 +166,11 @@ public class SplitFileInserterSegmentStorage {
     
     /** Allocate a cross-segment data block. Note that this algorithm must be reproduced exactly 
      * for splitfile compatibility; the Random seed is actually determined by the splitfile metadata.
-     * @param seg The cross-segment to allocate a block for.
-     * @param random PRNG seeded from the splitfile metadata, which determines which blocks to 
+     * @param random PRNG seeded from the splitfile metadata, which determines which blocks to
      * allocate in a deterministic manner.
      * @return The data block number allocated.
      */
-    int allocateCrossDataBlock(SplitFileInserterCrossSegmentStorage seg, Random random) {
+    int allocateCrossDataBlock(Random random) {
         int size = dataBlockCount;
         if(crossDataBlocksAllocatedCount == size) return -1;
         int x = 0;
@@ -271,11 +270,11 @@ public class SplitFileInserterSegmentStorage {
     }
     
     static int getKeyLength(SplitFileInserterStorage parent) {
-        return encodeKey(1, 1, ClientCHK.TEST_KEY, parent.hasSplitfileKey(), parent.checker, parent).length;
+        return encodeKey(1, 1, ClientCHK.TEST_KEY, parent.hasSplitfileKey(), parent.checker).length;
     }
     
-    private static byte[] encodeKey(int segNo, int blockNumber, ClientCHK key, 
-            boolean hasSplitfileKey, ChecksumChecker checker, SplitFileInserterStorage parent) {
+    private static byte[] encodeKey(int segNo, int blockNumber, ClientCHK key,
+            boolean hasSplitfileKey, ChecksumChecker checker) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
         try {
@@ -330,7 +329,7 @@ public class SplitFileInserterSegmentStorage {
      * @param key The key to write.
      * @throws IOException If we are unable to write the key. */
     void writeKey(int blockNumber, ClientCHK key) throws IOException {
-        byte[] buf = encodeKey(segNo, blockNumber, key, parent.hasSplitfileKey(), parent.checker, parent);
+        byte[] buf = encodeKey(segNo, blockNumber, key, parent.hasSplitfileKey(), parent.checker);
         parent.innerWriteSegmentKey(segNo, blockNumber, buf);
     }
     
@@ -343,7 +342,7 @@ public class SplitFileInserterSegmentStorage {
             blocksWithKeysCounter++;
             if(blocksWithKeysCounter != totalBlockCount) return;
         }
-        parent.onHasKeys(this);
+        parent.onHasKeys();
     }
     
     public synchronized boolean hasKeys() {
@@ -415,7 +414,7 @@ public class SplitFileInserterSegmentStorage {
                 CheckpointLock lock = null;
                 try {
                     lock = parent.jobRunner.lock();
-                    innerEncode(chunk);
+                    innerEncode();
                 } catch (PersistenceDisabledException e) {
                     // Will be retried on restarting.
                     shutdown = true;
@@ -441,7 +440,7 @@ public class SplitFileInserterSegmentStorage {
         });
     }
 
-    private void innerEncode(MemoryLimitedChunk chunk) {
+    private void innerEncode() {
         RAFLock lock = null;
         try {
             synchronized(this) {

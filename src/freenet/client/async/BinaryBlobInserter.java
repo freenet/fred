@@ -136,13 +136,13 @@ public class BinaryBlobInserter implements ClientPutState {
 				if(inserters[blockNum] == null) return;
 			}
 			if(parent.isCancelled()) {
-				fail(new InsertException(InsertExceptionMode.CANCELLED), true, context);
+				fail(true, context);
 				return;
 			}
 			logMINOR = Logger.shouldLog(LogLevel.MINOR, BinaryBlobInserter.this);
 			switch(e.code) {
 			case LowLevelPutException.COLLISION:
-				fail(new InsertException(InsertExceptionMode.COLLISION), false, context);
+				fail(false, context);
 				break;
 			case LowLevelPutException.INTERNAL_ERROR:
 				errors.inc(InsertExceptionMode.INTERNAL_ERROR);
@@ -173,7 +173,7 @@ public class BinaryBlobInserter implements ClientPutState {
 			if(logMINOR) Logger.minor(this, "Failed: "+e);
 			retries++;
 			if((retries > maxRetries) && (maxRetries != -1)) {
-				fail(InsertException.construct(errors), false, context);
+				fail(false, context);
 				return;
 			}
 			this.clearWakeupTime(context);
@@ -181,7 +181,7 @@ public class BinaryBlobInserter implements ClientPutState {
 			this.schedule();
 		}
 
-		private void fail(InsertException e, boolean fatal, ClientContext context) {
+		private void fail(boolean fatal, ClientContext context) {
 			synchronized(BinaryBlobInserter.this) {
 				if(inserters[blockNum] == null) return;
 				inserters[blockNum] = null;

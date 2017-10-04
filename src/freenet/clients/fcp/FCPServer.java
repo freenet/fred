@@ -567,7 +567,7 @@ public class FCPServer implements Runnable, DownloadCache {
                                       .getDefaultSendDirectionAdapter(SendDirection.ToClient);
     }
 
-	public PersistentRequestClient registerRebootClient(String name, NodeClientCore core, FCPConnectionHandler handler) {
+	public PersistentRequestClient registerRebootClient(String name, FCPConnectionHandler handler) {
 		PersistentRequestClient oldClient;
 		synchronized(this) {
 			oldClient = rebootClientsByName.get(name);
@@ -595,11 +595,11 @@ public class FCPServer implements Runnable, DownloadCache {
 		}
 	}
 
-	public PersistentRequestClient registerForeverClient(String name, NodeClientCore core, FCPConnectionHandler handler) {
+	public PersistentRequestClient registerForeverClient(String name, FCPConnectionHandler handler) {
 		return persistentRoot.registerForeverClient(name, handler);
 	}
 
-    public PersistentRequestClient getForeverClient(String name, NodeClientCore core, FCPConnectionHandler handler) {
+    public PersistentRequestClient getForeverClient(String name, FCPConnectionHandler handler) {
         return persistentRoot.getForeverClient(name, handler);
     }
 
@@ -624,7 +624,7 @@ public class FCPServer implements Runnable, DownloadCache {
 	}
 
 	public boolean removeGlobalRequestBlocking(final String identifier) throws MessageInvalidException, PersistenceDisabledException {
-		if(!globalRebootClient.removeByIdentifier(identifier, true, this, core.clientContext)) {
+		if(!globalRebootClient.removeByIdentifier(identifier, true, core.clientContext)) {
 			final CountDownLatch done = new CountDownLatch(1);
 			final AtomicBoolean success = new AtomicBoolean();
 			core.clientContext.jobRunner.queue(new PersistentJob() {
@@ -638,7 +638,7 @@ public class FCPServer implements Runnable, DownloadCache {
 				public boolean run(ClientContext context) {
 					boolean succeeded = false;
 					try {
-						succeeded = globalForeverClient.removeByIdentifier(identifier, true, FCPServer.this, core.clientContext);
+						succeeded = globalForeverClient.removeByIdentifier(identifier, true, core.clientContext);
 					} catch (Throwable t) {
 						Logger.error(this, "Caught removing identifier "+identifier+": "+t, t);
 					} finally {
@@ -661,7 +661,7 @@ public class FCPServer implements Runnable, DownloadCache {
 	}
 
 	public boolean removeAllGlobalRequestsBlocking() throws PersistenceDisabledException {
-		globalRebootClient.removeAll(core.clientContext);
+		globalRebootClient.removeAll();
 		final CountDownLatch done = new CountDownLatch(1);
 		final AtomicBoolean success = new AtomicBoolean();
 		core.clientContext.jobRunner.queue(new PersistentJob() {
@@ -675,7 +675,7 @@ public class FCPServer implements Runnable, DownloadCache {
 			public boolean run(ClientContext context) {
 				boolean succeeded = false;
 				try {
-					globalForeverClient.removeAll(core.clientContext);
+					globalForeverClient.removeAll();
 					succeeded = true;
 				} catch (Throwable t) {
 					Logger.error(this, "Caught while processing panic: "+t, t);
@@ -909,7 +909,7 @@ public class FCPServer implements Runnable, DownloadCache {
 			new ClientGet(persistRebootOnly ? globalRebootClient : globalForeverClient, fetchURI, defaultFetchContext.localRequestOnly,
 					defaultFetchContext.ignoreStore, filterData, QUEUE_MAX_RETRIES,
 					QUEUE_MAX_RETRIES, QUEUE_MAX_DATA_SIZE, returnType, persistRebootOnly, id,
-					Integer.MAX_VALUE, RequestStarter.BULK_SPLITFILE_PRIORITY_CLASS, returnFilename, null, false, realTimeFlag, false, core);
+					Integer.MAX_VALUE, RequestStarter.BULK_SPLITFILE_PRIORITY_CLASS, returnFilename, false, realTimeFlag, false, core);
 		cg.register(false);
 		cg.start(core.clientContext);
 	}
@@ -950,13 +950,12 @@ public class FCPServer implements Runnable, DownloadCache {
 	 * it's close...
 	 * @param req The request (insert etc) to start.
 	 * @param container The database handle. This method must be called on a DBJob.
-	 * @param context The client layer context object.
 	 * @throws IdentifierCollisionException If there is already a request with that identifier.
 	 * @throws DatabaseDisabledException If the database is disabled/broken/turned off, 
 	 * if we are shutting down, if we are waiting for the user to give us the decryption 
 	 * password etc.
 	 */
-	public void startBlocking(final ClientRequest req, ClientContext context) throws IdentifierCollisionException, PersistenceDisabledException {
+	public void startBlocking(final ClientRequest req) throws IdentifierCollisionException, PersistenceDisabledException {
 		if(req.persistence == Persistence.REBOOT) {
 			req.start(core.clientContext);
 		} else {
@@ -1097,7 +1096,7 @@ public class FCPServer implements Runnable, DownloadCache {
 			public boolean run(ClientContext context) {
 				FetchResult result = null;
 				try {
-					result = lookup(key, false, context, false, null);
+					result = lookup(key, false, null);
 				} finally {
 					synchronized(ow) {
 						ow.result = result;
@@ -1173,8 +1172,7 @@ public class FCPServer implements Runnable, DownloadCache {
 	}
 
 	@Override
-	public CacheFetchResult lookup(FreenetURI key, boolean noFilter, ClientContext context,
-			boolean mustCopy, Bucket preferred) {
+	public CacheFetchResult lookup(FreenetURI key, boolean mustCopy, Bucket preferred) {
 		if(globalForeverClient == null) return null;
 		ClientGet get = globalForeverClient.getCompletedRequest(key);
 		if(get != null) {

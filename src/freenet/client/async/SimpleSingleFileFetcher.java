@@ -109,7 +109,7 @@ public class SimpleSingleFileFetcher extends BaseSingleFileFetcher implements Cl
 			((ClientGetter)parent).addKeyToBinaryBlob(block, context);
 		Bucket data = extract(block, context);
 		if(data == null) return; // failed
-		context.uskManager.checkUSK(key.getURI(), fromStore, block.isMetadata());
+		context.uskManager.checkUSK(key.getURI(), block.isMetadata());
 		if(!block.isMetadata()) {
 			onSuccess(new FetchResult(new ClientMetadata(null), data), context);
 		} else {

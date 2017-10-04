@@ -58,7 +58,7 @@ public class RAMFreenetStore<T extends StorableBlock> implements FreenetStore<T>
 		}
 		try {
 			T ret =
-				callback.construct(block.data, block.header, routingKey, block.fullKey, canReadClientCache, canReadSlashdotCache, meta, null);
+				callback.construct(block.data, block.header, block.fullKey, canReadClientCache, canReadSlashdotCache, meta, null);
 			hits++;
 			if(!dontPromote)
 				blocksByRoutingKey.push(key, block);
@@ -178,7 +178,7 @@ public class RAMFreenetStore<T extends StorableBlock> implements FreenetStore<T>
 			
 			T ret;
 			try {
-				ret = callback.construct(block.data, block.header, routingKey, block.fullKey, canReadClientCache, false, null, null);
+				ret = callback.construct(block.data, block.header, block.fullKey, canReadClientCache, false, null, null);
 			} catch (KeyVerifyException e) {
 				Logger.error(this, "Caught while migrating: "+e, e);
 				continue;

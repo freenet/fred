@@ -91,7 +91,7 @@ public class ClientContext {
     public PersistentJobRunner dummyJobRunner;
 
 	public ClientContext(long bootID, ClientLayerPersister jobRunner, Executor mainExecutor,
-			ArchiveManager archiveManager, PersistentTempBucketFactory ptbf, TempBucketFactory tbf, PersistentFileTracker tracker,
+			ArchiveManager archiveManager, PersistentTempBucketFactory ptbf, TempBucketFactory tbf,
 			HealingQueue hq, USKManager uskManager, RandomSource strongRandom, Random fastWeakRandom, 
 			Ticker ticker, MemoryLimitedJobRunner memoryLimitedJobRunner, FilenameGenerator fg, FilenameGenerator persistentFG,
 			LockableRandomAccessBufferFactory rafFactory, LockableRandomAccessBufferFactory persistentRAFFactory,

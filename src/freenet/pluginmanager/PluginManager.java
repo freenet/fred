@@ -123,7 +123,7 @@ public class PluginManager {
 		if(logDEBUG)
 			Logger.debug(this, "Initialize Plugin Manager config");
 
-		client = core.makeClient(PRIO, true, false);
+		client = core.makeClient(PRIO, false);
 
 		// callback executor
 		executor = new SerialExecutor(NativeThread.NORM_PRIORITY);
@@ -251,7 +251,7 @@ public class PluginManager {
 	private boolean stopping;
 	private String[] toStart;
 
-	public void start(Config config) {
+	public void start() {
 	    if(!enabled) return;
 		if (toStart == null) {
 			synchronized (pluginWrappers) {
@@ -319,7 +319,7 @@ public class PluginManager {
 				for(Iterator<PluginInfoWrapper> it = wrappers.listIterator();it.hasNext();) {
 					PluginInfoWrapper pi = it.next();
 					System.out.println("Waiting for plugin to finish shutting down: "+pi.getFilename());
-					if(pi.finishShutdownPlugin(this, delta, false)) {
+					if(pi.finishShutdownPlugin(delta)) {
 						it.remove();
 					}
 				}

@@ -14,7 +14,6 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
-import java.util.HashMap;
 
 import freenet.support.HexUtil;
 import freenet.support.LogThresholdCallback;
@@ -38,8 +37,7 @@ public class CSSReadFilter implements ContentDataFilter, CharsetExtractor {
 	}
 
 	@Override
-	public void readFilter(InputStream input, OutputStream output, String charset, HashMap<String, String> otherParams,
-			FilterCallback cb) throws DataFilterException, IOException {
+	public void readFilter(InputStream input, OutputStream output, String charset, FilterCallback cb) throws DataFilterException, IOException {
 		if (logDEBUG)
 			Logger.debug(
 				this,
@@ -56,9 +54,9 @@ public class CSSReadFilter implements ContentDataFilter, CharsetExtractor {
 				w = new BufferedWriter(osw, 32768);
 
 			} catch(UnsupportedEncodingException e) {
-				throw UnknownCharsetException.create(e, charset);
+				throw UnknownCharsetException.create(charset);
 			}
-			CSSParser parser = new CSSParser(r, w, false, cb, charset, false, false);
+			CSSParser parser = new CSSParser(r, w, cb, charset, false, false);
 			parser.parse();
 		}
 		finally {
@@ -83,9 +81,9 @@ public class CSSReadFilter implements ContentDataFilter, CharsetExtractor {
 				isr = new InputStreamReader(strm, charset);
 				r = new BufferedReader(isr, 32768);
 			} catch(UnsupportedEncodingException e) {
-				throw UnknownCharsetException.create(e, charset);
+				throw UnknownCharsetException.create(charset);
 			}
-			CSSParser parser = new CSSParser(r, w, false, new NullFilterCallback(), null, true, false);
+			CSSParser parser = new CSSParser(r, w, new NullFilterCallback(), null, true, false);
 			parser.parse();
 			r.close();
 			r = null;

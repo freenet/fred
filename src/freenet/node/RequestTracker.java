@@ -255,7 +255,7 @@ public class RequestTracker {
 				// The overall running* map can include local. But the local map can't include non-local.
 				if((!local) && tag.wasLocal) continue;
 				int out = tag.expectedTransfersOut(ignoreLocalVsRemote, transfersPerInsert, true);
-				int in = tag.expectedTransfersIn(ignoreLocalVsRemote, transfersPerInsert, true);
+				int in = tag.expectedTransfersIn(ignoreLocalVsRemote);
 				count++;
 				transfersOut += out;
 				transfersIn += in;
@@ -323,7 +323,7 @@ public class RequestTracker {
 					if((!local) && tag.wasLocal) continue;
 					if(tag.getSource() == source) {
 						int out = tag.expectedTransfersOut(ignoreLocalVsRemote, transfersPerInsert, true);
-						int in = tag.expectedTransfersIn(ignoreLocalVsRemote, transfersPerInsert, true);
+						int in = tag.expectedTransfersIn(ignoreLocalVsRemote);
 						count++;
 						transfersOut += out;
 						transfersIn += in;
@@ -356,12 +356,12 @@ public class RequestTracker {
 					if(tag.currentlyFetchingOfferedKeyFrom(source)) {
 						if(logMINOR) Logger.minor(this, "Counting "+tag+" to "+entry.getKey());
 						transfersOut += tag.expectedTransfersOut(ignoreLocalVsRemote, transfersPerInsert, false);
-						transfersIn += tag.expectedTransfersIn(ignoreLocalVsRemote, transfersPerInsert, false);
+						transfersIn += tag.expectedTransfersIn(ignoreLocalVsRemote);
 						count++;
 					} else if(tag.currentlyRoutingTo(source)) {
 						if(logMINOR) Logger.minor(this, "Counting "+tag+" to "+entry.getKey());
 						transfersOut += tag.expectedTransfersOut(ignoreLocalVsRemote, transfersPerInsert, false);
-						transfersIn += tag.expectedTransfersIn(ignoreLocalVsRemote, transfersPerInsert, false);
+						transfersIn += tag.expectedTransfersIn(ignoreLocalVsRemote);
 						count++;
 					} else if(logDEBUG) Logger.debug(this, "Not counting "+entry.getKey());
 				}
@@ -411,7 +411,7 @@ public class RequestTracker {
 						counterMap.put(source, counter);
 					}
 					int out = tag.expectedTransfersOut(ignoreLocalVsRemote, transfersPerInsert, true);
-					int in = tag.expectedTransfersIn(ignoreLocalVsRemote, transfersPerInsert, true);
+					int in = tag.expectedTransfersIn(ignoreLocalVsRemote);
 					counter.total++;
 					counter.expectedTransfersIn += in;
 					counter.expectedTransfersOut += out;

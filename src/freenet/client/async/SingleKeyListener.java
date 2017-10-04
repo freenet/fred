@@ -29,7 +29,7 @@ public class SingleKeyListener implements KeyListener {
 	}
 
 	@Override
-	public short definitelyWantKey(Key key, byte[] saltedKey, ClientContext context) {
+	public short definitelyWantKey(Key key) {
 		if(!key.equals(this.key)) return -1;
 		else return prio;
 	}
@@ -45,7 +45,7 @@ public class SingleKeyListener implements KeyListener {
 	}
 
 	@Override
-	public SendableGet[] getRequestsForKey(Key key, byte[] saltedKey, ClientContext context) {
+	public SendableGet[] getRequestsForKey(Key key) {
 		if(!key.equals(this.key)) return null;
 		return new SendableGet[] { fetcher };
 	}

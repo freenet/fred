@@ -76,7 +76,7 @@ public class PluginJarUpdater extends NodeUpdater {
 		return false;
 	}
 	
-	PluginJarUpdater(NodeUpdateManager manager, FreenetURI URI, int current, int min, int max, String blobFilenamePrefix, String pluginName, PluginManager pm, boolean autoDeployOnRestart) {
+	PluginJarUpdater(NodeUpdateManager manager, FreenetURI URI, int current, int min, int max, String blobFilenamePrefix, String pluginName, PluginManager pm) {
 		super(manager, URI, current, min, max, blobFilenamePrefix);
 		this.pluginName = pluginName;
 		this.pluginManager = pm;
@@ -92,7 +92,7 @@ public class PluginJarUpdater extends NodeUpdater {
 	private static final String REQUIRED_NODE_VERSION_PREFIX = "Required-Node-Version: ";
 	
 	@Override
-	protected void maybeParseManifest(FetchResult result, int build) {
+	protected void maybeParseManifest(FetchResult result) {
 		requiredNodeVersion = -1;
 		parseManifest(result);
 		if(requiredNodeVersion != -1) {

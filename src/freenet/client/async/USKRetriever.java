@@ -144,12 +144,12 @@ public class USKRetriever extends BaseClientGetter implements USKCallback {
 				pipeIn = decompressorManager.execute();
 				ClientGetWorkerThread worker = new ClientGetWorkerThread(new BufferedInputStream(pipeIn), output, null, null, null, false, null, null, null, context.linkFilterExceptionProvider);
 				worker.start();
-				streamGenerator.writeTo(pipeOut, context);
+				streamGenerator.writeTo(pipeOut);
 				worker.waitFinished();
 				// If this throws, we want the whole request to fail.
 				pipeOut.close(); pipeOut = null;
 			} else {
-					streamGenerator.writeTo(output, context);
+					streamGenerator.writeTo(output);
 					// If this throws, we want the whole request to fail.
 					output.close(); output = null;
 			}
@@ -322,13 +322,13 @@ public class USKRetriever extends BaseClientGetter implements USKCallback {
 	 * @param tries The new number of tries after each cooldown. Greater than 0
 	 * and less than 3 or we throw.
 	 */
-	public void changeUSKPollParameters(long time, int tries, ClientContext context) {
+	public void changeUSKPollParameters(long time, int tries) {
 		USKFetcher f;
 		synchronized(this) {
 			f = fetcher;
 		}
 		if(f == null) throw new IllegalStateException();
-		f.changeUSKPollParameters(time, tries, context);
+		f.changeUSKPollParameters(time, tries);
 	}
 
     @Override

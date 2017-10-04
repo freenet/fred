@@ -63,7 +63,7 @@ public class RevocationChecker implements ClientGetCallback, RequestClient {
 		this.revocationDNFCounter = 0;
 		this.blobFile = blobFile;
 		this.logMINOR = Logger.shouldLog(LogLevel.MINOR, this);
-		ctxRevocation = core.makeClient((short)0, true, false).getFetchContext();
+		ctxRevocation = core.makeClient((short)0, false).getFetchContext();
 		// Do not allow redirects etc.
 		// If we allow redirects then it will take too long to download the revocation.
 		// Anyone inserting it should be aware of this fact! 
@@ -190,10 +190,10 @@ public class RevocationChecker implements ClientGetCallback, RequestClient {
 
 	@Override
 	public void onSuccess(FetchResult result, ClientGetter state) {
-		onSuccess(result, state, state.getBlobBucket());
+		onSuccess(result, state.getBlobBucket());
 	}
 	
-	void onSuccess(FetchResult result, ClientGetter state, Bucket blob) {
+	void onSuccess(FetchResult result, Bucket blob) {
 		// The key has been blown !
 		// FIXME: maybe we need a bigger warning message.
 		blown = true;
@@ -263,10 +263,10 @@ public class RevocationChecker implements ClientGetCallback, RequestClient {
 
 	@Override
 	public void onFailure(FetchException e, ClientGetter state) {
-		onFailure(e, state, state.getBlobBucket());
+		onFailure(e, state.getBlobBucket());
 	}
 	
-	void onFailure(FetchException e, ClientGetter state, Bucket blob) {
+	void onFailure(FetchException e, Bucket blob) {
 		logMINOR = Logger.shouldLog(LogLevel.MINOR, this);
 		if(logMINOR) Logger.minor(this, "Revocation fetch failed: "+e);
 		FetchExceptionMode errorCode = e.getMode();

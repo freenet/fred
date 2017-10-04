@@ -34,10 +34,10 @@ public abstract class MultiMessageCallback {
 	private boolean someFailed;
 	
 	/** This is called when all messages have been acked, or failed */
-	abstract void finish(boolean success);
+	abstract void finish();
 	
 	/** This is called when all messages have been sent (but not acked) or failed to send */
-	abstract void sent(boolean success);
+	abstract void sent();
 
 	/** Add another message. You should call arm() after you have added all messages. */
 	public AsyncMessageCallback make() {
@@ -59,7 +59,7 @@ public abstract class MultiMessageCallback {
                         if(!armed) return;
 						success = !someFailed;
 					}
-					MultiMessageCallback.this.sent(success);
+					MultiMessageCallback.this.sent();
 				}
 
 				@Override
@@ -94,8 +94,8 @@ public abstract class MultiMessageCallback {
 						if(someFailed) success = false;
 					}
 					if(callSent)
-						MultiMessageCallback.this.sent(success);
-					finish(success);
+						MultiMessageCallback.this.sent();
+					finish();
 				}
 				
 			};
@@ -118,8 +118,8 @@ public abstract class MultiMessageCallback {
 			if(waitingForSend == 0) callSent = true;
 			success = !someFailed;
 		}
-		if(callSent) sent(success);
-		if(complete) finish(success);
+		if(callSent) sent();
+		if(complete) finish();
 	}
 	
 	/** @return True if the callbacck has finished (and is armed) */

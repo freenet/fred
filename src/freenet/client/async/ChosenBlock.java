@@ -29,8 +29,8 @@ public abstract class ChosenBlock {
 	public transient final boolean canWriteClientCache;
 	public transient final boolean forkOnCacheable;
 	public transient final boolean realTimeFlag;
-	
-	public ChosenBlock(SendableRequestItem token, Key key, ClientKey ckey, boolean localRequestOnly, boolean ignoreStore, boolean canWriteClientCache, boolean forkOnCacheable, boolean realTimeFlag, RequestScheduler sched) {
+
+	public ChosenBlock(SendableRequestItem token, Key key, ClientKey ckey, boolean localRequestOnly, boolean ignoreStore, boolean canWriteClientCache, boolean forkOnCacheable, boolean realTimeFlag) {
 		this.token = token;
 		if(token == null) throw new NullPointerException();
 		this.key = key;
@@ -66,12 +66,12 @@ public abstract class ChosenBlock {
 
 	public boolean send(NodeClientCore core, RequestScheduler sched) {
 		ClientContext context = sched.getContext();
-		SendableRequestSender sender = getSender(context);
+		SendableRequestSender sender = getSender();
 		sendIsBlocking = sender.sendIsBlocking();
 		return sender.send(core, sched, context, this);
 	}
 	
-	public abstract SendableRequestSender getSender(ClientContext context);
+	public abstract SendableRequestSender getSender();
 	
 	public void onDumped() {
 		token.dump();

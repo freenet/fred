@@ -123,7 +123,7 @@ public class SplitFileFetcherCrossSegmentStorage {
                 CheckpointLock lock = null;
                 try {
                     lock = parent.jobRunner.lock();
-                    innerDecode(chunk);
+                    innerDecode();
                 } catch (IOException e) {
                     Logger.error(this, "Failed to decode "+this+" because of disk error: "+e, e);
                     parent.failOnDiskError(e);
@@ -154,7 +154,7 @@ public class SplitFileFetcherCrossSegmentStorage {
     
     /** Attempt FEC decoding. Check blocks before decoding in case there is disk corruption. Check
      * the new decoded blocks afterwards to ensure reproducible behaviour. */
-    private void innerDecode(MemoryLimitedChunk chunk) throws IOException {
+    private void innerDecode() throws IOException {
         if(logMINOR) Logger.minor(this, "Trying to decode "+this+" for "+parent);
         boolean killed = false;
         synchronized(this) {

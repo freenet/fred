@@ -1006,7 +1006,7 @@ public class CSSParserTest extends TestCase {
 	private String filter(String css) throws IOException, URISyntaxException {
 		StringWriter w = new StringWriter();
 		GenericReadFilterCallback cb = new GenericReadFilterCallback(new URI("/CHK@OR904t6ylZOwoobMJRmSn7HsPGefHSP7zAjoLyenSPw,x2EzszO4Kqot8akqmKYXJbkD-fSj6noOVGB-K2YisZ4,AAIC--8/1-works.html"), null, null, null);
-		CSSParser p = new CSSParser(new StringReader(css), w, false, cb, "UTF-8", false, false);
+		CSSParser p = new CSSParser(new StringReader(css), w, cb, "UTF-8", false, false);
 		p.parse();
 		return w.toString();
 	}

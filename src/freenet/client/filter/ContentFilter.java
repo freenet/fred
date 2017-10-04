@@ -279,7 +279,7 @@ public class ContentFilter {
 					charset = detectCharset(charsetBuffer, offset, handler, maybeCharset);
 				}
 				try {
-					handler.readFilter.readFilter(input, output, charset, otherParams, filterCallback);
+					handler.readFilter.readFilter(input, output, charset, filterCallback);
 				}
 				catch(EOFException e) {
 					throw new DataFilterException(l10n("EOFMessage"), l10n("EOFMessage"), l10n("EOFDescription"));

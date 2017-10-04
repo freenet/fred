@@ -150,8 +150,8 @@ public class ClientGet extends ClientRequest implements ClientGetCallback, Clien
 	public ClientGet(PersistentRequestClient globalClient, FreenetURI uri, boolean dsOnly, boolean ignoreDS,
 			boolean filterData, int maxSplitfileRetries, int maxNonSplitfileRetries,
 			long maxOutputLength, ReturnType returnType, boolean persistRebootOnly, String identifier, int verbosity,
-			short prioClass, File returnFilename, String charset, boolean writeToClientCache, boolean realTimeFlag, boolean binaryBlob, NodeClientCore core) throws IdentifierCollisionException, NotAllowedException, IOException {
-		super(uri, identifier, verbosity, charset, null, globalClient,
+			short prioClass, File returnFilename, boolean writeToClientCache, boolean realTimeFlag, boolean binaryBlob, NodeClientCore core) throws IdentifierCollisionException, NotAllowedException, IOException {
+		super(uri, identifier, verbosity, null, globalClient,
 				prioClass,
 				(persistRebootOnly ? Persistence.REBOOT : Persistence.FOREVER), realTimeFlag, null, true);
 
@@ -210,7 +210,7 @@ public class ClientGet extends ClientRequest implements ClientGetCallback, Clien
 
 	public ClientGet(FCPConnectionHandler handler, ClientGetMessage message, 
 	        NodeClientCore core) throws IdentifierCollisionException, MessageInvalidException {
-		super(message.uri, message.identifier, message.verbosity, message.charset, handler,
+		super(message.uri, message.identifier, message.verbosity, handler,
 				message.priorityClass, message.persistence, message.realTimeFlag, message.clientToken, message.global);
 		// Create a Fetcher directly in order to get more fine-grained control,
 		// since the client may override a few context elements.
@@ -388,8 +388,8 @@ public class ClientGet extends ClientRequest implements ClientGetCallback, Clien
 		if(client != null)
 			client.notifySuccess(this);
 	}
-	
-    public void setSuccessForMigration(ClientContext context, long completionTime, Bucket data) throws ResumeFailedException {
+
+    public void setSuccessForMigration(long completionTime, Bucket data) throws ResumeFailedException {
         synchronized(this) {
             succeeded = true;
             started = true;
@@ -665,7 +665,7 @@ public class ClientGet extends ClientRequest implements ClientGetCallback, Clien
 	                
 	                @Override
 	                public boolean run(ClientContext context) {
-	                    innerHandleCompatibilityMode(ce, context);
+	                    innerHandleCompatibilityMode(ce);
 	                    return false;
 	                }
 	                
@@ -674,11 +674,11 @@ public class ClientGet extends ClientRequest implements ClientGetCallback, Clien
 	            // Not much we can do
 	        }
 	    } else {
-	        innerHandleCompatibilityMode(ce, context);
+	        innerHandleCompatibilityMode(ce);
 	    }
 	}
 
-	private void innerHandleCompatibilityMode(SplitfileCompatibilityModeEvent ce, ClientContext context) {
+	private void innerHandleCompatibilityMode(SplitfileCompatibilityModeEvent ce) {
 	    compatMode.merge(ce.minCompatibilityMode, ce.maxCompatibilityMode, ce.splitfileCryptoKey, ce.dontCompress, ce.bottomLayer);
 	    if(client != null) {
 	        RequestStatusCache cache = client.getRequestStatusCache();

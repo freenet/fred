@@ -289,8 +289,8 @@ public class EncryptedRandomAccessBufferTest {
         dos.close();
         eraf.close();
         DataInputStream dis = new DataInputStream(new ByteArrayInputStream(baos.toByteArray()));
-        ClientContext context = new ClientContext(0, null, null, null, null, null, null, null, null,
-                null, r, null, null, null, null, null, null, null, null, null, null, null, null, 
+        ClientContext context = new ClientContext(0, null, null, null, null, null, null, null,
+                null, r, null, null, null, null, null, null, null, null, null, null, null, null,
                 null, null, null);
         context.setPersistentMasterSecret(secret);
         EncryptedRandomAccessBuffer restored = (EncryptedRandomAccessBuffer) BucketTools.restoreRAFFrom(dis, context.persistentFG, context.persistentFileTracker, secret);
@@ -320,8 +320,8 @@ public class EncryptedRandomAccessBufferTest {
         oos.writeObject(eraf);
         oos.close();
         DataInputStream dis = new DataInputStream(new ByteArrayInputStream(baos.toByteArray()));
-        ClientContext context = new ClientContext(0, null, null, null, null, null, null, null, null,
-                null, r, null, null, null, null, null, null, null, null, null, null, null, null, 
+        ClientContext context = new ClientContext(0, null, null, null, null, null, null, null,
+                null, r, null, null, null, null, null, null, null, null, null, null, null, null,
                 null, null, null);
         context.setPersistentMasterSecret(secret);
         ObjectInputStream ois = new ObjectInputStream(dis);

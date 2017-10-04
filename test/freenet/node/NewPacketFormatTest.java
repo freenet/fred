@@ -186,7 +186,7 @@ public class NewPacketFormatTest extends TestCase {
 			boolean shouldSend = true;
 			
 			@Override
-			public MessageItem makeLoadStats(boolean realtime, boolean highPriority, boolean noRemember) {
+			public MessageItem makeLoadStats() {
 				return new MessageItem(loadMessage, null, null, (short)0);
 			}
 
@@ -262,7 +262,7 @@ public class NewPacketFormatTest extends TestCase {
 		NullBasePeerNode senderNode = new NullBasePeerNode() {
 			
 			@Override
-			public MessageItem makeLoadStats(boolean realtime, boolean highPriority, boolean noRemember) {
+			public MessageItem makeLoadStats() {
 				return new MessageItem(loadMessage, null, false, null, (short) 0, false, false);
 			}
 
@@ -293,7 +293,7 @@ public class NewPacketFormatTest extends TestCase {
 		NullBasePeerNode senderNode = new NullBasePeerNode() {
 			
 			@Override
-			public MessageItem makeLoadStats(boolean realtime, boolean highPriority, boolean noRemember) {
+			public MessageItem makeLoadStats() {
 				return new MessageItem(loadMessage, null, null, (short)0);
 			}
 
@@ -434,14 +434,13 @@ public class NewPacketFormatTest extends TestCase {
 		Thread.sleep(PacketSender.MAX_COALESCING_DELAY * 2);
 		senderNPF.maybeSendPacket(false, senderSessionKey);
 
-		FreenetInetAddress LOCALHOST = new FreenetInetAddress("127.0.0.1", true);
+		FreenetInetAddress LOCALHOST = new FreenetInetAddress("127.0.0.1");
 		Peer PEER = new Peer(LOCALHOST, 1234);
 
 		byte[] data = senderNode.sentEncryptedPacket;
 
 		receiverNode.decryptedMessages = new ArrayList<byte[]>();
-		receiverNPF.handleReceivedPacket(data, 0, data.length, System.currentTimeMillis(),
-						 PEER);
+		receiverNPF.handleReceivedPacket(data, 0, data.length);
 
 		assertEquals(1, receiverNode.decryptedMessages.size());
 		assertTrue(Arrays.equals(message, copyOfMessage));

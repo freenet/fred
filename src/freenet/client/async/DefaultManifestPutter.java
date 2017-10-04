@@ -63,13 +63,13 @@ public class DefaultManifestPutter extends BaseManifestPutter {
 	// this should prevent to big containers
 	public static final long DEFAULT_CONTAINERSIZE_SPARE = 196*1024;
 
-	public DefaultManifestPutter(ClientPutCallback clientCallback, HashMap<String, Object> manifestElements, short prioClass, FreenetURI target, String defaultName, InsertContext ctx, 
-			boolean persistent, byte[] forceCryptoKey, ClientContext context) throws TooManyFilesInsertException {
+	public DefaultManifestPutter(ClientPutCallback clientCallback, HashMap<String, Object> manifestElements, short prioClass, FreenetURI target, String defaultName, InsertContext ctx,
+			byte[] forceCryptoKey, ClientContext context) throws TooManyFilesInsertException {
 		// If the top level key is an SSK, all CHK blocks and particularly splitfiles below it should have
 		// randomised keys. This substantially improves security by making it impossible to identify blocks
 		// even if you know the content. In the user interface, we will offer the option of inserting as a
 		// random SSK to take advantage of this.
-		super(clientCallback, manifestElements, prioClass, target, defaultName, ctx, ClientPutter.randomiseSplitfileKeys(target, ctx, persistent), forceCryptoKey, context);
+		super(clientCallback, manifestElements, prioClass, target, defaultName, ctx, ClientPutter.randomiseSplitfileKeys(target, ctx), forceCryptoKey, context);
 	}
 	
 	/**

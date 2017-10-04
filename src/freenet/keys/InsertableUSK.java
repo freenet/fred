@@ -25,7 +25,7 @@ public class InsertableUSK extends USK {
     private static final long serialVersionUID = 1L;
     public final DSAPrivateKey privKey;
 	
-	public static InsertableUSK createInsertable(FreenetURI uri, boolean persistent) throws MalformedURLException {
+	public static InsertableUSK createInsertable(FreenetURI uri) throws MalformedURLException {
 		if(!uri.getKeyType().equalsIgnoreCase("USK"))
 			throw new MalformedURLException();
 		InsertableClientSSK ssk =

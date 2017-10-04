@@ -57,6 +57,7 @@ public class SecurityLevelsToadlet extends Toadlet {
 		this.node = node;
 	}
 
+	@SuppressWarnings("UnusedParameters")
 	public void handleMethodPOST(URI uri, HTTPRequest request, ToadletContext ctx) throws ToadletContextClosedException, IOException, RedirectException {
         if(!ctx.checkFullAccess(this))
             return;
@@ -118,12 +119,12 @@ public class SecurityLevelsToadlet extends Toadlet {
 					String confirmPassword = request.getPartAsStringFailsafe("confirmMasterPassword", MAX_PASSWORD_LENGTH);
 					if (!oldPassword.isEmpty() && !confirmPassword.isEmpty() && !password.isEmpty() && password.equals(confirmPassword)) {
 						try {
-							core.node.changeMasterPassword(oldPassword, password, false);
+							core.node.changeMasterPassword(password);
 						} catch (MasterKeysWrongPasswordException e) {
 							sendChangePasswordForm(ctx, true, false, newPhysicalLevel.name());
 							return;
 						} catch (MasterKeysFileSizeException e) {
-							sendPasswordFileCorruptedPage(e.isTooBig(), ctx, false, true);
+							sendPasswordFileCorruptedPage(ctx);
 							if(changedAnything)
 								core.storeConfig();
 							return;
@@ -149,9 +150,9 @@ public class SecurityLevelsToadlet extends Toadlet {
 						if (!password.isEmpty() && !confirmPassword.isEmpty() && password.equals(confirmPassword)) {
 							try {
 								if(oldPhysicalLevel == PHYSICAL_THREAT_LEVEL.NORMAL || oldPhysicalLevel == PHYSICAL_THREAT_LEVEL.LOW)
-									core.node.changeMasterPassword("", password, false);
+									core.node.changeMasterPassword(password);
 								else
-									core.node.setMasterPassword(password, false);
+									core.node.setMasterPassword(password);
 							} catch (AlreadySetPasswordException e) {
 								sendChangePasswordForm(ctx, false, false, newPhysicalLevel.name());
 								return;
@@ -171,7 +172,7 @@ public class SecurityLevelsToadlet extends Toadlet {
 									core.storeConfig();
 								return;
 							} catch (MasterKeysFileSizeException e) {
-								sendPasswordFileCorruptedPage(e.isTooBig(), ctx, false, true);
+								sendPasswordFileCorruptedPage(ctx);
 								if(changedAnything)
 									core.storeConfig();
 								return;
@@ -194,7 +195,7 @@ public class SecurityLevelsToadlet extends Toadlet {
 						if (!password.isEmpty()) {
 							// This is actually the OLD password ...
 							try {
-								core.node.changeMasterPassword(password, "", false);
+								core.node.changeMasterPassword("");
 							} catch (IOException e) {
 								if(!core.node.getMasterPasswordFile().exists()) {
 									// Ok.
@@ -233,7 +234,7 @@ public class SecurityLevelsToadlet extends Toadlet {
 									core.storeConfig();
 								return;
 							} catch (MasterKeysFileSizeException e) {
-								sendPasswordFileCorruptedPage(e.isTooBig(), ctx, false, true);
+								sendPasswordFileCorruptedPage(ctx);
 								if(changedAnything)
 									core.storeConfig();
 								return;
@@ -307,7 +308,7 @@ public class SecurityLevelsToadlet extends Toadlet {
 				}
 				System.err.println("Setting master password");
 				try {
-					node.setMasterPassword(masterPassword, false);
+					node.setMasterPassword(masterPassword);
 				} catch (AlreadySetPasswordException e) {
 					System.err.println("Already set master password");
 					Logger.error(this, "Already set master password");
@@ -319,7 +320,7 @@ public class SecurityLevelsToadlet extends Toadlet {
 					sendPasswordFormPage(true, ctx);
 					return;
 				} catch (MasterKeysFileSizeException e) {
-					sendPasswordFileCorruptedPage(e.isTooBig(), ctx, false, false);
+					sendPasswordFileCorruptedPage(ctx);
 					return;
 				}
 				MultiValueTable<String,String> headers = new MultiValueTable<String,String>();
@@ -349,7 +350,7 @@ public class SecurityLevelsToadlet extends Toadlet {
 	}
 
 	private void sendCantDeleteMasterKeysFile(ToadletContext ctx, String physicalSecurityLevel) throws ToadletContextClosedException, IOException {
-		HTMLNode pageNode = sendCantDeleteMasterKeysFileInner(ctx, node.getMasterPasswordFile().getPath(), false, physicalSecurityLevel, this.node);
+		HTMLNode pageNode = sendCantDeleteMasterKeysFileInner(ctx, node.getMasterPasswordFile().getPath(), false, physicalSecurityLevel);
 		writeHTMLReply(ctx, 200, "OK", pageNode.generate());
 	}
 
@@ -362,7 +363,7 @@ public class SecurityLevelsToadlet extends Toadlet {
 		sendCantDeleteMasterKeysFileInner(content, form, filename, physicalSecurityLevel);
 	}
 
-	public static HTMLNode sendCantDeleteMasterKeysFileInner(ToadletContext ctx, String filename, boolean forFirstTimeWizard, String physicalSecurityLevel, Node node) {
+	public static HTMLNode sendCantDeleteMasterKeysFileInner(ToadletContext ctx, String filename, boolean forFirstTimeWizard, String physicalSecurityLevel) {
 		PageNode page = ctx.getPageMaker().getPageNode(l10nSec("cantDeletePasswordFileTitle"), ctx);
 		HTMLNode pageNode = page.outer;
 		HTMLNode contentNode = page.content;
@@ -625,8 +626,8 @@ public class SecurityLevelsToadlet extends Toadlet {
 		return NodeL10n.getBase().getString("SecurityLevels."+key, pattern, value);
 	}
 
-	void sendPasswordFileCorruptedPage(boolean tooBig, ToadletContext ctx, boolean forSecLevels, boolean forFirstTimeWizard) throws ToadletContextClosedException, IOException {
-		HTMLNode page = sendPasswordFileCorruptedPageInner(tooBig, ctx, forSecLevels, forFirstTimeWizard, node.getMasterPasswordFile().getPath(), node);
+	void sendPasswordFileCorruptedPage(ToadletContext ctx) throws ToadletContextClosedException, IOException {
+		HTMLNode page = sendPasswordFileCorruptedPageInner(ctx, node.getMasterPasswordFile().getPath());
 		writeHTMLReply(ctx, 500, "Internal Server Error", page.generate());
 	}
 
@@ -638,7 +639,7 @@ public class SecurityLevelsToadlet extends Toadlet {
 		sendPasswordFileCorruptedPageInner(infoBox, masterPasswordFile);
 	}
 
-	public static HTMLNode sendPasswordFileCorruptedPageInner(boolean tooBig, ToadletContext ctx, boolean forSecLevels, boolean forFirstTimeWizard, String masterPasswordFile, Node node) {
+	public static HTMLNode sendPasswordFileCorruptedPageInner(ToadletContext ctx, String masterPasswordFile) {
 		PageNode page = ctx.getPageMaker().getPageNode(l10nSec("passwordFileCorruptedTitle"), ctx);
 		HTMLNode pageNode = page.outer;
 		HTMLNode contentNode = page.content;

@@ -28,7 +28,6 @@ class CSSParser extends CSSTokenizerFilter {
 	CSSParser(
 		Reader r,
 		Writer w,
-		boolean paranoidStringCheck,
 		FilterCallback cb,
 		String charset,
 		boolean stopAtDetectedCharset, boolean isInline) {

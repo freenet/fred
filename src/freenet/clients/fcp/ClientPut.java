@@ -77,7 +77,6 @@ public class ClientPut extends ClientPutBase {
 	 *            The identifier of the insert
 	 * @param verbosity
 	 *            The verbosity bitmask
-	 * @param charset TODO
 	 * @param priorityClass
 	 *            The priority for this insert
 	 * @param persistence
@@ -114,10 +113,10 @@ public class ClientPut extends ClientPutBase {
 	 * @throws InsertException 
 	 */
 	public ClientPut(PersistentRequestClient globalClient, FreenetURI uri, String identifier, int verbosity, 
-			String charset, short priorityClass, Persistence persistence, String clientToken,
+			short priorityClass, Persistence persistence, String clientToken,
 			boolean getCHKOnly, boolean dontCompress, int maxRetries, UploadFrom uploadFromType, File origFilename,
 			String contentType, RandomAccessBucket data, FreenetURI redirectTarget, String targetFilename, boolean earlyEncode, boolean canWriteClientCache, boolean forkOnCacheable, int extraInsertsSingleBlock, int extraInsertsSplitfileHeaderBlock, boolean realTimeFlag, InsertContext.CompatibilityMode compatMode, byte[] overrideSplitfileKey, boolean binaryBlob, NodeClientCore core) throws IdentifierCollisionException, NotAllowedException, MetadataUnresolvedException, IOException {
-		super(uri = checkEmptySSK(uri, targetFilename, core.clientContext), identifier, verbosity, charset, null, globalClient, priorityClass, persistence, null, true, getCHKOnly, dontCompress, maxRetries, earlyEncode, canWriteClientCache, forkOnCacheable, false, extraInsertsSingleBlock, extraInsertsSplitfileHeaderBlock, realTimeFlag, null, compatMode, false/*XXX ignoreUSKDatehints*/, core);
+		super(uri = checkEmptySSK(uri, targetFilename, core.clientContext), identifier, verbosity, null, globalClient, priorityClass, persistence, null, true, getCHKOnly, dontCompress, maxRetries, earlyEncode, canWriteClientCache, forkOnCacheable, false, extraInsertsSingleBlock, extraInsertsSplitfileHeaderBlock, realTimeFlag, null, compatMode, false/*XXX ignoreUSKDatehints*/, core);
 		if(uploadFromType == UploadFrom.DISK) {
 			if(!core.allowUploadFrom(origFilename))
 				throw new NotAllowedException();
@@ -148,14 +147,14 @@ public class ClientPut extends ClientPutBase {
 		this.data = tempData;
 		this.clientMetadata = cm;
 
-		putter = new ClientPutter(this, data, this.uri, cm, 
-				ctx, priorityClass, 
-				isMetadata, 
-				this.uri.getDocName() == null ? targetFilename : null, binaryBlob, core.clientContext, overrideSplitfileKey, -1);
+		putter = new ClientPutter(this, data, this.uri, cm,
+				ctx, priorityClass,
+				isMetadata,
+				this.uri.getDocName() == null ? targetFilename : null, binaryBlob, overrideSplitfileKey, -1);
 	}
 	
 	public ClientPut(FCPConnectionHandler handler, ClientPutMessage message, FCPServer server) throws IdentifierCollisionException, MessageInvalidException, IOException {
-		super(checkEmptySSK(message.uri, message.targetFilename, server.core.clientContext), message.identifier, message.verbosity, null, 
+		super(checkEmptySSK(message.uri, message.targetFilename, server.core.clientContext), message.identifier, message.verbosity,
 				handler, message.priorityClass, message.persistence, message.clientToken,
 				message.global, message.getCHKOnly, message.dontCompress, message.localRequestOnly, message.maxRetries, message.earlyEncode, message.canWriteClientCache, message.forkOnCacheable, message.compressorDescriptor, message.extraInsertsSingleBlock, message.extraInsertsSplitfileHeaderBlock, message.realTimeFlag, message.compatibilityMode, message.ignoreUSKDatehints, server);
 		String salt = null;
@@ -261,7 +260,7 @@ public class ClientPut extends ClientPutBase {
 		putter = new ClientPutter(this, data, this.uri, cm, 
 				ctx, priorityClass, 
 				isMetadata,
-				this.uri.getDocName() == null ? targetFilename : null, binaryBlob, server.core.clientContext, message.overrideSplitfileCryptoKey, message.metadataThreshold);
+				this.uri.getDocName() == null ? targetFilename : null, binaryBlob, message.overrideSplitfileCryptoKey, message.metadataThreshold);
 	}
 	
 	protected ClientPut() {

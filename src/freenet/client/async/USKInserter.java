@@ -99,7 +99,7 @@ public class USKInserter implements ClientPutState, USKFetcherCallback, PutCompl
 			if(logMINOR)
 				Logger.minor(this, "scheduling fetcher for "+pubUSK.getURI());
 			if(finished) return;
-			fetcher = context.uskManager.getFetcherForInsertDontSchedule(persistent ? pubUSK.copy() : pubUSK, parent.priorityClass, this, parent.getClient(), context, persistent, ctx.ignoreUSKDatehints);
+			fetcher = context.uskManager.getFetcherForInsertDontSchedule(persistent ? pubUSK.copy() : pubUSK, this, parent.getClient(), persistent, ctx.ignoreUSKDatehints);
 			if(logMINOR)
 				Logger.minor(this, "scheduled: "+fetcher);
 		}
@@ -289,7 +289,7 @@ public class USKInserter implements ClientPutState, USKFetcherCallback, PutCompl
 			parent.addMustSucceedBlocks(1);
 			parent.notifyClients(context);
 		}
-		privUSK = InsertableUSK.createInsertable(uri, persistent);
+		privUSK = InsertableUSK.createInsertable(uri);
 		pubUSK = privUSK.getUSK();
 		edition = pubUSK.suggestedEdition;
 		this.freeData = freeData;

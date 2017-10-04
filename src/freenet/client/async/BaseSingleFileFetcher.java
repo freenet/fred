@@ -63,12 +63,12 @@ public abstract class BaseSingleFileFetcher extends SendableGet implements HasKe
 	}
 	
 	@Override
-	public long countAllKeys(ClientContext context) {
+	public long countAllKeys() {
 		return 1;
 	}
 	
 	@Override
-	public long countSendableKeys(ClientContext context) {
+	public long countSendableKeys() {
 		return 1;
 	}
 	
@@ -243,7 +243,7 @@ public abstract class BaseSingleFileFetcher extends SendableGet implements HasKe
 	public abstract void onSuccess(ClientKeyBlock block, boolean fromStore, Object token, ClientContext context);
 	
 	@Override
-	public long getCooldownWakeup(SendableRequestItem token, ClientContext context) {
+	public long getCooldownWakeup(SendableRequestItem token) {
 		return cooldownWakeupTime;
 	}
 
@@ -255,8 +255,8 @@ public abstract class BaseSingleFileFetcher extends SendableGet implements HasKe
 	public void reschedule(ClientContext context) {
 		getScheduler(context).register(null, new SendableGet[] { this }, persistent, ctx.blocks, true);
 	}
-	
-	public SendableGet getRequest(Key key) {
+
+	public SendableGet getRequest() {
 		return this;
 	}
 
@@ -270,7 +270,7 @@ public abstract class BaseSingleFileFetcher extends SendableGet implements HasKe
 	}
 
 	@Override
-	public KeyListener makeKeyListener(ClientContext context, boolean onStartup) {
+	public KeyListener makeKeyListener() {
 		synchronized(this) {
 			if(finished) return null;
 			if(cancelled) return null;
@@ -324,9 +324,8 @@ public abstract class BaseSingleFileFetcher extends SendableGet implements HasKe
 	 * that looks too complex without significant changes to data structures.
 	 * For now it's just a hack to make changing the polling interval in USKs work.
 	 * @see <a href="https://bugs.freenetproject.org/view.php?id=4984">Bug</a>
-	 * @param context The context object.
 	 */
-	public void onChangedFetchContext(ClientContext context) {
+	public void onChangedFetchContext() {
 		synchronized(this) {
 			if(cancelled || finished) return;
 		}

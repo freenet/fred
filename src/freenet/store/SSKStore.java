@@ -17,8 +17,7 @@ public class SSKStore extends StoreCallback<SSKBlock> {
 	
 	@Override
 	public SSKBlock construct(byte[] data, byte[] headers,
-			byte[] routingKey, byte[] fullKey, 
-			boolean canReadClientCache, boolean canReadSlashdotCache, BlockMetadata meta, DSAPublicKey knownPublicKey) 
+		byte[] fullKey, boolean canReadClientCache, boolean canReadSlashdotCache, BlockMetadata meta, DSAPublicKey knownPublicKey)
 	throws SSKVerifyException {
 		if(data == null || headers == null) throw new SSKVerifyException("Need data and headers");
 		if(fullKey == null) throw new SSKVerifyException("Need full key to reconstruct an SSK");

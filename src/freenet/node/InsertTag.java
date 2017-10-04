@@ -67,8 +67,7 @@ public class InsertTag extends UIDTag {
 	}
 
 	@Override
-	public synchronized int expectedTransfersIn(boolean ignoreLocalVsRemote,
-			int outwardTransfersPerInsert, boolean forAccept) {
+	public synchronized int expectedTransfersIn(boolean ignoreLocalVsRemote) {
 		if(!accepted) return 0;
 		return ((!isLocal()) || ignoreLocalVsRemote) ? 1 : 0;
 	}

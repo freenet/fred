@@ -9,7 +9,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashMap;
 
 import freenet.l10n.NodeL10n;
 import freenet.support.Logger;
@@ -89,8 +88,7 @@ public class MP3Filter implements ContentDataFilter {
 
 	@Override
 	public void readFilter(InputStream input, OutputStream output,
-			String charset, HashMap<String, String> otherParams,
-			FilterCallback cb) throws DataFilterException, IOException {
+			String charset, FilterCallback cb) throws DataFilterException, IOException {
 		filter(input, output);
 	}
 	
@@ -258,7 +256,7 @@ public class MP3Filter implements ContentDataFilter {
 //		fis.read(buf);
 //		fis.read(buf);
 //		fis.read(buf);
-		filter.readFilter(fis, fos, null, null, null);
+		filter.readFilter(fis, fos, null, null);
 		fis.close();
 		fos.close();
 	}

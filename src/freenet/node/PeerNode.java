@@ -469,7 +469,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 		negTypes = fs.getIntArray("auth.negTypes");
 		if(negTypes == null || negTypes.length == 0) {
 			if(fromAnonymousInitiator())
-				negTypes = outgoingMangler.supportedNegTypes(false); // Assume compatible. Anonymous initiator = short-lived, and we already connected so we know we are.
+				negTypes = outgoingMangler.supportedNegTypes(); // Assume compatible. Anonymous initiator = short-lived, and we already connected so we know we are.
 			else
 				throw new FSParseException("No negTypes!");
 		}
@@ -658,7 +658,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 					String detectedUDPString = metadata.get("detected.udp");
 					p = null;
 					if(detectedUDPString != null)
-						p = new Peer(detectedUDPString, false);
+						p = new Peer(detectedUDPString);
 				} catch(UnknownHostException e) {
 					p = null;
 					Logger.error(this, "detected.udp = " + metadata.get("detected.udp") + " - " + e, e);
@@ -705,7 +705,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 		}
 
 		if(fromLocal)
-			innerCalcNextHandshake(false, false, now); // Let them connect so we can recognise we are NATed
+			innerCalcNextHandshake(false, now); // Let them connect so we can recognise we are NATed
 
 		else
 			sendHandshakeTime = now;  // Be sure we're ready to handshake right away
@@ -1236,7 +1236,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 		node.usm.onDisconnect(this);
 		if(dumpMessageQueue)
 			node.tracker.onRestartOrDisconnect(this);
-		node.failureTable.onDisconnect(this);
+		node.failureTable.onDisconnect();
 		node.peers.disconnected(this);
 		node.nodeUpdater.disconnected(this);
 		boolean ret;
@@ -1338,7 +1338,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 		// Tell opennet manager even if this is darknet, because we may need more opennet peers now.
 		OpennetManager om = node.getOpennet();
 		if(om != null)
-			om.onDisconnect(this);
+			om.onDisconnect();
 		outputLoadTrackerRealTime.failSlotWaiters(true);
 		outputLoadTrackerBulk.failSlotWaiters(true);
 		loadSenderRealTime.onDisconnect();
@@ -1462,7 +1462,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 	/**
 	 * Set sendHandshakeTime, and return whether to fetch the ARK.
 	 */
-	protected boolean innerCalcNextHandshake(boolean successfulHandshakeSend, boolean dontFetchARK, long now) {
+	protected boolean innerCalcNextHandshake(boolean successfulHandshakeSend, long now) {
 		if(isBurstOnly())
 			return calcNextHandshakeBurstOnly(now);
 		synchronized(this) {
@@ -1520,7 +1520,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 	protected void calcNextHandshake(boolean successfulHandshakeSend, boolean dontFetchARK, boolean notRegistered) {
 		long now = System.currentTimeMillis();
 		boolean fetchARKFlag = false;
-		fetchARKFlag = innerCalcNextHandshake(successfulHandshakeSend, dontFetchARK, now);
+		fetchARKFlag = innerCalcNextHandshake(successfulHandshakeSend, now);
 		if(!notRegistered)
 			setPeerNodeStatus(now);  // Because of isBursting being set above and it can't hurt others
 		// Don't fetch ARKs for peers we have verified (through handshake) to be incompatible with us
@@ -2217,7 +2217,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 
 			@Override
 			public void run() {
-				node.clientCore.uskManager.unsubscribeContent(myARK, unsub, true);
+				node.clientCore.uskManager.unsubscribeContent(unsub);
 			}
 			
 		});
@@ -3570,7 +3570,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 		return false;
 	}
 
-	final void invalidate(long now) {
+	final void invalidate() {
 		synchronized(this) {
 			isRoutable = false;
 		}
@@ -3723,7 +3723,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 	 */
 	public int selectNegType(OutgoingPacketMangler mangler) {
 		int[] hisNegTypes;
-		int[] myNegTypes = mangler.supportedNegTypes(false);
+		int[] myNegTypes = mangler.supportedNegTypes();
 		synchronized(this) {
 			hisNegTypes = negTypes;
 		}
@@ -3802,7 +3802,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 	 * Create a DarknetPeerNode or an OpennetPeerNode as appropriate
 	 * @throws PeerTooOldException 
 	 */
-	public static PeerNode create(SimpleFieldSet fs, Node node2, NodeCrypto crypto, OpennetManager opennet, PeerManager manager) throws FSParseException, PeerParseException, ReferenceSignatureVerificationException, PeerTooOldException {
+	public static PeerNode create(SimpleFieldSet fs, Node node2, NodeCrypto crypto, OpennetManager opennet) throws FSParseException, PeerParseException, ReferenceSignatureVerificationException, PeerTooOldException {
 		if(crypto.isOpennet)
 			return new OpennetPeerNode(fs, node2, crypto, opennet, true);
 		else
@@ -4227,7 +4227,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 		return (short) (uptime & 0xFF);
 	}
 
-	public void incrementNumberOfSelections(long time) {
+	public void incrementNumberOfSelections() {
 		// TODO: reimplement with a bit field to spare memory
 		synchronized(this) {
 			countSelectionsSinceConnected++;
@@ -4262,17 +4262,16 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 	 * 3. In the near future PacketSender will be responsible for output bandwidth
 	 * throttling.
 	 * So it makes sense to send a single packet and round-robin.
-	 * @param now
 	 * @param ackOnly
 	 * @throws BlockedTooLongException
 	 */
-	public boolean maybeSendPacket(long now, boolean ackOnly) throws BlockedTooLongException {
+	public boolean maybeSendPacket(boolean ackOnly) throws BlockedTooLongException {
 		PacketFormat pf;
 		synchronized(this) {
 			if(packetFormat == null) return false;
 			pf = packetFormat;
 		}
-		return pf.maybeSendPacket(now, ackOnly);
+		return pf.maybeSendPacket(ackOnly);
 	}
 
 	/**
@@ -4361,7 +4360,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 		private final boolean realTimeFlag;
 		private boolean sendASAP;
 		
-		public void onSetPeerAllocation(boolean input, int thisAllocation, int transfersPerInsert) {
+		public void onSetPeerAllocation(boolean input, int thisAllocation) {
 			
 			boolean mustSend = false;
 			// FIXME review constants, how often are allocations actually sent?
@@ -4450,8 +4449,8 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 		(realTime ? loadSenderRealTime : loadSenderBulk).onSetMaxOutputTransfersPeerLimit(maxOutputTransfers);
 	}
 	
-	public void onSetPeerAllocation(boolean input, int thisAllocation, int transfersPerInsert, int maxOutputTransfers, boolean realTime) {
-		(realTime ? loadSenderRealTime : loadSenderBulk).onSetPeerAllocation(input, thisAllocation, transfersPerInsert);
+	public void onSetPeerAllocation(boolean input, int thisAllocation, boolean realTime) {
+		(realTime ? loadSenderRealTime : loadSenderBulk).onSetPeerAllocation(input, thisAllocation);
 	}
 
 	public class IncomingLoadSummaryStats {
@@ -4992,16 +4991,16 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 				if(lastIncomingLoadStats == null) return null;
 				loadStats = lastIncomingLoadStats;
 			}
-			RunningRequestsSnapshot runningRequests = node.nodeStats.getRunningRequestsTo(PeerNode.this, loadStats.averageTransfersOutPerInsert, realTime);
+			RunningRequestsSnapshot runningRequests = node.nodeStats.getRunningRequestsTo(PeerNode.this, realTime);
 			RunningRequestsSnapshot otherRunningRequests = loadStats.getOtherRunningRequests();
 			boolean ignoreLocalVsRemoteBandwidthLiability = node.nodeStats.ignoreLocalVsRemoteBandwidthLiability();
 			return new IncomingLoadSummaryStats(runningRequests.totalRequests(), 
 					loadStats.outputBandwidthPeerLimit, loadStats.inputBandwidthPeerLimit,
 					loadStats.outputBandwidthUpperLimit, loadStats.inputBandwidthUpperLimit,
-					runningRequests.calculate(ignoreLocalVsRemoteBandwidthLiability, false),
-					runningRequests.calculate(ignoreLocalVsRemoteBandwidthLiability, true),
-					otherRunningRequests.calculate(ignoreLocalVsRemoteBandwidthLiability, false),
-					otherRunningRequests.calculate(ignoreLocalVsRemoteBandwidthLiability, true));
+					runningRequests.calculate(false),
+					runningRequests.calculate(true),
+					otherRunningRequests.calculate(false),
+					otherRunningRequests.calculate(true));
 		}
 		
 		/** Can we route the tag to this peer? If so (including if we are accepting because
@@ -5025,11 +5024,11 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 				if(dontSendUnlessGuaranteed)
 					worstAcceptable = RequestLikelyAcceptedState.GUARANTEED;
 				// Requests already running to this node
-				RunningRequestsSnapshot runningRequests = node.nodeStats.getRunningRequestsTo(PeerNode.this, loadStats.averageTransfersOutPerInsert, realTime);
+				RunningRequestsSnapshot runningRequests = node.nodeStats.getRunningRequestsTo(PeerNode.this, realTime);
 				runningRequests.log(PeerNode.this);
 				// Requests running from its other peers
 				RunningRequestsSnapshot otherRunningRequests = loadStats.getOtherRunningRequests();
-				RequestLikelyAcceptedState acceptState = getRequestLikelyAcceptedState(runningRequests, otherRunningRequests, ignoreLocalVsRemote, loadStats);
+				RequestLikelyAcceptedState acceptState = getRequestLikelyAcceptedState(runningRequests, otherRunningRequests, loadStats);
 				if(logMINOR) Logger.minor(this, "Predicted acceptance state for request: "+acceptState+" must beat "+worstAcceptable);
 				if(acceptState.ordinal() > worstAcceptable.ordinal()) return null;
 				if(tag.addRoutedTo(PeerNode.this, offeredKey))
@@ -5161,11 +5160,11 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 						if(logMINOR) Logger.minor(this, "Checking slot waiters for "+type);
 						foundNone = false;
 						// Requests already running to this node
-						RunningRequestsSnapshot runningRequests = node.nodeStats.getRunningRequestsTo(PeerNode.this, loadStats.averageTransfersOutPerInsert, realTime);
+						RunningRequestsSnapshot runningRequests = node.nodeStats.getRunningRequestsTo(PeerNode.this, realTime);
 						runningRequests.log(PeerNode.this);
 						// Requests running from its other peers
 						RunningRequestsSnapshot otherRunningRequests = loadStats.getOtherRunningRequests();
-						acceptState = getRequestLikelyAcceptedState(runningRequests, otherRunningRequests, ignoreLocalVsRemote, loadStats);
+						acceptState = getRequestLikelyAcceptedState(runningRequests, otherRunningRequests, loadStats);
 						if(acceptState == null || acceptState == RequestLikelyAcceptedState.UNLIKELY) {
 							if(logMINOR) Logger.minor(this, "Accept state is "+acceptState+" - not waking up - type is "+type);
 							return;
@@ -5199,10 +5198,10 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 		 * @param runningRequests 
 		 * @param byteCountersInput 
 		 * @param byteCountersOutput */
-		private RequestLikelyAcceptedState getRequestLikelyAcceptedState(RunningRequestsSnapshot runningRequests, RunningRequestsSnapshot otherRunningRequests, boolean ignoreLocalVsRemote, PeerLoadStats stats) {
-			RequestLikelyAcceptedState outputState = getRequestLikelyAcceptedStateBandwidth(false, runningRequests, otherRunningRequests, ignoreLocalVsRemote, stats);
-			RequestLikelyAcceptedState inputState = getRequestLikelyAcceptedStateBandwidth(true, runningRequests, otherRunningRequests, ignoreLocalVsRemote, stats);
-			RequestLikelyAcceptedState transfersState = getRequestLikelyAcceptedStateTransfers(runningRequests, otherRunningRequests, ignoreLocalVsRemote, stats);
+		private RequestLikelyAcceptedState getRequestLikelyAcceptedState(RunningRequestsSnapshot runningRequests, RunningRequestsSnapshot otherRunningRequests, PeerLoadStats stats) {
+			RequestLikelyAcceptedState outputState = getRequestLikelyAcceptedStateBandwidth(false, runningRequests, otherRunningRequests, stats);
+			RequestLikelyAcceptedState inputState = getRequestLikelyAcceptedStateBandwidth(true, runningRequests, otherRunningRequests, stats);
+			RequestLikelyAcceptedState transfersState = getRequestLikelyAcceptedStateTransfers(runningRequests, otherRunningRequests, stats);
 			RequestLikelyAcceptedState ret = inputState;
 			
 			if(outputState.ordinal() > ret.ordinal())
@@ -5215,14 +5214,14 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 		private RequestLikelyAcceptedState getRequestLikelyAcceptedStateBandwidth(
 				boolean input,
 				RunningRequestsSnapshot runningRequests,
-				RunningRequestsSnapshot otherRunningRequests, boolean ignoreLocalVsRemote, 
+				RunningRequestsSnapshot otherRunningRequests,
 				PeerLoadStats stats) {
-			double ourUsage = runningRequests.calculate(ignoreLocalVsRemote, input);
+			double ourUsage = runningRequests.calculate(input);
 			if(logMINOR) Logger.minor(this, "Our usage is "+ourUsage+" peer limit is "+stats.peerLimit(input)+" lower limit is "+stats.lowerLimit(input)+" realtime "+realTime+" input "+input);
 			if(ourUsage < stats.peerLimit(input))
 				return RequestLikelyAcceptedState.GUARANTEED;
 			otherRunningRequests.log(PeerNode.this);
-			double theirUsage = otherRunningRequests.calculate(ignoreLocalVsRemote, input);
+			double theirUsage = otherRunningRequests.calculate(input);
 			if(logMINOR) Logger.minor(this, "Their usage is "+theirUsage);
 			if(ourUsage + theirUsage < stats.lowerLimit(input))
 				return RequestLikelyAcceptedState.LIKELY;
@@ -5232,7 +5231,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 
 		private RequestLikelyAcceptedState getRequestLikelyAcceptedStateTransfers(
 				RunningRequestsSnapshot runningRequests,
-				RunningRequestsSnapshot otherRunningRequests, boolean ignoreLocalVsRemote, 
+				RunningRequestsSnapshot otherRunningRequests,
 				PeerLoadStats stats) {
 			
 			int ourUsage = runningRequests.totalOutTransfers();
@@ -5343,13 +5342,13 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 		return messageQueue;
 	}
 
-	public boolean handleReceivedPacket(byte[] buf, int offset, int length, long now, Peer replyTo) {
+	public boolean handleReceivedPacket(byte[] buf, int offset, int length) {
 		PacketFormat pf;
 		synchronized(this) {
 			pf = packetFormat;
 			if(pf == null) return false;
 		}
-		return pf.handleReceivedPacket(buf, offset, length, now, replyTo);
+		return pf.handleReceivedPacket(buf, offset, length);
 	}
 
 	public void checkForLostPackets() {
@@ -5461,7 +5460,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 	}
 	
 	@Override
-	public MessageItem makeLoadStats(boolean realtime, boolean boostPriority, boolean noRemember) {
+	public MessageItem makeLoadStats() {
 	    // FIXME re-enable when try NLM again.
 	    return null;
 //		Message msg = loadSender(realtime).makeLoadStats(System.currentTimeMillis(), node.nodeStats.outwardTransfersPerInsert(), noRemember);
@@ -5567,7 +5566,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 		node.nodeStats.routingMissDistanceOverall.report(distance);
 		(isLocal ? node.nodeStats.routingMissDistanceLocal : node.nodeStats.routingMissDistanceRemote).report(distance);
 		(realTime ? node.nodeStats.routingMissDistanceRT : node.nodeStats.routingMissDistanceBulk).report(distance);
-		node.peers.incrementSelectionSamples(System.currentTimeMillis(), this);
+		node.peers.incrementSelectionSamples(this);
 	}
 
 	private long maxPeerPingTime() {

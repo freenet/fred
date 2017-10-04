@@ -262,7 +262,7 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
 		if(logMINOR)
 			Logger.minor(this, "Succeeded from "+state+" on "+this);
 		// Fetching the container is essentially a full success, we should update the latest known good.
-		context.uskManager.checkUSK(uri, persistent(), false);
+		context.uskManager.checkUSK(uri, false);
 		try {
 			if (binaryBlobWriter != null && !dontFinalizeBlobWriter) binaryBlobWriter.finalizeBucket();
 		} catch (IOException ioe) {
@@ -341,7 +341,7 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
 			worker = new ClientGetWorkerThread(new BufferedInputStream(dataInput), output, uri, mimeType, hashes, ctx.filterData, ctx.charset, ctx.prefetchHook, ctx.tagReplacer, context.linkFilterExceptionProvider);
 			worker.start();
 			try {
-				streamGenerator.writeTo(dataOutput, context);
+				streamGenerator.writeTo(dataOutput);
 			} catch(IOException e) {
 				//Check if the worker thread caught an exception
 				worker.getError();
@@ -414,7 +414,7 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
     @Override
     public void onSuccess(File tempFile, long length, ClientMetadata metadata,
             ClientGetState state, ClientContext context) {
-        context.uskManager.checkUSK(uri, persistent(), false);
+        context.uskManager.checkUSK(uri, false);
         try {
             if (binaryBlobWriter != null && !dontFinalizeBlobWriter) binaryBlobWriter.finalizeBucket();
         } catch (IOException ioe) {
@@ -759,7 +759,7 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
 		if(logMINOR)
 			Logger.minor(this, "Adding key "+block.getClientKey().getURI()+" to "+this, new Exception("debug"));
 		try {
-			binaryBlobWriter.addKey(block, context);
+			binaryBlobWriter.addKey(block);
 		} catch (IOException e) {
 			Logger.error(this, "Failed to write key to binary blob stream: "+e, e);
 			onFailure(new FetchException(FetchExceptionMode.BUCKET_ERROR, "Failed to write key to binary blob stream: "+e), null, context);

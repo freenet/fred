@@ -74,7 +74,7 @@ public class SplitFileFetcherGet extends SendableGet implements HasKeyListener {
     }
 
     @Override
-    public long getCooldownWakeup(SendableRequestItem token, ClientContext context) {
+    public long getCooldownWakeup(SendableRequestItem token) {
         MyKey key = (MyKey) token;
         return storage.segments[key.segmentNumber].getCooldownTime(key.blockNumber);
     }
@@ -84,7 +84,7 @@ public class SplitFileFetcherGet extends SendableGet implements HasKeyListener {
         if(!toNetwork) return false;
         // Notify clients of all the work we've done checking the datastore.
         if(parent.localRequestOnly()) {
-            storage.finishedCheckingDatastoreOnLocalRequest(context);
+            storage.finishedCheckingDatastoreOnLocalRequest();
             return true;
         } else {
             storage.setHasCheckedStore(context);
@@ -106,12 +106,12 @@ public class SplitFileFetcherGet extends SendableGet implements HasKeyListener {
     }
 
     @Override
-    public long countAllKeys(ClientContext context) {
+    public long countAllKeys() {
         return storage.countUnfetchedKeys();
     }
 
     @Override
-    public long countSendableKeys(ClientContext context) {
+    public long countSendableKeys() {
         return storage.countSendableKeys();
     }
 
@@ -150,7 +150,7 @@ public class SplitFileFetcherGet extends SendableGet implements HasKeyListener {
     }
 
     @Override
-    public KeyListener makeKeyListener(ClientContext context, boolean onStartup) {
+    public KeyListener makeKeyListener() {
         return storage.keyListener;
     }
 

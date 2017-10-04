@@ -154,7 +154,7 @@ public class PluginInfoWrapper implements Comparable<PluginInfoWrapper> {
 		}
 	}
 
-	public boolean finishShutdownPlugin(PluginManager manager, long maxWaitTime, boolean reloading) {
+	public boolean finishShutdownPlugin(long maxWaitTime) {
 		boolean success = true;
 		if(thread != null) {
 			thread.interrupt();
@@ -193,7 +193,7 @@ public class PluginInfoWrapper implements Comparable<PluginInfoWrapper> {
 	 **/
 	public void stopPlugin(PluginManager manager, long maxWaitTime, boolean reloading) {
 		startShutdownPlugin(manager, reloading);
-		finishShutdownPlugin(manager, maxWaitTime, reloading);
+		finishShutdownPlugin(maxWaitTime);
 		// always remove plugin
 		manager.removePlugin(this);
 	}

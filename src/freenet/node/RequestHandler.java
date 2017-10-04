@@ -15,7 +15,6 @@ import freenet.io.comm.ReferenceSignatureVerificationException;
 import freenet.io.xfer.BlockTransmitter;
 import freenet.io.xfer.BlockTransmitter.BlockTransmitterCompletion;
 import freenet.io.xfer.BlockTransmitter.ReceiverAbortHandler;
-import freenet.io.xfer.BulkTransmitter;
 import freenet.io.xfer.BulkTransmitter.AllSentCallback;
 import freenet.io.xfer.PartiallyReceivedBlock;
 import freenet.io.xfer.WaitedTooLongException;
@@ -252,7 +251,7 @@ public class RequestHandler implements PrioRunnable, ByteCounter, RequestSenderL
 							node.tracker.reassignTagToSelf(tag);
 							return false;
 						}
-						if(node.failureTable.peersWantKey(key, source)) {
+						if(node.failureTable.peersWantKey(key)) {
 							// This may indicate downstream is having trouble communicating with us.
 							Logger.error(this, "Downstream transfer successful but upstream transfer to "+source.shortToString()+" failed. Reassigning tag to self because want the data for peers on "+RequestHandler.this);
 							node.tracker.reassignTagToSelf(tag);
@@ -462,7 +461,7 @@ public class RequestHandler implements PrioRunnable, ByteCounter, RequestSenderL
 					return;
 				case RequestSender.SUCCESS:
 					if(key instanceof NodeSSK)
-						sendSSK(rs.getHeaders(), rs.getSSKData(), needsPubKey, (rs.getSSKBlock().getKey()).getPubKey());
+						sendSSK(rs.getHeaders(), rs.getSSKData(), (rs.getSSKBlock().getKey()).getPubKey());
 					else {
 						maybeCompleteTransfer();
 					}
@@ -530,13 +529,13 @@ public class RequestHandler implements PrioRunnable, ByteCounter, RequestSenderL
 			transferFinished(xferSuccess);
 	}
 	
-	private void sendSSK(byte[] headers, final byte[] data, boolean needsPubKey2, DSAPublicKey pubKey) throws NotConnectedException {
+	private void sendSSK(byte[] headers, final byte[] data, DSAPublicKey pubKey) throws NotConnectedException {
 		// SUCCESS requires that BOTH the pubkey AND the data/headers have been received.
 		// The pubKey will have been set on the SSK key, and the SSKBlock will have been constructed.
 		MultiMessageCallback mcb = null;
 		mcb = new MultiMessageCallback() {
 			@Override
-			public void finish(boolean success) {
+			public void finish() {
 				sentPayload(data.length); // FIXME report this at the time when that message is acked for more accurate reporting???
 				applyByteCounts();
 				// Will call unlockHandler.
@@ -544,7 +543,7 @@ public class RequestHandler implements PrioRunnable, ByteCounter, RequestSenderL
 				unregisterRequestHandlerWithNode();
 			}
 			@Override
-			void sent(boolean success) {
+			void sent() {
 				// As soon as the originator receives the messages, he can reuse the slot.
 				// Unlocking on sent is a reasonable compromise between:
 				// 1. Unlocking immediately avoids problems with the recipient reusing the slot when he's received the data, therefore us rejecting the request and getting a mandatory backoff, and
@@ -596,7 +595,7 @@ public class RequestHandler implements PrioRunnable, ByteCounter, RequestSenderL
 	 */
 	private void returnLocalData(KeyBlock block) throws NotConnectedException {
 		if(key instanceof NodeSSK) {
-			sendSSK(block.getRawHeaders(), block.getRawData(), needsPubKey, ((SSKBlock) block).getPubKey());
+			sendSSK(block.getRawHeaders(), block.getRawData(), ((SSKBlock) block).getPubKey());
 			status = RequestSender.SUCCESS; // for byte logging
 			// Assume local SSK sending will succeed?
 			node.nodeStats.remoteRequest(true, true, true, htl, key.toNormalizedDouble(), realTimeFlag, false);
@@ -790,7 +789,7 @@ public class RequestHandler implements PrioRunnable, ByteCounter, RequestSenderL
 			// Check whether it is actually the noderef of the peer.
 			// If so, we need to relay it anyway.
 			
-			SimpleFieldSet ref = OpennetManager.validateNoderef(noderef, 0, noderef.length, source, false);
+			SimpleFieldSet ref = OpennetManager.validateNoderef(noderef, source, false);
 			
 			if(ref == null || om.alreadyHaveOpennetNode(ref)) {
 				// Okay, let it through.
@@ -849,7 +848,7 @@ public class RequestHandler implements PrioRunnable, ByteCounter, RequestSenderL
 				// We have sent a noderef. It is not appropriate for the caller to call ackOpennet():
 				// in all cases he should unlock.
 				if(logMINOR) Logger.minor(this, "Got noderef on "+RequestHandler.this);
-				finishOpennetNoRelayInner(om, noderef);
+				finishOpennetNoRelayInner(noderef);
 				applyByteCounts();
 				unregisterRequestHandlerWithNode();
 			}
@@ -861,7 +860,7 @@ public class RequestHandler implements PrioRunnable, ByteCounter, RequestSenderL
 			}
 
 			@Override
-			public void acked(boolean timedOutMessage) {
+			public void acked() {
 				if(logMINOR) Logger.minor(this, "Noderef acknowledged from "+source+" on "+RequestHandler.this);
 				gotNoderef(null);
 			}
@@ -869,11 +868,11 @@ public class RequestHandler implements PrioRunnable, ByteCounter, RequestSenderL
 		}, node);
 	}
 
-	private void finishOpennetNoRelayInner(OpennetManager om, byte[] noderef) {
+	private void finishOpennetNoRelayInner(byte[] noderef) {
 		if(noderef == null)
 			return;
 
-		SimpleFieldSet ref = OpennetManager.validateNoderef(noderef, 0, noderef.length, source, false);
+		SimpleFieldSet ref = OpennetManager.validateNoderef(noderef, source, false);
 
 		if(ref == null)
 			return;
@@ -935,15 +934,13 @@ public class RequestHandler implements PrioRunnable, ByteCounter, RequestSenderL
 					
 					// Send it forward to the data source, if it is valid.
 					
-					if(OpennetManager.validateNoderef(newNoderef, 0, newNoderef.length, source, false) != null) {
+					if(OpennetManager.validateNoderef(newNoderef, source, false) != null) {
 						try {
 							if(logMINOR) Logger.minor(this, "Relaying noderef from source to data source for "+RequestHandler.this);
 							om.sendOpennetRef(true, uid, dataSource, newNoderef, RequestHandler.this, new AllSentCallback() {
 
 								@Override
-								public void allSent(
-										BulkTransmitter bulkTransmitter,
-										boolean anyFailed) {
+								public void allSent() {
 									// As soon as the originator receives the three blocks, he can reuse the slot.
 									tag.finishedWaitingForOpennet(dataSource);
 									tag.unlockHandler();
@@ -976,7 +973,7 @@ public class RequestHandler implements PrioRunnable, ByteCounter, RequestSenderL
 			}
 
 			@Override
-			public void acked(boolean timedOutMessage) {
+			public void acked() {
 				tag.unlockHandler(); // will remove transfer
 				rs.ackOpennet(dataSource);
 				applyByteCounts();

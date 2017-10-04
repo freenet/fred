@@ -16,7 +16,6 @@ import freenet.client.events.SimpleEventProducer;
 import freenet.client.filter.FoundURICallback;
 import freenet.client.filter.TagReplacerCallback;
 import freenet.node.RequestScheduler;
-import freenet.support.api.BucketFactory;
 import freenet.support.io.StorageFormatException;
 
 /** Context for a Fetcher. Contains all the settings a Fetcher needs to know 
@@ -128,7 +127,6 @@ public class FetchContext implements Cloneable, Serializable {
 			int maxSplitfileBlockRetries, int maxNonSplitfileRetries, int maxUSKRetries,
 			boolean allowSplitfiles, boolean followRedirects, boolean localRequestOnly,
 			boolean filterData, int maxDataBlocksPerSegment, int maxCheckBlocksPerSegment,
-			BucketFactory bucketFactory,
 			ClientEventProducer producer,
 			boolean ignoreTooManyPathComponents, boolean canWriteClientCache, String charset, String overrideMIME) {
 		this.blocks = null;

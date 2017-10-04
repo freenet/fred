@@ -111,7 +111,7 @@ public class SplitFileInserterStorageTest extends TestCase {
         bigRAFFactory = new PooledFileRandomAccessBufferFactory(fg, r);
         smallBucketFactory = new ArrayBucketFactory();
         bigBucketFactory = new TempBucketFactory(executor, fg, 0, 0, r, false, 0, null);
-        baseContext = HighLevelSimpleClientImpl.makeDefaultInsertContext(bigBucketFactory, new SimpleEventProducer());
+        baseContext = HighLevelSimpleClientImpl.makeDefaultInsertContext(new SimpleEventProducer());
         cryptoKey = new byte[32];
         r.nextBytes(cryptoKey);
         checker = new CRCChecksumChecker();
@@ -778,10 +778,10 @@ public class SplitFileInserterStorageTest extends TestCase {
         
         MyFetchCallback fcb = new MyFetchCallback();
         
-        FetchContext fctx = HighLevelSimpleClientImpl.makeDefaultFetchContext(size*2, size*2, smallBucketFactory, new SimpleEventProducer());
+        FetchContext fctx = HighLevelSimpleClientImpl.makeDefaultFetchContext(size*2, size*2, new SimpleEventProducer());
         
         SplitFileFetcherStorage fetcherStorage = new SplitFileFetcherStorage(m1, fcb, new ArrayList<COMPRESSOR_TYPE>(),
-                new ClientMetadata(), false, cmode.code, fctx, false, salt, URI, URI, true, new byte[0],
+                new ClientMetadata(), false, cmode.code, fctx, salt, URI, URI, true, new byte[0],
                 r, smallBucketFactory, smallRAFFactory, jobRunner, ticker, memoryLimitedJobRunner, 
                 checker, false, null, null, keys);
         
@@ -1005,12 +1005,12 @@ public class SplitFileInserterStorageTest extends TestCase {
         
         MyFetchCallback fcb = new MyFetchCallback();
         
-        FetchContext fctx = HighLevelSimpleClientImpl.makeDefaultFetchContext(size*2, size*2, smallBucketFactory, new SimpleEventProducer());
+        FetchContext fctx = HighLevelSimpleClientImpl.makeDefaultFetchContext(size*2, size*2, new SimpleEventProducer());
         
         short cmode = (short) context.getCompatibilityMode().ordinal();
         
         SplitFileFetcherStorage fetcherStorage = new SplitFileFetcherStorage(m1, fcb, new ArrayList<COMPRESSOR_TYPE>(),
-                new ClientMetadata(), false, cmode, fctx, false, salt, URI, URI, true, new byte[0],
+                new ClientMetadata(), false, cmode, fctx, salt, URI, URI, true, new byte[0],
                 r, smallBucketFactory, smallRAFFactory, jobRunner, ticker, memoryLimitedJobRunner, 
                 checker, false, null, null, keysFetching);
         
@@ -1085,12 +1085,12 @@ public class SplitFileInserterStorageTest extends TestCase {
         
         MyFetchCallback fcb = new MyFetchCallback();
         
-        FetchContext fctx = HighLevelSimpleClientImpl.makeDefaultFetchContext(size*2, size*2, smallBucketFactory, new SimpleEventProducer());
+        FetchContext fctx = HighLevelSimpleClientImpl.makeDefaultFetchContext(size*2, size*2, new SimpleEventProducer());
         
         short cmode = (short) context.getCompatibilityMode().ordinal();
         
         SplitFileFetcherStorage fetcherStorage = new SplitFileFetcherStorage(m1, fcb, new ArrayList<COMPRESSOR_TYPE>(),
-                new ClientMetadata(), false, cmode, fctx, false, salt, URI, URI, true, new byte[0],
+                new ClientMetadata(), false, cmode, fctx, salt, URI, URI, true, new byte[0],
                 r, smallBucketFactory, smallRAFFactory, jobRunner, ticker, memoryLimitedJobRunner, 
                 checker, false, null, null, keysFetching);
         
@@ -1158,7 +1158,7 @@ public class SplitFileInserterStorageTest extends TestCase {
         StreamGenerator g = storage.streamGenerator();
         Bucket out = smallBucketFactory.makeBucket(-1);
         OutputStream os = out.getOutputStream();
-        g.writeTo(os, null);
+        g.writeTo(os);
         os.close();
         assertTrue(BucketTools.equalBuckets(originalData, out));
         out.free();

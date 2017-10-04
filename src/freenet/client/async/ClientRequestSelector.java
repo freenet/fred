@@ -216,7 +216,7 @@ public class ClientRequestSelector implements KeysFetchingLocally {
 			}
 			if(isInsertScheduler && req instanceof SendableGet) {
 				IllegalStateException e = new IllegalStateException("removeFirstInner returned a SendableGet on an insert scheduler!!");
-				req.internalError(e, sched, context, req.persistent());
+				req.internalError(e, sched, req.persistent());
 				throw e;
 			}
 			ChosenBlock block = maybeMakeChosenRequest(req, context, now);
@@ -395,7 +395,7 @@ outer:	for(;choosenPriorityClass <= RequestStarter.MINIMUM_FETCHABLE_PRIORITY_CL
 					} else {
 						Logger.error(this, "Could not find client grabber for client "+req.getClient()+" from "+chosenTracker);
 					}
-					innerRegister(req, context, null);
+					innerRegister(req, context);
 					continue;
 				}
 				
@@ -644,8 +644,8 @@ outer:	for(;choosenPriorityClass <= RequestStarter.MINIMUM_FETCHABLE_PRIORITY_CL
         }
         return requestGrabber;
     }
-    
-    public void reregisterAll(ClientRequester request, RequestScheduler lock, ClientContext context, short oldPrio) {
+
+    public void reregisterAll(ClientRequester request, ClientContext context, short oldPrio) {
         RequestClient client = request.getClient();
         short newPrio = request.getPriorityClass();
         if(newPrio == oldPrio) {
@@ -707,8 +707,8 @@ outer:	for(;choosenPriorityClass <= RequestStarter.MINIMUM_FETCHABLE_PRIORITY_CL
                             for(int m=0;m<rga.size();m++) {
                                 SendableRequest req = (SendableRequest) rga.get(m);
                                 if(req == null) continue;
-                                sendable += req.countSendableKeys(context);
-                                all += req.countAllKeys(context);
+                                sendable += req.countSendableKeys();
+                                all += req.countAllKeys();
                             }
                             System.out.println("Sendable keys: "+sendable+" all keys "+all+" diff "+(all-sendable));
                             total += all;
@@ -722,15 +722,8 @@ outer:	for(;choosenPriorityClass <= RequestStarter.MINIMUM_FETCHABLE_PRIORITY_CL
     /**
      * @param req
      * @param container
-     * @param maybeActive Array of requests, can be null, which are being registered
-     * in this group. These will be ignored for purposes of checking whether stuff
-     * is activated when it shouldn't be. It is perfectly okay to have req be a
-     * member of maybeActive.
-     * 
-     * FIXME: Either get rid of the debugging code and therefore get rid of maybeActive,
-     * or make req a SendableRequest[] and register them all at once.
      */
-    void innerRegister(SendableRequest req, ClientContext context, SendableRequest[] maybeActive) {
+    void innerRegister(SendableRequest req, ClientContext context) {
         if(isInsertScheduler && req instanceof BaseSendableGet)
             throw new IllegalArgumentException("Adding a SendableGet to an insert scheduler!!");
         if((!isInsertScheduler) && req instanceof SendableInsert)

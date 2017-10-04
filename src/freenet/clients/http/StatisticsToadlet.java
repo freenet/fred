@@ -128,7 +128,7 @@ public class StatisticsToadlet extends Toadlet {
 
 		if (requestPath.length() > 0) {
 			if(requestPath.equals("requesters.html") || requestPath.equals("/requesters.html")) {
-				showRequesters(request, ctx);
+				showRequesters(ctx);
 				return;
 			}
 		}
@@ -221,7 +221,7 @@ public class StatisticsToadlet extends Toadlet {
 			//HTMLNode storeSizeInfobox = nextTableCell.addChild("div", "class", "infobox");
              HTMLNode storeSizeInfobox = contentNode.addChild("div","class", "infobox");
 			
-			drawStoreSizeBox(storeSizeInfobox, myLocation, nodeUptimeSeconds);
+			drawStoreSizeBox(storeSizeInfobox, nodeUptimeSeconds);
            
 			
 			if(numberOfConnected + numberOfRoutingBackedOff > 0) {
@@ -528,7 +528,7 @@ public class StatisticsToadlet extends Toadlet {
 		this.writeHTMLReply(ctx, 200, "OK", pageNode.generate());
 	}
 
-	private void showRequesters(HTTPRequest request, ToadletContext ctx) throws ToadletContextClosedException, IOException {
+	private void showRequesters(ToadletContext ctx) throws ToadletContextClosedException, IOException {
 		PageNode page = ctx.getPageMaker().getPageNode(l10n("fullTitle"), ctx);
 		HTMLNode pageNode = page.outer;
 		HTMLNode contentNode = page.content;
@@ -710,7 +710,7 @@ public class StatisticsToadlet extends Toadlet {
 		}
 	}
 
-	private void drawStoreSizeBox(HTMLNode storeSizeInfobox, double loc, long nodeUptimeSeconds) {
+	private void drawStoreSizeBox(HTMLNode storeSizeInfobox, long nodeUptimeSeconds) {
 		storeSizeInfobox.addChild("div", "class", "infobox-header", l10n("datastore"));
 		HTMLNode storeSizeInfoboxContent = storeSizeInfobox.addChild("div", "class", "infobox-content");
 

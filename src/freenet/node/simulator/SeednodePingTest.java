@@ -77,7 +77,7 @@ public class SeednodePingTest extends RealNodeTest {
 		}
 	}
 	// Start it
-        node.start(true);
+        node.start();
 	//Logger.setupStdoutLogging(LogLevel.MINOR, "freenet:NORMAL,freenet.node.NodeDispatcher:MINOR,freenet.node.FNPPacketMangler:MINOR");
 	Logger.getChain().setThreshold(LogLevel.ERROR); // kill logging
 	Thread.sleep(SECONDS.toMillis(2));

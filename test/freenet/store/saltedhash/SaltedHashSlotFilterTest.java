@@ -62,7 +62,7 @@ public class SaltedHashSlotFilterTest extends TestCase {
 		FileUtil.removeAll(f);
 
 		CHKStore store = new CHKStore();
-		SaltedHashFreenetStore<CHKBlock> saltStore = SaltedHashFreenetStore.construct(f, "testCachingFreenetStoreCHK", store, weakPRNG, storeSize, true, SemiOrderedShutdownHook.get(), true, true, ticker, null);
+		SaltedHashFreenetStore<CHKBlock> saltStore = SaltedHashFreenetStore.construct(f, "testCachingFreenetStoreCHK", store, weakPRNG, storeSize, true, SemiOrderedShutdownHook.get(), true, true, null);
 		saltStore.start(null, true);
 		
 		int falsePositives = 0;
@@ -109,7 +109,7 @@ public class SaltedHashSlotFilterTest extends TestCase {
 		FileUtil.removeAll(f);
 
 		CHKStore store = new CHKStore();
-		SaltedHashFreenetStore<CHKBlock> saltStore = SaltedHashFreenetStore.construct(f, "testCachingFreenetStoreCHK", store, weakPRNG, STORE_SIZE, true, SemiOrderedShutdownHook.get(), true, true, ticker, null);
+		SaltedHashFreenetStore<CHKBlock> saltStore = SaltedHashFreenetStore.construct(f, "testCachingFreenetStoreCHK", store, weakPRNG, STORE_SIZE, true, SemiOrderedShutdownHook.get(), true, true, null);
 		saltStore.start(null, true);
 		
 		int falsePositives = 0;
@@ -132,7 +132,7 @@ public class SaltedHashSlotFilterTest extends TestCase {
 		
 		saltStore.close();
 		store = new CHKStore();
-		saltStore = SaltedHashFreenetStore.construct(f, "testCachingFreenetStoreCHK", store, weakPRNG, STORE_SIZE, true, SemiOrderedShutdownHook.get(), true, true, ticker, null);
+		saltStore = SaltedHashFreenetStore.construct(f, "testCachingFreenetStoreCHK", store, weakPRNG, STORE_SIZE, true, SemiOrderedShutdownHook.get(), true, true, null);
 		saltStore.start(null, true);
 		
 		for(int i=0;i<TEST_COUNT;i++) {
@@ -156,7 +156,7 @@ public class SaltedHashSlotFilterTest extends TestCase {
 		FileUtil.removeAll(f);
 
 		CHKStore store = new CHKStore();
-		SaltedHashFreenetStore<CHKBlock> saltStore = SaltedHashFreenetStore.construct(f, "testCachingFreenetStoreCHK", store, weakPRNG, STORE_SIZE, true, SemiOrderedShutdownHook.get(), true, true, ticker, null);
+		SaltedHashFreenetStore<CHKBlock> saltStore = SaltedHashFreenetStore.construct(f, "testCachingFreenetStoreCHK", store, weakPRNG, STORE_SIZE, true, SemiOrderedShutdownHook.get(), true, true, null);
 		saltStore.start(null, true);
 		
 		int falsePositives = 0;
@@ -186,7 +186,7 @@ public class SaltedHashSlotFilterTest extends TestCase {
 		// Abrupt abort. The slots should have been written by now.
 		saltStore.close(true);
 		store = new CHKStore();
-		saltStore = SaltedHashFreenetStore.construct(f, "testCachingFreenetStoreCHK", store, weakPRNG, STORE_SIZE, true, SemiOrderedShutdownHook.get(), true, true, ticker, null);
+		saltStore = SaltedHashFreenetStore.construct(f, "testCachingFreenetStoreCHK", store, weakPRNG, STORE_SIZE, true, SemiOrderedShutdownHook.get(), true, true, null);
 		saltStore.start(null, true);
 		
 		for(int i=0;i<TEST_COUNT;i++) {
@@ -210,7 +210,7 @@ public class SaltedHashSlotFilterTest extends TestCase {
 		FileUtil.removeAll(f);
 
 		CHKStore store = new CHKStore();
-		SaltedHashFreenetStore<CHKBlock> saltStore = SaltedHashFreenetStore.construct(f, "testCachingFreenetStoreCHK", store, weakPRNG, STORE_SIZE, false, SemiOrderedShutdownHook.get(), true, true, ticker, null);
+		SaltedHashFreenetStore<CHKBlock> saltStore = SaltedHashFreenetStore.construct(f, "testCachingFreenetStoreCHK", store, weakPRNG, STORE_SIZE, false, SemiOrderedShutdownHook.get(), true, true, null);
 		saltStore.start(null, true);
 		
 		int falsePositives = 0;
@@ -234,7 +234,7 @@ public class SaltedHashSlotFilterTest extends TestCase {
 		saltStore.close();
 		store = new CHKStore();
 		// Now turn on slot filters. Does it still work?
-		saltStore = SaltedHashFreenetStore.construct(f, "testCachingFreenetStoreCHK", store, weakPRNG, STORE_SIZE, true, SemiOrderedShutdownHook.get(), true, true, ticker, null);
+		saltStore = SaltedHashFreenetStore.construct(f, "testCachingFreenetStoreCHK", store, weakPRNG, STORE_SIZE, true, SemiOrderedShutdownHook.get(), true, true, null);
 		saltStore.start(null, true);
 		
 		for(int i=0;i<TEST_COUNT;i++) {
@@ -258,7 +258,7 @@ public class SaltedHashSlotFilterTest extends TestCase {
 		FileUtil.removeAll(f);
 
 		CHKStore store = new CHKStore();
-		SaltedHashFreenetStore<CHKBlock> saltStore = SaltedHashFreenetStore.construct(f, "testCachingFreenetStoreCHK", store, weakPRNG, STORE_SIZE, false, SemiOrderedShutdownHook.get(), true, true, ticker, null);
+		SaltedHashFreenetStore<CHKBlock> saltStore = SaltedHashFreenetStore.construct(f, "testCachingFreenetStoreCHK", store, weakPRNG, STORE_SIZE, false, SemiOrderedShutdownHook.get(), true, true, null);
 		saltStore.start(null, true);
 		
 		int falsePositives = 0;
@@ -283,7 +283,7 @@ public class SaltedHashSlotFilterTest extends TestCase {
 		store = new CHKStore();
 		// Now turn on slot filters. Does it still work?
 		SaltedHashFreenetStore.NO_CLEANER_SLEEP = true;
-		saltStore = SaltedHashFreenetStore.construct(f, "testCachingFreenetStoreCHK", store, weakPRNG, STORE_SIZE, true, SemiOrderedShutdownHook.get(), true, true, ticker, null);
+		saltStore = SaltedHashFreenetStore.construct(f, "testCachingFreenetStoreCHK", store, weakPRNG, STORE_SIZE, true, SemiOrderedShutdownHook.get(), true, true, null);
 		saltStore.start(null, true);
 		saltStore.testingWaitForCleanerDone(50, 100);
 		

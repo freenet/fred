@@ -128,7 +128,7 @@ public class SlashdotStore<T extends StorableBlock> implements FreenetStore<T> {
 		}
 		try {
 			T ret =
-				callback.construct(data, header, routingKey, fk, canReadClientCache, canReadSlashdotCache, null, null);
+				callback.construct(data, header, fk, canReadClientCache, canReadSlashdotCache, null, null);
 			synchronized(this) {
 				hits++;
 				if(!dontPromote) {

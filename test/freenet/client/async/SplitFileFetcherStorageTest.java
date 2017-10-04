@@ -287,7 +287,7 @@ public class SplitFileFetcherStorageTest extends TestCase {
                 
             };
             return new SplitFileFetcherStorage(metadata, cb, NO_DECOMPRESSORS, metadata.getClientMetadata(), false,
-                    (short) COMPATIBILITY_MODE.ordinal(), ctx, false, salt, URI, URI, true, new byte[0], random, bf,
+                    (short) COMPATIBILITY_MODE.ordinal(), ctx, salt, URI, URI, true, new byte[0], random, bf,
                     f, jobRunner, ticker, memoryLimitedJobRunner, new CRCChecksumChecker(), persistent, null, null, fetchingKeys);
         }
 
@@ -298,19 +298,19 @@ public class SplitFileFetcherStorageTest extends TestCase {
         public SplitFileFetcherStorage createStorage(StorageCallback cb, FetchContext ctx,
                 LockableRandomAccessBuffer raf) throws IOException, StorageFormatException, FetchException {
             assertTrue(persistent);
-            return new SplitFileFetcherStorage(raf, false, cb, ctx, random, jobRunner, fetchingKeys, ticker, memoryLimitedJobRunner, new CRCChecksumChecker(), false, null, false, false);
+            return new SplitFileFetcherStorage(raf, cb, ctx, random, jobRunner, fetchingKeys, ticker, memoryLimitedJobRunner, new CRCChecksumChecker(), false, false);
         }
 
         public FetchContext makeFetchContext() {
-            return HighLevelSimpleClientImpl.makeDefaultFetchContext(Long.MAX_VALUE, Long.MAX_VALUE, 
-                    bf, new SimpleEventProducer());
+            return HighLevelSimpleClientImpl.makeDefaultFetchContext(Long.MAX_VALUE, Long.MAX_VALUE,
+                    new SimpleEventProducer());
         }
 
         public void verifyOutput(SplitFileFetcherStorage storage) throws IOException {
             StreamGenerator g = storage.streamGenerator();
             Bucket out = bf.makeBucket(-1);
             OutputStream os = out.getOutputStream();
-            g.writeTo(os, null);
+            g.writeTo(os);
             os.close();
             assertTrue(BucketTools.equalBuckets(originalData, out));
             out.free();

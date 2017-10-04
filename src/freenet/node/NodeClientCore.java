@@ -174,7 +174,7 @@ public class NodeClientCore implements Persistable {
 	private boolean finishedInitStorage;
 	private boolean finishingInitStorage;
 
-	NodeClientCore(Node node, Config config, SubConfig nodeConfig, SubConfig installConfig, int portNumber, int sortOrder, SimpleFieldSet oldConfig, SubConfig fproxyConfig, SimpleToadletServer toadlets, DatabaseKey databaseKey, MasterSecret persistentSecret) throws NodeInitException {
+	NodeClientCore(Node node, Config config, SubConfig nodeConfig, SubConfig installConfig, int portNumber, int sortOrder, SimpleToadletServer toadlets, DatabaseKey databaseKey, MasterSecret persistentSecret) throws NodeInitException {
 		this.node = node;
 		this.tracker = node.tracker;
 		this.nodeStats = node.nodeStats;
@@ -238,7 +238,7 @@ public class NodeClientCore implements Persistable {
 				node.setupProgramDir(installConfig, "tempDir",
 						     node.runDir().file("temp").toString(),
 						     "NodeClientCore.tempDir",
-						     "NodeClientCore.tempDirLong", nodeConfig);
+						     "NodeClientCore.tempDirLong");
 
 		// FIXME remove back compatibility hack.
 		File oldTemp = node.runDir().file("temp-" + node.getDarknetPortNumber());
@@ -296,8 +296,7 @@ public class NodeClientCore implements Persistable {
 						     node.userDir().file("persistent-temp")
 								     .toString(),
 						     "NodeClientCore.persistentTempDir",
-						     "NodeClientCore.persistentTempDirLong",
-						     nodeConfig);
+						     "NodeClientCore.persistentTempDirLong");
 
 		fcpPersistentRoot = new PersistentRequestRoot();
 		try {
@@ -503,7 +502,7 @@ public class NodeClientCore implements Persistable {
 									    nodeConfig.getBoolean(
 											    "encryptPersistentTempBuckets"));
 		persistentTempBucketFactory.setDiskSpaceChecker(persistentDiskChecker);
-		HighLevelSimpleClient client = makeClient((short) 0, false, false);
+		HighLevelSimpleClient client = makeClient((short) 0, false);
 		FetchContext defaultFetchContext = client.getFetchContext();
 		InsertContext defaultInsertContext = client.getInsertContext(false);
 		int
@@ -599,7 +598,7 @@ public class NodeClientCore implements Persistable {
 		clientContext = new ClientContext(node.bootID, clientLayerPersister, node.executor,
 						  archiveManager, persistentTempBucketFactory,
 						  tempBucketFactory,
-						  persistentTempBucketFactory, healingQueue,
+						  healingQueue,
 						  uskManager, random, node.fastWeakRandom,
 						  node.getTicker(), memoryLimitedJobRunner,
 						  tempFilenameGenerator,
@@ -691,8 +690,7 @@ public class NodeClientCore implements Persistable {
 						     node.userDir().file("downloads").getPath(),
 						     "NodeClientCore.downloadsDir",
 						     "NodeClientCore.downloadsDirLong",
-						     l10n("couldNotFindOrCreateDir"),
-						     (SubConfig) null);
+						     l10n("couldNotFindOrCreateDir"));
 
 		// Downloads allowed, uploads allowed
 
@@ -1034,7 +1032,7 @@ public class NodeClientCore implements Persistable {
 		}
 	}
 
-	public void start(Config config) throws NodeInitException {
+	public void start() throws NodeInitException {
 	    
 		persister.start();
 
@@ -1043,7 +1041,7 @@ public class NodeClientCore implements Persistable {
 		storeChecker.start();
 		if(fcpServer != null)
 			fcpServer.maybeStart();
-        node.pluginManager.start(node.config);
+        node.pluginManager.start();
         node.ipDetector.ipDetectorManager.start();
 		if(tmci != null)
 			tmci.start();
@@ -1618,7 +1616,7 @@ public class NodeClientCore implements Persistable {
 		try {
 			long startTime = System.currentTimeMillis();
 			is = node.makeInsertSender(block.getKey(),
-				node.maxHTL(), uid, tag, null, headers, prb, false, canWriteClientCache, forkOnCacheable, preferInsert, ignoreLowBackoff, realTimeFlag);
+				node.maxHTL(), uid, tag, null, headers, prb, false, forkOnCacheable, preferInsert, ignoreLowBackoff, realTimeFlag);
 			boolean hasReceivedRejectedOverload = false;
 			// Wait for status
 			while(true) {
@@ -1877,13 +1875,7 @@ public class NodeClientCore implements Persistable {
 	/** @deprecated Only provided for compatibility with old plugins! Plugins must specify! */
 	@Deprecated
 	public HighLevelSimpleClient makeClient(short prioClass) {
-		return makeClient(prioClass, false, false);
-	}
-
-	/** @deprecated Only provided for compatibility with old plugins! Plugins must specify! */
-	@Deprecated
-	public HighLevelSimpleClient makeClient(short prioClass, boolean forceDontIgnoreTooManyPathComponents) {
-		return makeClient(prioClass, forceDontIgnoreTooManyPathComponents, false);
+		return makeClient(prioClass, false);
 	}
 
 	/**
@@ -1893,8 +1885,8 @@ public class NodeClientCore implements Persistable {
 	 * but their transfers are faster. Latency-optimised requests are expected to be bursty,
 	 * whereas throughput-optimised (bulk) requests can be constant.
 	 */
-	public HighLevelSimpleClient makeClient(short prioClass, boolean forceDontIgnoreTooManyPathComponents, boolean realTimeFlag) {
-		return new HighLevelSimpleClientImpl(this, tempBucketFactory, random, prioClass, forceDontIgnoreTooManyPathComponents, realTimeFlag);
+	public HighLevelSimpleClient makeClient(short prioClass, boolean realTimeFlag) {
+		return new HighLevelSimpleClientImpl(this, tempBucketFactory, random, prioClass, realTimeFlag);
 	}
 
 	public FCPServer getFCPServer() {
@@ -2050,7 +2042,7 @@ public class NodeClientCore implements Persistable {
 	/** Queue the offered key. */
 	public void queueOfferedKey(Key key, boolean realTime) {
 		ClientRequestScheduler sched = requestStarters.getScheduler(key instanceof NodeSSK, false, realTime);
-		sched.queueOfferedKey(key, realTime);
+		sched.queueOfferedKey(key);
 	}
 
 	public void dequeueOfferedKey(Key key) {

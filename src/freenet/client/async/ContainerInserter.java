@@ -98,7 +98,6 @@ public class ContainerInserter implements ClientPutState, Serializable {
 	 * @param reportMetadataOnly2
 	 * @param token2
 	 * @param archiveType2
-	 * @param freeData
 	 * @param forceCryptoKey
 	 * @param cryptoAlgorithm
 	 * @param realTimeFlag
@@ -114,7 +113,6 @@ public class ContainerInserter implements ClientPutState, Serializable {
 			boolean reportMetadataOnly2,
 			Object token2,
 			ARCHIVE_TYPE archiveType2,
-			boolean freeData,
 			byte[] forceCryptoKey,
 			byte cryptoAlgorithm,
 			boolean realTimeFlag) {
@@ -203,7 +201,7 @@ public class ContainerInserter implements ClientPutState, Serializable {
 		}
 		
 		// Treat it as a splitfile for purposes of determining reinsert count.
-		SingleFileInserter sfi = new SingleFileInserter(parent, cb, block, false, ctx, realTimeFlag, dc, reportMetadataOnly, token, archiveType, true, null, true, persistent, 0, 0, null, cryptoAlgorithm, forceCryptoKey, -1);
+		SingleFileInserter sfi = new SingleFileInserter(parent, cb, block, false, ctx, realTimeFlag, reportMetadataOnly, token, archiveType, true, null, true, persistent, 0, 0, null, cryptoAlgorithm, forceCryptoKey, -1);
 		if(logMINOR)
 			Logger.minor(this, "Inserting container: "+sfi+" for "+this);
 		cb.onTransition(this, sfi, context);

@@ -63,7 +63,7 @@ public abstract class SendableGet extends BaseSendableGet {
 	static final SendableGetRequestSender sender = new SendableGetRequestSender();
 	
 	@Override
-	public SendableRequestSender getSender(ClientContext context) {
+	public SendableRequestSender getSender() {
 		return sender;
 	}
 	
@@ -81,13 +81,13 @@ public abstract class SendableGet extends BaseSendableGet {
 	 * @param token
 	 * @return
 	 */
-	public abstract long getCooldownWakeup(SendableRequestItem token, ClientContext context);
+	public abstract long getCooldownWakeup(SendableRequestItem token);
 	
 	/**
 	 * An internal error occurred, effecting this SendableGet, independantly of any ChosenBlock's.
 	 */
 	@Override
-	public void internalError(final Throwable t, final RequestScheduler sched, ClientContext context, boolean persistent) {
+	public void internalError(final Throwable t, final RequestScheduler sched, boolean persistent) {
 		Logger.error(this, "Internal error on "+this+" : "+t, t);
 		sched.callFailure(this, new LowLevelGetException(LowLevelGetException.INTERNAL_ERROR, t.getMessage(), t), NativeThread.MAX_PRIORITY, persistent);
 	}
@@ -101,7 +101,7 @@ public abstract class SendableGet extends BaseSendableGet {
 	public void unregister(ClientContext context, short oldPrio) {
 		super.unregister(context, oldPrio);
 		ClientRequestScheduler scheduler = getScheduler(context);
-		context.checker.removeRequest(this, persistent, context, oldPrio == -1 ? getPriorityClass() : oldPrio);
+		context.checker.removeRequest(this, persistent, oldPrio == -1 ? getPriorityClass() : oldPrio);
 	}
 	
 	public static FetchException translateException(LowLevelGetException e) {

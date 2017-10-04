@@ -147,7 +147,7 @@ class KeyListenerTracker implements KeySalter {
 		return true;
 	}
 	
-	public short getKeyPrio(Key key, short priority, ClientContext context) {
+	public short getKeyPrio(Key key, short priority) {
 		assert(key instanceof NodeSSK == isSSKScheduler);
 		byte[] saltedKey = saltKey(key);
 		List<KeyListener> matches = probablyWantKey(key, saltedKey);
@@ -157,7 +157,7 @@ class KeyListenerTracker implements KeySalter {
 		for (KeyListener listener : matches) {
 			short prio;
 			try {
-				prio = listener.definitelyWantKey(key, saltedKey, sched.clientContext);
+				prio = listener.definitelyWantKey(key);
 			} catch (Throwable t) {
 				Logger.error(this, format("Error in definitelyWantKey callback for %s", listener), t);
 				continue;
@@ -180,14 +180,14 @@ class KeyListenerTracker implements KeySalter {
 		return count;
 	}
 	
-	public boolean anyWantKey(Key key, ClientContext context) {
+	public boolean anyWantKey(Key key) {
 		assert(key instanceof NodeSSK == isSSKScheduler);
 		byte[] saltedKey = saltKey(key);
 		List<KeyListener> matches = probablyWantKey(key, saltedKey);
 		if (!matches.isEmpty()) {
 			for (KeyListener listener : matches) {
 				try {
-					if (listener.definitelyWantKey(key, saltedKey, sched.clientContext) >= 0) {
+					if (listener.definitelyWantKey(key) >= 0) {
 						return true;
 					}
 				} catch (Throwable t) {
@@ -198,7 +198,7 @@ class KeyListenerTracker implements KeySalter {
 		return false;
 	}
 	
-	public synchronized boolean anyProbablyWantKey(Key key, ClientContext context) {
+	public synchronized boolean anyProbablyWantKey(Key key) {
 		assert(key instanceof NodeSSK == isSSKScheduler);
 		byte[] saltedKey = saltKey(key);
 		for (KeyListener listener : keyListeners) {
@@ -241,7 +241,7 @@ class KeyListenerTracker implements KeySalter {
 		return ret;
 	}
 	
-	public SendableGet[] requestsForKey(Key key, ClientContext context) {
+	public SendableGet[] requestsForKey(Key key) {
 		ArrayList<SendableGet> list = new ArrayList<SendableGet>();
 		assert(key instanceof NodeSSK == isSSKScheduler);
 		byte[] saltedKey = saltKey(key);
@@ -249,7 +249,7 @@ class KeyListenerTracker implements KeySalter {
 		for (KeyListener listener : matches) {
 			SendableGet[] reqs;
 			try {
-				reqs = listener.getRequestsForKey(key, saltedKey, context);
+				reqs = listener.getRequestsForKey(key);
 			} catch (Throwable t) {
 				Logger.error(this, format("Error in getRequestsForKey callback for %s", listener), t);
 				continue;

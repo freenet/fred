@@ -237,7 +237,7 @@ public class PersistentRequestClient {
 		}
 	}
 
-	public boolean removeByIdentifier(String identifier, boolean kill, FCPServer server, ClientContext context) {
+	public boolean removeByIdentifier(String identifier, boolean kill, ClientContext context) {
 		ClientRequest req;
 		if(logMINOR) Logger.minor(this, "removeByIdentifier("+identifier+ ',' +kill+ ')');
 		if(statusCache != null)
@@ -461,7 +461,7 @@ public class PersistentRequestClient {
 		if(completionCallbacks!=null) completionCallbacks.remove(cb);
 	}
 
-	public void removeAll(ClientContext context) {
+	public void removeAll() {
 		HashSet<ClientRequest> toKill = new HashSet<ClientRequest>();
 		if(statusCache != null)
 			statusCache.clear();

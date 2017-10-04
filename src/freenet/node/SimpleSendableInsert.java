@@ -83,7 +83,7 @@ public class SimpleSendableInsert extends SendableInsert {
 	}
 
 	@Override
-	public SendableRequestSender getSender(ClientContext context) {
+	public SendableRequestSender getSender() {
 		return new SendableRequestSender() {
 
 			@Override
@@ -140,7 +140,7 @@ public class SimpleSendableInsert extends SendableInsert {
 
 	public void schedule() {
 		finished = false; // can reschedule
-		scheduler.registerInsert(this, false);
+		scheduler.registerInsert(this);
 	}
 
 	public void cancel(ClientContext context) {
@@ -152,13 +152,13 @@ public class SimpleSendableInsert extends SendableInsert {
 	}
 
 	@Override
-	public synchronized long countAllKeys(ClientContext context) {
+	public synchronized long countAllKeys() {
 		if(finished) return 0;
 		return 1;
 	}
 
 	@Override
-	public synchronized long countSendableKeys(ClientContext context) {
+	public synchronized long countSendableKeys() {
 		if(finished) return 0;
 		return 1;
 	}

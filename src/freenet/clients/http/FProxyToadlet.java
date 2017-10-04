@@ -127,6 +127,7 @@ public final class FProxyToadlet extends Toadlet implements RequestClient {
 		return true;
 	}
 
+	@SuppressWarnings("UnusedParameters")
 	public void handleMethodPOST(URI uri, HTTPRequest req, ToadletContext ctx) throws ToadletContextClosedException, IOException, RedirectException {
 		String ks = uri.getPath();
 
@@ -139,7 +140,7 @@ public final class FProxyToadlet extends Toadlet implements RequestClient {
 		}
 	}
 
-	public static void handleDownload(ToadletContext context, Bucket data, BucketFactory bucketFactory, String mimeType, String requestedMimeType, String forceString, boolean forceDownload, String basePath, FreenetURI key, String extras, String referrer, boolean downloadLink, ToadletContext ctx, NodeClientCore core, boolean dontFreeData, String maybeCharset) throws ToadletContextClosedException, IOException {
+	public static void handleDownload(ToadletContext context, Bucket data, BucketFactory bucketFactory, String mimeType, String requestedMimeType, String forceString, boolean forceDownload, String basePath, FreenetURI key, String extras, String referrer, ToadletContext ctx, NodeClientCore core) throws ToadletContextClosedException, IOException {
 		if(logMINOR)
 			Logger.minor(FProxyToadlet.class, "handleDownload(data.size="+data.size()+", mimeType="+mimeType+", requestedMimeType="+requestedMimeType+", forceDownload="+forceDownload+", basePath="+basePath+", key="+key);
 		String extrasNoMime = extras; // extras will not include MIME type to start with - REDFLAG maybe it should be an array
@@ -814,7 +815,7 @@ public final class FProxyToadlet extends Toadlet implements RequestClient {
 				}
 				if(needsFetch){
 					//If we don't have the data, then we need to fetch it and block until it is available
-					FetchResult result = fetch(key, maxSize, new RequestClientBuilder().realTime().build(), fctx);
+					FetchResult result = fetch(key, new RequestClientBuilder().realTime().build(), fctx);
 
 					// Now, is it safe?
 
@@ -823,7 +824,7 @@ public final class FProxyToadlet extends Toadlet implements RequestClient {
 				}
 			} else if(fe != null) throw fe;
 
-			handleDownload(ctx, data, ctx.getBucketFactory(), mimeType, requestedMimeType, forceString, httprequest.isParameterSet("forcedownload"), "/", key, "&max-size="+maxSizeDownload, referer, true, ctx, core, fr != null, maybeCharset);
+			handleDownload(ctx, data, ctx.getBucketFactory(), mimeType, requestedMimeType, forceString, httprequest.isParameterSet("forcedownload"), "/", key, "&max-size="+maxSizeDownload, referer, ctx, core);
 		} catch (FetchException e) {
 			//Handle exceptions thrown from the ContentFilter
 			String msg = e.getMessage();
@@ -1110,7 +1111,7 @@ public final class FProxyToadlet extends Toadlet implements RequestClient {
 
 		// FIXME how to change these on the fly when the interface language is changed?
 
-		HighLevelSimpleClient client = core.makeClient(RequestStarter.INTERACTIVE_PRIORITY_CLASS, true, true);
+		HighLevelSimpleClient client = core.makeClient(RequestStarter.INTERACTIVE_PRIORITY_CLASS, true);
 
 		random = new byte[32];
 		core.random.nextBytes(random);

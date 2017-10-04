@@ -118,7 +118,7 @@ public class GIFFilterTest extends TestCase {
 
                 ContentDataFilter filter = new GIFFilter();
                 try {
-                    filter.readFilter(inStream, outStream, "", null, null);
+                    filter.readFilter(inStream, outStream, "", null);
                     fail("Filter did not fail on reject sample " + reject);
                 } catch (DataFilterException e) {
                     // Expected.
@@ -163,7 +163,7 @@ public class GIFFilterTest extends TestCase {
         try (InputStream inStream = input.getInputStream();
              OutputStream outStream = output.getOutputStream()) {
 
-            filter.readFilter(inStream, outStream, "", null, null);
+            filter.readFilter(inStream, outStream, "", null);
         }
 
         return output;

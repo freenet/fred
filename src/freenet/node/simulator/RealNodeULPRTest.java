@@ -142,7 +142,7 @@ public class RealNodeULPRTest extends RealNodeTest {
         Logger.normal(RealNodeRoutingTest.class, "Added random links");
         
 		for(Node node: nodes)
-            node.start(false);
+            node.start();
         
         int successfulTests = 0;
         
@@ -171,7 +171,7 @@ public class RealNodeULPRTest extends RealNodeTest {
         	insertKey = InsertableClientSSK.create(testKey);
         	fetchKey = ClientKSK.create(testKey);
         	
-        	block = ((InsertableClientSSK)insertKey).encode(new ArrayBucket(buf), false, false, (short)-1, buf.length, random, COMPRESSOR_TYPE.DEFAULT_COMPRESSORDESCRIPTOR, false);
+        	block = ((InsertableClientSSK)insertKey).encode(new ArrayBucket(buf), false, false, (short)-1, buf.length, COMPRESSOR_TYPE.DEFAULT_COMPRESSORDESCRIPTOR, false);
         } else {
         	block = ClientCHKBlock.encode(buf, false, false, (short)-1, buf.length, COMPRESSOR_TYPE.DEFAULT_COMPRESSORDESCRIPTOR, false);
         	insertKey = fetchKey = block.getClientKey();

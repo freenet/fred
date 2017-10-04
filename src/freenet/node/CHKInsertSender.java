@@ -306,10 +306,10 @@ public final class CHKInsertSender extends BaseSender implements PrioRunnable, A
 			pn.noLongerRoutingTo(thisTag, false);
 		}
 	}
-	
-	CHKInsertSender(NodeCHK myKey, long uid, InsertTag tag, byte[] headers, short htl, 
-            PeerNode source, Node node, PartiallyReceivedBlock prb, boolean fromStore,
-            boolean canWriteClientCache, boolean forkOnCacheable, boolean preferInsert, boolean ignoreLowBackoff, boolean realTimeFlag) {
+
+	CHKInsertSender(NodeCHK myKey, long uid, InsertTag tag, byte[] headers, short htl,
+			PeerNode source, Node node, PartiallyReceivedBlock prb, boolean fromStore,
+			boolean forkOnCacheable, boolean preferInsert, boolean ignoreLowBackoff, boolean realTimeFlag) {
 		super(myKey, realTimeFlag, source, node, htl, uid);
         this.origUID = uid;
         this.origTag = tag;
@@ -545,7 +545,7 @@ public final class CHKInsertSender extends BaseSender implements PrioRunnable, A
 	}
 
 	/** @return True if fatal i.e. we should try another node. */
-	private boolean handleRejectedOverload(Message msg, PeerNode next, InsertTag thisTag) {
+	private boolean handleRejectedOverload(Message msg, PeerNode next) {
 		// Probably non-fatal, if so, we have time left, can try next one
 		if (msg.getBoolean(DMT.IS_LOCAL)) {
 			next.localRejectedOverload("ForwardRejectedOverload6", realTimeFlag);
@@ -559,7 +559,7 @@ public final class CHKInsertSender extends BaseSender implements PrioRunnable, A
 		return false; // Wait for any further response
 	}
 
-	private void handleRNF(Message msg, PeerNode next, InsertTag thisTag) {
+	private void handleRNF(Message msg, PeerNode next) {
 		if(logMINOR) Logger.minor(this, "Rejected: RNF");
 		short newHtl = msg.getShort(DMT.HTL);
 		if(newHtl < 0) newHtl = 0;
@@ -571,7 +571,7 @@ public final class CHKInsertSender extends BaseSender implements PrioRunnable, A
 		next.successNotOverload(realTimeFlag);
 	}
 
-	private void handleDataInsertRejected(Message msg, PeerNode next, InsertTag thisTag) {
+	private void handleDataInsertRejected(Message msg, PeerNode next) {
 		next.successNotOverload(realTimeFlag);
 		short reason = msg
 				.getShort(DMT.DATA_INSERT_REJECTED_REASON);
@@ -1118,7 +1118,7 @@ public final class CHKInsertSender extends BaseSender implements PrioRunnable, A
 	}
 
 	@Override
-	protected void timedOutWhileWaiting(double load) {
+	protected void timedOutWhileWaiting() {
 		htl -= (short)Math.max(0, hopsForFatalTimeoutWaitingForPeer());
 		if(htl < 0) htl = 0;
         // Backtrack, i.e. RNF.
@@ -1280,7 +1280,7 @@ public final class CHKInsertSender extends BaseSender implements PrioRunnable, A
 							}
 
 							if (msg.getSpec() == DMT.FNPRejectedOverload) {
-								if(handleRejectedOverload(msg, waitingFor, tag)) {
+								if(handleRejectedOverload(msg, waitingFor)) {
 									// Already set the status, and handle... will have unlocked the next node, so no need to call finished().
 									transfer.onCompleted();
 									return; // Don't try another node.
@@ -1294,7 +1294,7 @@ public final class CHKInsertSender extends BaseSender implements PrioRunnable, A
 							}
 							
 							if (msg.getSpec() == DMT.FNPDataInsertRejected) {
-								handleDataInsertRejected(msg, waitingFor, tag);
+								handleDataInsertRejected(msg, waitingFor);
 								transfer.kill();
 								return; // Don't try another node.
 							}
@@ -1333,7 +1333,7 @@ public final class CHKInsertSender extends BaseSender implements PrioRunnable, A
 			}
 
 			if (msg.getSpec() == DMT.FNPRejectedOverload) {
-				if(handleRejectedOverload(msg, next, thisTag)) {
+				if(handleRejectedOverload(msg, next)) {
 					// We have had an Accepted. This happens on a timeout downstream.
 					// They will complete it (finish()), so we need to wait for a transfer completion.
 					// FIXME it might be less confusing and therefore less likely to cause problems
@@ -1346,14 +1346,14 @@ public final class CHKInsertSender extends BaseSender implements PrioRunnable, A
 
 			if (msg.getSpec() == DMT.FNPRouteNotFound) {
 				//RNF means that the HTL was not exhausted, but that the data will still be stored.
-				handleRNF(msg, next, thisTag);
+				handleRNF(msg, next);
 				transfer.onCompleted();
 				break;
 			}
 
 			//Can occur after reception of the entire chk block
 			if (msg.getSpec() == DMT.FNPDataInsertRejected) {
-				handleDataInsertRejected(msg, next, thisTag);
+				handleDataInsertRejected(msg, next);
 				transfer.kill();
 				break;
 			}

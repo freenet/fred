@@ -136,7 +136,7 @@ public class FailureTable {
 			// We have to do this inside the lock to prevent race condition with the cleaner causing us to get dropped because isEmpty() before updating.
 			entry.failedTo(routedTo, rfTimeout, ftTimeout, now, htl);
 
-			trimEntries(now);
+			trimEntries();
 		}
 	}
 	
@@ -175,12 +175,12 @@ public class FailureTable {
 				entry.failedTo(routedTo, rfTimeout, ftTimeout, now, htl);
 			if(requestor != null)
 				entry.addRequestor(requestor, now, origHTL);
-			
-			trimEntries(now);
+
+			trimEntries();
 		}
 	}
-	
-	private synchronized void trimEntries(long now) {
+
+	private synchronized void trimEntries() {
 		while(entriesByKey.size() > MAX_ENTRIES) {
 			entriesByKey.popKey();
 		}
@@ -402,14 +402,14 @@ public class FailureTable {
 		boolean heAsked = entry.askedByPeer(peer, now);
 		if(!(weAsked || heAsked)) {
 			if(logMINOR) Logger.minor(this, "Not propagating key: weAsked="+weAsked+" heAsked="+heAsked);
-			if(entry.isEmpty(now)) {
+			if(entry.isEmpty()) {
 				synchronized(this) {
 					entriesByKey.removeKey(key);
 				}
 			}
 			return;
 		}
-		if(entry.isEmpty(now)) {
+		if(entry.isEmpty()) {
 			synchronized(this) {
 				entriesByKey.removeKey(key);
 			}
@@ -671,7 +671,7 @@ public class FailureTable {
 	}
 
 	/** Called when a node disconnects */
-	public void onDisconnect(final PeerNode pn) {
+	public void onDisconnect() {
 		if(!(node.enableULPRDataPropagation || node.enablePerNodeFailureTables)) return;
 		// FIXME do something (off thread if expensive)
 	}
@@ -721,13 +721,13 @@ public class FailureTable {
 		}
 	}
 
-	public boolean peersWantKey(Key key, PeerNode apartFrom) {
+	public boolean peersWantKey(Key key) {
 		FailureTableEntry entry;
 		synchronized(this) {
 			entry = entriesByKey.get(key);
 			if(entry == null) return false; // Nobody cares
 		}
-		return entry.othersWant(apartFrom);
+		return entry.othersWant();
 	}
         
         /** @return The lowest HTL at which any peer has requested this key recently */

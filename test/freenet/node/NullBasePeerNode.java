@@ -224,7 +224,7 @@ public class NullBasePeerNode implements BasePeerNode {
 	}
 
 	@Override
-	public MessageItem makeLoadStats(boolean realtime, boolean highPriority, boolean lossy) {
+	public MessageItem makeLoadStats() {
 		// Don't send load stats.
 		return null;
 	}

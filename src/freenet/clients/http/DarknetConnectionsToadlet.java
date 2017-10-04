@@ -224,7 +224,7 @@ public class DarknetConnectionsToadlet extends ConnectionsToadlet {
 					}
 				}
 			}
-			N2NTMToadlet.createN2NTMSendForm( pageNode, ctx.isAdvancedModeEnabled(), contentNode, ctx, peers);
+			N2NTMToadlet.createN2NTMSendForm(ctx.isAdvancedModeEnabled(), contentNode, ctx, peers);
 			writeHTMLReply(ctx, 200, "OK", pageNode.generate());
 			return;
 		} else if (request.isPartSet("doAction") && request.getPartAsStringFailsafe("action",25).equals("update_notes")) {
@@ -472,12 +472,11 @@ public class DarknetConnectionsToadlet extends ConnectionsToadlet {
 
 	@Override
 	public void handleMethodGET(URI uri, HTTPRequest request, ToadletContext ctx) throws ToadletContextClosedException, IOException, RedirectException {
-		if(tryHandlePeerNoderef(uri, request, ctx)) return;
+		if(tryHandlePeerNoderef(uri, ctx)) return;
 		super.handleMethodGET(uri, request, ctx);
 	}
 
-	private boolean tryHandlePeerNoderef(URI uri, HTTPRequest request,
-			ToadletContext ctx) throws ToadletContextClosedException, IOException {
+	private boolean tryHandlePeerNoderef(URI uri, ToadletContext ctx) throws ToadletContextClosedException, IOException {
 		String path = uri.getPath();
 		if(path.endsWith(".fref") && path.startsWith(path()+"friend-")) {
 			// Get noderef for a peer

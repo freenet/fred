@@ -101,13 +101,12 @@ public class ClientPutter extends BaseClientPutter implements PutCompletionCallb
 	 * @param isMetadata
 	 * @param targetFilename If set, create a one-file manifest containing this filename pointing to this file.
 	 * @param binaryBlob
-	 * @param context The client object for purposs of round-robin client balancing.
 	 * @param overrideSplitfileCrypto
 	 * @param metadataThreshold
 	 */
 	public ClientPutter(ClientPutCallback client, RandomAccessBucket data, FreenetURI targetURI, ClientMetadata cm, InsertContext ctx,
 			short priorityClass,
-			boolean isMetadata, String targetFilename, boolean binaryBlob, ClientContext context, byte[] overrideSplitfileCrypto,
+			boolean isMetadata, String targetFilename, boolean binaryBlob, byte[] overrideSplitfileCrypto,
 			long metadataThreshold) {
 		super(priorityClass, client);
 		this.cm = cm;
@@ -156,7 +155,7 @@ public class ClientPutter extends BaseClientPutter implements PutCompletionCallb
 			// randomised keys. This substantially improves security by making it impossible to identify blocks
 			// even if you know the content. In the user interface, we will offer the option of inserting as a
 			// random SSK to take advantage of this.
-			boolean randomiseSplitfileKeys = randomiseSplitfileKeys(targetURI, ctx, persistent());
+			boolean randomiseSplitfileKeys = randomiseSplitfileKeys(targetURI, ctx);
 
 			if(data == null)
 				throw new InsertException(InsertExceptionMode.BUCKET_ERROR, "No data to insert", null);
@@ -197,8 +196,8 @@ public class ClientPutter extends BaseClientPutter implements PutCompletionCallb
 						ClientMetadata meta = cm;
 						if(meta != null) meta = persistent() ? meta.clone() : meta;
 						currentState =
-							new SingleFileInserter(this, this, new InsertBlock(data, meta, targetURI), isMetadata, ctx, realTimeFlag, 
-									false, false, null, null, false, targetFilename, false, persistent(), 0, 0, null, cryptoAlgorithm, cryptoKey, metadataThreshold);
+							new SingleFileInserter(this, this, new InsertBlock(data, meta, targetURI), isMetadata, ctx, realTimeFlag,
+                                    false, null, null, false, targetFilename, false, persistent(), 0, 0, null, cryptoAlgorithm, cryptoKey, metadataThreshold);
 					} else
 						currentState =
 							new BinaryBlobInserter(data, this, getClient(), false, priorityClass, ctx, context);
@@ -264,7 +263,7 @@ public class ClientPutter extends BaseClientPutter implements PutCompletionCallb
 		return true;
 	}
 
-	public static boolean randomiseSplitfileKeys(FreenetURI targetURI, InsertContext ctx, boolean persistent) {
+	public static boolean randomiseSplitfileKeys(FreenetURI targetURI, InsertContext ctx) {
 		// If the top level key is an SSK, all CHK blocks and particularly splitfiles below it should have
 		// randomised keys. This substantially improves security by making it impossible to identify blocks
 		// even if you know the content. In the user interface, we will offer the option of inserting as a

@@ -99,7 +99,7 @@ public class ToadletContextImpl implements ToadletContext {
 	private boolean closed;
 	private boolean shouldDisconnect;
 	
-	public ToadletContextImpl(Socket sock, MultiValueTable<String,String> headers, BucketFactory bf, PageMaker pageMaker, ToadletContainer container, UserAlertManager userAlertManager, BookmarkManager bookmarkManager, URI uri, long uniqueID) throws IOException {
+	public ToadletContextImpl(Socket sock, MultiValueTable<String, String> headers, BucketFactory bf, PageMaker pageMaker, ToadletContainer container, UserAlertManager userAlertManager, BookmarkManager bookmarkManager, URI uri) throws IOException {
 		this.headers = headers;
 		this.cookies = null;
 		this.replyCookies = null;
@@ -122,7 +122,7 @@ public class ToadletContextImpl implements ToadletContext {
 		closed = true;
 	}
 	
-	private void sendMethodNotAllowed(String method, boolean shouldDisconnect) throws ToadletContextClosedException, IOException {
+	private void sendMethodNotAllowed(boolean shouldDisconnect) throws ToadletContextClosedException, IOException {
 		if(closed) throw new ToadletContextClosedException();
 		MultiValueTable<String,String> mvt = new MultiValueTable<String,String>();
 		mvt.put("Allow", "GET, PUT");
@@ -183,7 +183,7 @@ public class ToadletContextImpl implements ToadletContext {
 	
 	public void sendReplyHeaders(int code, String desc, MultiValueTable<String,String> mvt, String mimeType, long length, boolean forceDisableJavascript) throws ToadletContextClosedException, IOException {
 	    boolean enableJavascript = (!forceDisableJavascript) && container.isFProxyJavascriptEnabled();
-	    sendReplyHeaders(code, desc, mvt, mimeType, length, null, false, false, enableJavascript);
+	    sendReplyHeaders(code, desc, mvt, mimeType, length, null, false, enableJavascript);
 	}
 
 	@Deprecated
@@ -196,7 +196,7 @@ public class ToadletContextImpl implements ToadletContext {
 	
 	public void sendReplyHeadersStatic(int replyCode, String replyDescription, MultiValueTable<String,String> mvt, String mimeType, long contentLength, Date mTime) throws ToadletContextClosedException, IOException {
 	    if(mTime == null) throw new IllegalArgumentException();
-	    sendReplyHeaders(replyCode, replyDescription, mvt, mimeType, contentLength, mTime, false, false, false);
+	    sendReplyHeaders(replyCode, replyDescription, mvt, mimeType, contentLength, mTime, false, false);
 	}
 	
 	@Override
@@ -204,10 +204,10 @@ public class ToadletContextImpl implements ToadletContext {
 	    boolean enableJavascript = false;
 	    if(container.isFProxyWebPushingEnabled() && container.isFProxyJavascriptEnabled())
 	        enableJavascript = true;
-	    sendReplyHeaders(replyCode, replyDescription, mvt, mimeType, contentLength, null, false, true, enableJavascript);
+	    sendReplyHeaders(replyCode, replyDescription, mvt, mimeType, contentLength, null, true, enableJavascript);
 	}
 	
-	private void sendReplyHeaders(int replyCode, String replyDescription, MultiValueTable<String,String> mvt, String mimeType, long contentLength, Date mTime, boolean isOutlinkConfirmationPage, boolean allowFrames, boolean enableJavascript) throws ToadletContextClosedException, IOException {
+	private void sendReplyHeaders(int replyCode, String replyDescription, MultiValueTable<String, String> mvt, String mimeType, long contentLength, Date mTime, boolean allowFrames, boolean enableJavascript) throws ToadletContextClosedException, IOException {
 		if(closed) throw new ToadletContextClosedException();
 		if(firstReplySendingException != null) {
 			throw new IllegalStateException("Already sent headers!", firstReplySendingException);
@@ -548,7 +548,7 @@ public class ToadletContextImpl implements ToadletContext {
 				boolean allowPost = container.allowPosts();
 				BucketFactory bf = container.getBucketFactory();
 				
-				ToadletContextImpl ctx = new ToadletContextImpl(sock, headers, bf, pageMaker, container, userAlertManager, bookmarkManager, uri, container.generateUniqueID());
+				ToadletContextImpl ctx = new ToadletContextImpl(sock, headers, bf, pageMaker, container, userAlertManager, bookmarkManager, uri);
 				ctx.shouldDisconnect = disconnect;
 				
 				/*
@@ -596,7 +596,7 @@ public class ToadletContextImpl implements ToadletContext {
 					} else {
 						FileUtil.skipFully(is, len);
 						if (method.equals("POST")) {
-							ctx.sendMethodNotAllowed("POST", true);
+							ctx.sendMethodNotAllowed(true);
 						} else {
 							sendError(sock.getOutputStream(), 403, "Forbidden", "Content not allowed in this configuration", true, null);
 						}
@@ -639,7 +639,7 @@ public class ToadletContextImpl implements ToadletContext {
 						// if the Toadlet does not support the method, we don't need to parse the data
 						// also due this pre check a 'NoSuchMethodException' should never appear
 						if (!(t.findSupportedMethods().contains(method))) {
-							ctx.sendMethodNotAllowed(method, ctx.shouldDisconnect);
+							ctx.sendMethodNotAllowed(ctx.shouldDisconnect);
 							break;
 						}
 

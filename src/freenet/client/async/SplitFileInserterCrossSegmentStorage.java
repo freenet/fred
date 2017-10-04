@@ -54,8 +54,7 @@ public class SplitFileInserterCrossSegmentStorage {
     // FIXME turn off before merging into master.
     static final boolean DEBUG_ENCODE = true;
     
-    public SplitFileInserterCrossSegmentStorage(SplitFileInserterStorage parent, int segNo, 
-            boolean persistent, int segLen, int crossCheckBlocks) {
+    public SplitFileInserterCrossSegmentStorage(SplitFileInserterStorage parent, int segNo, int segLen, int crossCheckBlocks) {
         this.parent = parent;
         this.segNo = segNo;
         this.dataBlockCount = segLen;
@@ -171,7 +170,7 @@ public class SplitFileInserterCrossSegmentStorage {
                 CheckpointLock lock = null;
                 try {
                     lock = parent.jobRunner.lock();
-                    innerEncode(chunk);
+                    innerEncode();
                 } catch (PersistenceDisabledException e) {
                     // Will be retried on restarting.
                     shutdown = true;
@@ -184,7 +183,7 @@ public class SplitFileInserterCrossSegmentStorage {
                             synchronized(SplitFileInserterCrossSegmentStorage.this) {
                                 encoding = false;
                             }
-                            parent.onFinishedEncoding(SplitFileInserterCrossSegmentStorage.this);
+                            parent.onFinishedEncoding();
                         }
                     } finally {
                         // Callback is part of the persistent job, unlock *after* calling it.
@@ -198,7 +197,7 @@ public class SplitFileInserterCrossSegmentStorage {
     }
 
     /** Encode a segment. Much simpler than fetcher! */
-    private void innerEncode(MemoryLimitedChunk chunk) {
+    private void innerEncode() {
         try {
             synchronized(this) {
                 if(cancelled) return;

@@ -1085,9 +1085,8 @@ public class OpennetManager {
 		void gotNoderef(byte[] noderef);
 		/** Timed out waiting for a noderef. */
 		void timedOut();
-		/** Got an ack - didn't timeout but there won't be a noderef. 
-		 * @param timedOutMessage */
-		void acked(boolean timedOutMessage);
+		/** Got an ack - didn't timeout but there won't be a noderef. */
+		void acked();
 	}
 	
 	private static class SyncNoderefCallback implements NoderefCallback {
@@ -1104,7 +1103,7 @@ public class OpennetManager {
 		}
 		
 		@Override
-		public void acked(boolean timedOutMessage) {
+		public void acked() {
 			gotNoderef(null);
 		}
 		
@@ -1175,7 +1174,7 @@ public class OpennetManager {
 							if(completed) return;
 							completed = true;
 						}
-						callback.acked(msg.getSpec() == DMT.FNPOpennetCompletedTimeout);
+						callback.acked();
 					} else {
 						// Noderef bulk transfer
 						long xferUID = msg.getLong(DMT.TRANSFER_UID);
@@ -1263,7 +1262,7 @@ public class OpennetManager {
 		}
 	}
 
-	public static SimpleFieldSet validateNoderef(byte[] noderef, int offset, int length, PeerNode from, boolean forceOpennetEnabled) {
+	public static SimpleFieldSet validateNoderef(byte[] noderef, PeerNode from, boolean forceOpennetEnabled) {
     	SimpleFieldSet ref;
 		try {
 			ref = PeerNode.compressedNoderefToFieldSet(noderef, 0, noderef.length);
@@ -1329,7 +1328,7 @@ public class OpennetManager {
 
 	/** Notification that a peer was disconnected. Query the Announcer,
 	 * it may need to rerun. */
-	public void onDisconnect(PeerNode node2) {
+	public void onDisconnect() {
 		if(announcer != null)
 			announcer.maybeSendAnnouncementOffThread();
 	}

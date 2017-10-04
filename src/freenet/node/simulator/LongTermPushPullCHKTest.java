@@ -89,7 +89,7 @@ public class LongTermPushPullCHKTest extends LongTermTest {
 			Logger.getChain().setThreshold(LogLevel.ERROR);
 
 			// Start it
-			node.start(true);
+			node.start();
 			long t1 = System.currentTimeMillis();
 			if (!TestUtil.waitForNodes(node)) {
 				exitCode = EXIT_FAILED_TARGET;
@@ -105,7 +105,7 @@ public class LongTermPushPullCHKTest extends LongTermTest {
 			// PUSH N+1 BLOCKS
 			for (int i = 0; i <= MAX_N; i++) {
 			    RandomAccessBucket data = randomData(node);
-				HighLevelSimpleClient client = node.clientCore.makeClient((short) 0, false, false);
+				HighLevelSimpleClient client = node.clientCore.makeClient((short) 0, false);
 				System.out.println("PUSHING " + i);
 
 				try {
@@ -138,7 +138,7 @@ public class LongTermPushPullCHKTest extends LongTermTest {
 			node2 = NodeStarter.createTestNode(DARKNET_PORT2, OPENNET_PORT2, dir.getPath(), false,
 			        Node.DEFAULT_MAX_HTL, 0, random, new PooledExecutor(), 1000, 5 * 1024 * 1024, true, true, true,
 			        true, true, true, true, 12 * 1024, false, true, false, false, null);
-			node2.start(true);
+			node2.start();
 
 			t1 = System.currentTimeMillis();
 			if (!TestUtil.waitForNodes(node2)) {
@@ -151,7 +151,7 @@ public class LongTermPushPullCHKTest extends LongTermTest {
 
 			// PULL N+1 BLOCKS
 			for (int i = 0; i <= MAX_N; i++) {
-				HighLevelSimpleClient client = node2.clientCore.makeClient((short) 0, false, false);
+				HighLevelSimpleClient client = node2.clientCore.makeClient((short) 0, false);
 				Calendar targetDate = (Calendar) today.clone();
 				targetDate.add(Calendar.DAY_OF_MONTH, -((1 << i) - 1));
 

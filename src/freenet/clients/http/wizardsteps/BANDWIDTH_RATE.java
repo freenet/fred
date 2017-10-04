@@ -86,18 +86,18 @@ public class BANDWIDTH_RATE extends BandwidthManipulator implements Step {
 		if (detected.downBytes > 0 && detected.upBytes > 0) {
 			//Detected limits reasonable; add half of both as recommended option.
 			BandwidthLimit usable = new BandwidthLimit(detected.downBytes/2, detected.upBytes/2, "bandwidthDetected", true);
-			addLimitRow(table, helper, usable, true, true);
+			addLimitRow(table, usable, true, true);
 			addedDefault = true;
 		}
 
 		BandwidthLimit current = getCurrentBandwidthLimitsOrNull();
 		if(current != null) {
-			addLimitRow(table, helper, current, false, !addedDefault);
+			addLimitRow(table, current, false, !addedDefault);
 			addedDefault = true;
 		}
 		
 		for (BandwidthLimit limit : limits) {
-			addLimitRow(table, helper, limit, false, !addedDefault);
+			addLimitRow(table, limit, false, !addedDefault);
 		}
 
 		//Add custom option.
@@ -195,11 +195,10 @@ public class BANDWIDTH_RATE extends BandwidthManipulator implements Step {
 	/**
 	 * Adds a row to the table for the given limit. Adds download limit, upload limit, and selection button.
 	 * @param table Table to add a row to.
-	 * @param helper To make a form for the button and hidden fields.
 	 * @param limit Limit to display.
 	 * @param recommended Whether to mark the limit with (Recommended) next to the select button.
 	 */
-	private void addLimitRow(HTMLNode table, PageHelper helper, BandwidthLimit limit, boolean recommended, boolean useMaybeDefault) {
+	private void addLimitRow(HTMLNode table, BandwidthLimit limit, boolean recommended, boolean useMaybeDefault) {
 		HTMLNode row = table.addChild("tr");
 		row.addChild("td", WizardL10n.l10n(limit.descriptionKey));
 		String downColumn = SizeUtil.formatSize(limit.downBytes)+WizardL10n.l10n("bandwidthPerSecond");

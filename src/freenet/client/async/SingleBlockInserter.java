@@ -13,7 +13,6 @@ import freenet.client.InsertContext;
 import freenet.client.InsertException;
 import freenet.client.InsertContext.CompatibilityMode;
 import freenet.client.InsertException.InsertExceptionMode;
-import freenet.crypt.RandomSource;
 import freenet.keys.CHKEncodeException;
 import freenet.keys.ClientCHKBlock;
 import freenet.keys.ClientKey;
@@ -145,11 +144,11 @@ public class SingleBlockInserter extends SendableInsert implements ClientPutStat
 		this.cryptoKey = cryptoKey;
 	}
 
-	protected ClientKeyBlock innerEncode(RandomSource random) throws InsertException {
+	protected ClientKeyBlock innerEncode() throws InsertException {
 		CompatibilityMode cmode = ctx.getCompatibilityMode();
 		boolean pre1254 = !(cmode == CompatibilityMode.COMPAT_CURRENT || cmode.ordinal() >= CompatibilityMode.COMPAT_1255.ordinal());
 		try {
-			return innerEncode(random, uri, sourceData, isMetadata, compressionCodec, sourceLength, ctx.compressorDescriptor, pre1254, cryptoAlgorithm, cryptoKey);
+			return innerEncode(uri, sourceData, isMetadata, compressionCodec, sourceLength, ctx.compressorDescriptor, pre1254, cryptoAlgorithm, cryptoKey);
 		} catch (KeyEncodeException e) {
 			Logger.error(SingleBlockInserter.class, "Caught "+e, e);
 			throw new InsertException(InsertExceptionMode.INTERNAL_ERROR, e, null);
@@ -164,13 +163,13 @@ public class SingleBlockInserter extends SendableInsert implements ClientPutStat
 			
 	}
 	
-	protected static ClientKeyBlock innerEncode(RandomSource random, FreenetURI uri, Bucket sourceData, boolean isMetadata, short compressionCodec, int sourceLength, String compressorDescriptor, boolean pre1254, byte cryptoAlgorithm, byte[] cryptoKey) throws InsertException, CHKEncodeException, IOException, SSKEncodeException, MalformedURLException, InvalidCompressionCodecException {
+	protected static ClientKeyBlock innerEncode(FreenetURI uri, Bucket sourceData, boolean isMetadata, short compressionCodec, int sourceLength, String compressorDescriptor, boolean pre1254, byte cryptoAlgorithm, byte[] cryptoKey) throws InsertException, CHKEncodeException, IOException, SSKEncodeException, MalformedURLException, InvalidCompressionCodecException {
 		String uriType = uri.getKeyType();
 		if(uriType.equals("CHK")) {
 			return ClientCHKBlock.encode(sourceData, isMetadata, compressionCodec == -1, compressionCodec, sourceLength, compressorDescriptor, pre1254, cryptoKey, cryptoAlgorithm);
 		} else if(uriType.equals("SSK") || uriType.equals("KSK")) {
 			InsertableClientSSK ik = InsertableClientSSK.create(uri);
-			return ik.encode(sourceData, isMetadata, compressionCodec == -1, compressionCodec, sourceLength, random, compressorDescriptor, pre1254);
+			return ik.encode(sourceData, isMetadata, compressionCodec == -1, compressionCodec, sourceLength, compressorDescriptor, pre1254);
 		} else {
 			throw new InsertException(InsertExceptionMode.INVALID_URI, "Unknown keytype "+uriType, null);
 		}
@@ -204,7 +203,7 @@ public class SingleBlockInserter extends SendableInsert implements ClientPutStat
 		}
 	}
 	
-	protected ClientKeyBlock encode(ClientContext context, boolean calledByCB) throws InsertException {
+	protected ClientKeyBlock encode(ClientContext context) throws InsertException {
 		ClientKeyBlock block;
 		boolean shouldSend;
 		synchronized(this) {
@@ -213,7 +212,7 @@ public class SingleBlockInserter extends SendableInsert implements ClientPutStat
 				Logger.error(this, "Source data is null on "+this+" but not finished!");
 				return null;
 			}
-			block = innerEncode(context.random);
+			block = innerEncode();
 			shouldSend = (resultingKey == null);
 			resultingKey = block.getClientKey();
 		}
@@ -301,12 +300,12 @@ public class SingleBlockInserter extends SendableInsert implements ClientPutStat
 		cb.onFailure(e, this, context);
 	}
 
-	public ClientKeyBlock getBlock(ClientContext context, boolean calledByCB) {
+	public ClientKeyBlock getBlock(ClientContext context) {
 		try {
 			synchronized (this) {
 				if(finished) return null;
 			}
-			return encode(context, calledByCB);
+			return encode(context);
 		} catch (InsertException e) {
 			cb.onFailure(e, this, context);
 			return null;
@@ -332,7 +331,7 @@ public class SingleBlockInserter extends SendableInsert implements ClientPutStat
 		if(ctx.getCHKOnly) { 
 			onSuccess(null, getKeyNoEncode(), context);
 		} else {
-			getScheduler(context).registerInsert(this, persistent);
+			getScheduler(context).registerInsert(this);
 		}
 	}
 
@@ -347,7 +346,7 @@ public class SingleBlockInserter extends SendableInsert implements ClientPutStat
 				return resultingKey.getURI();
 			}
 		}
-		getBlock(context, true);
+		getBlock(context);
 		synchronized(this) {
 			// FIXME not really necessary? resultingKey is never dropped, only set.
 		    return resultingKey.getURI();
@@ -455,7 +454,7 @@ public class SingleBlockInserter extends SendableInsert implements ClientPutStat
 			BlockItem block = (BlockItem) req.token;
 			try {
 				try {
-					encodedBlock = innerEncode(context.random, block.uri, block.copyBucket, block.isMetadata, block.compressionCodec, block.sourceLength, compressorDescriptor, block.pre1254, block.cryptoAlgorithm, block.cryptoKey);
+					encodedBlock = innerEncode(block.uri, block.copyBucket, block.isMetadata, block.compressionCodec, block.sourceLength, compressorDescriptor, block.pre1254, block.cryptoAlgorithm, block.cryptoKey);
 					b = encodedBlock.getBlock();
 				} catch (CHKEncodeException e) {
 					throw new LowLevelPutException(LowLevelPutException.INTERNAL_ERROR, e.toString() + ":" + e.getMessage(), e);
@@ -551,7 +550,7 @@ public class SingleBlockInserter extends SendableInsert implements ClientPutStat
 
 	
 	@Override
-	public SendableRequestSender getSender(ClientContext context) {
+	public SendableRequestSender getSender() {
 		String compress;
 		compress = ctx.compressorDescriptor;
 		return new MySendableRequestSender(compress, this);
@@ -579,7 +578,7 @@ public class SingleBlockInserter extends SendableInsert implements ClientPutStat
 			if(finished) return;
 		}
 		try {
-			encode(context, false);
+			encode(context);
 		} catch (InsertException e) {
 			fail(e, context);
 		} catch (Throwable t) {
@@ -590,7 +589,7 @@ public class SingleBlockInserter extends SendableInsert implements ClientPutStat
 	}
 
 	@Override
-	public synchronized long countSendableKeys(ClientContext context) {
+	public synchronized long countSendableKeys() {
 		if(finished)
 			return 0;
 		else
@@ -598,8 +597,8 @@ public class SingleBlockInserter extends SendableInsert implements ClientPutStat
 	}
 
 	@Override
-	public synchronized long countAllKeys(ClientContext context) {
-		return countSendableKeys(context);
+	public synchronized long countAllKeys() {
+		return countSendableKeys();
 	}
 
 	@Override

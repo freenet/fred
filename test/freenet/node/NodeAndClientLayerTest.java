@@ -60,9 +60,8 @@ public class NodeAndClientLayerTest extends NodeAndClientLayerTestBase {
         params.baseDirectory = dir;
         params.executor = executor;
         Node node = NodeStarter.createTestNode(params);
-        node.start(false);
-        HighLevelSimpleClient client = 
-                node.clientCore.makeClient((short)0, false, false);
+        node.start();
+        HighLevelSimpleClient client = node.clientCore.makeClient((short)0, false);
         InsertContext ictx = client.getInsertContext(true);
         ictx.localRequestOnly = true;
         InsertBlock block = generateBlock(random);

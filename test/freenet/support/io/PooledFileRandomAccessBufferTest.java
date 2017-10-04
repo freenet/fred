@@ -32,7 +32,7 @@ public class PooledFileRandomAccessBufferTest extends RandomAccessBufferTestBase
     @Override
     protected PooledFileRandomAccessBuffer construct(long size) throws IOException {
         File f = File.createTempFile("test", ".tmp", base);
-        return new PooledFileRandomAccessBuffer(f, false, size, r.nextBoolean() ? r : null, -1, true, fds);
+        return new PooledFileRandomAccessBuffer(f, false, size, -1, true, fds);
     }
 
     /** Simplest test for pooling. TODO Add more. */

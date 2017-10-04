@@ -21,10 +21,8 @@ public class DisconnectMessage extends FCPMessage {
 	/**
 	 * Creates a new disconnect message.
 	 *
-	 * @param simpleFieldSet
-	 *            The field set to create the message from
 	 */
-	public DisconnectMessage(SimpleFieldSet simpleFieldSet) {
+	public DisconnectMessage() {
 		/* do nothing. */
 	}
 

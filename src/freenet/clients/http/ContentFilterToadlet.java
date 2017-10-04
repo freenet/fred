@@ -231,7 +231,7 @@ public class ContentFilterToadlet extends Toadlet implements LinkEnabledCallback
             }
             String resultFilename = makeResultFilename(filename, mimeType);
             try {
-                handleFilter(bucket, mimeType, filterOperation, resultHandling, resultFilename, ctx, core);
+                handleFilter(bucket, mimeType, resultHandling, resultFilename, ctx, core);
             } catch (FileNotFoundException e) {
                 writeBadRequestError(l10n("errorNoFileOrCannotReadTitle"), l10n("errorNoFileOrCannotRead", "file", filename), ctx, true);
             }
@@ -281,13 +281,13 @@ public class ContentFilterToadlet extends Toadlet implements LinkEnabledCallback
         return filteredFilename;
     }
     
-    private void handleFilter(Bucket data, String mimeType, FilterOperation operation, ResultHandling resultHandling, String resultFilename, ToadletContext ctx, NodeClientCore core)
+    private void handleFilter(Bucket data, String mimeType, ResultHandling resultHandling, String resultFilename, ToadletContext ctx, NodeClientCore core)
             throws ToadletContextClosedException, IOException, BadRequestException {
         Bucket resultBucket = ctx.getBucketFactory().makeBucket(-1);
         String resultMimeType = null;
         boolean unsafe = false;
         try {
-            FilterStatus status = applyFilter(data, resultBucket, mimeType, operation, core);
+            FilterStatus status = applyFilter(data, resultBucket, mimeType, core);
             resultMimeType = status.mimeType;
         } catch (UnsafeContentTypeException e) {
             unsafe = true;
@@ -315,21 +315,21 @@ public class ContentFilterToadlet extends Toadlet implements LinkEnabledCallback
         }
     }
     
-    private FilterStatus applyFilter(Bucket input, Bucket output, String mimeType, FilterOperation operation, NodeClientCore core)
+    private FilterStatus applyFilter(Bucket input, Bucket output, String mimeType, NodeClientCore core)
             throws UnsafeContentTypeException, IOException {
         InputStream inputStream = null;
         OutputStream outputStream = null;
         try {
             inputStream = input.getInputStream();
             outputStream = output.getOutputStream();
-            return applyFilter(inputStream, outputStream, mimeType, operation, core);
+            return applyFilter(inputStream, outputStream, mimeType, core);
         } finally {
             Closer.close(inputStream);
             Closer.close(outputStream);
         }
     }
-    
-    private FilterStatus applyFilter(InputStream input, OutputStream output, String mimeType, FilterOperation operation, NodeClientCore core)
+
+    private FilterStatus applyFilter(InputStream input, OutputStream output, String mimeType, NodeClientCore core)
             throws UnsafeContentTypeException, IOException {
         URI fakeUri;
         try {

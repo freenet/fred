@@ -167,9 +167,9 @@ public class CHKInsertHandler implements PrioRunnable, ByteCounter {
         
         prb = new PartiallyReceivedBlock(Node.PACKETS_IN_BLOCK, Node.PACKET_SIZE);
         if(htl > 0)
-            sender = node.makeInsertSender(key, htl, uid, tag, source, headers, prb, false, false, forkOnCacheable, preferInsert, ignoreLowBackoff, realTimeFlag);
-        br = new BlockReceiver(node.usm, source, uid, prb, this, node.getTicker(), false, realTimeFlag, myTimeoutHandler, false);
-        
+            sender = node.makeInsertSender(key, htl, uid, tag, source, headers, prb, false, forkOnCacheable, preferInsert, ignoreLowBackoff, realTimeFlag);
+        br = new BlockReceiver(node.usm, source, uid, prb, this, node.getTicker(), realTimeFlag, myTimeoutHandler, false);
+
         // Receive the data, off thread
         Runnable dataReceiver = new DataReceiver();
 		receiveStarted = true;
@@ -321,7 +321,7 @@ public class CHKInsertHandler implements PrioRunnable, ByteCounter {
     		Message m = DMT.createFNPInsertTransfersCompleted(uid, true);
     		source.sendAsync(m, null, this);
     		prb = new PartiallyReceivedBlock(Node.PACKETS_IN_BLOCK, Node.PACKET_SIZE);
-    		br = new BlockReceiver(node.usm, source, uid, prb, this, node.getTicker(), false, realTimeFlag, null, false);
+    		br = new BlockReceiver(node.usm, source, uid, prb, this, node.getTicker(), realTimeFlag, null, false);
     		prb.abort(RetrievalException.NO_DATAINSERT, "No DataInsert", true);
     		source.localRejectedOverload("TimedOutAwaitingDataInsert", realTimeFlag);
     		

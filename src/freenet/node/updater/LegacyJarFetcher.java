@@ -36,7 +36,7 @@ class LegacyJarFetcher implements ClientGetCallback {
 	private boolean failed;
 	final LegacyFetchCallback cb;
 	interface LegacyFetchCallback {
-		public void onSuccess(LegacyJarFetcher fetcher);
+		public void onSuccess();
 		public void onFailure(FetchException e, LegacyJarFetcher fetcher);
 	}
 
@@ -48,7 +48,7 @@ class LegacyJarFetcher implements ClientGetCallback {
 		this.saveTo = saveTo;
 		this.context = core.clientContext;
 		this.cb = cb;
-		ctx = core.makeClient((short) 1, true, false).getFetchContext();
+		ctx = core.makeClient((short) 1, false).getFetchContext();
 		ctx.allowSplitfiles = true;
 		ctx.dontEnterImplicitArchives = false;
 		ctx.maxNonSplitfileRetries = -1;
@@ -86,7 +86,7 @@ class LegacyJarFetcher implements ClientGetCallback {
 			f = fetched;
 		}
 		if(f)
-			cb.onSuccess(this);
+			cb.onSuccess();
 		else {
 			try {
 				cg.start(context);
@@ -141,7 +141,7 @@ class LegacyJarFetcher implements ClientGetCallback {
 			synchronized(this) {
 				fetched = true;
 			}
-			cb.onSuccess(this);
+			cb.onSuccess();
 		}
 	}
 

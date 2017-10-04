@@ -13,7 +13,6 @@ import java.util.Random;
 
 import freenet.client.FetchException;
 import freenet.client.FetchException.FetchExceptionMode;
-import freenet.client.Metadata.SplitfileAlgorithm;
 import freenet.client.async.PersistentJobRunner.CheckpointLock;
 import freenet.crypt.ChecksumFailedException;
 import freenet.keys.CHKBlock;
@@ -115,7 +114,6 @@ public class SplitFileFetcherSegmentStorage {
      * Construct a segment.
      * @param parent
      * @param segNumber
-     * @param splitfileType
      * @param dataBlocks
      * @param checkBlocks
      * @param crossCheckBlocks
@@ -128,7 +126,7 @@ public class SplitFileFetcherSegmentStorage {
      * @param keys
      */
     public SplitFileFetcherSegmentStorage(SplitFileFetcherStorage parent, int segNumber, 
-            SplitfileAlgorithm splitfileType, int dataBlocks, int checkBlocks, int crossCheckBlocks,
+            int dataBlocks, int checkBlocks, int crossCheckBlocks,
             long segmentDataOffset, long segmentCrossCheckDataOffset,
             long segmentKeysOffset, long segmentStatusOffset, 
             boolean writeRetries, SplitFileSegmentKeys keys, KeysFetchingLocally keysFetching) {
@@ -301,7 +299,7 @@ public class SplitFileFetcherSegmentStorage {
                 CheckpointLock lock = null;
                 try {
                     lock = parent.jobRunner.lock();
-                    innerDecode(chunk);
+                    innerDecode();
                 } catch (IOException e) {
                     Logger.error(this, "Failed to decode "+this+" because of disk error: "+e, e);
                     parent.failOnDiskError(e);
@@ -337,7 +335,7 @@ public class SplitFileFetcherSegmentStorage {
     
     /** Attempt FEC decoding. Check blocks before decoding in case there is disk corruption. Check
      * the new decoded blocks afterwards to ensure reproducible behaviour. */
-    private void innerDecode(MemoryLimitedChunk chunk) throws IOException {
+    private void innerDecode() throws IOException {
         if(logMINOR) Logger.minor(this, "Trying to decode "+this+" for "+parent);
         // Even if we fail, once we set tryDecode=true, we need to notify the parent when we're done.
         boolean fail;
@@ -406,7 +404,7 @@ public class SplitFileFetcherSegmentStorage {
                 wasCorrupt = corruptMetadata;
                 corruptMetadata = false;
             }
-            parent.restartedAfterDataCorruption(wasCorrupt);
+            parent.restartedAfterDataCorruption();
             return;
         }
         
@@ -472,7 +470,7 @@ public class SplitFileFetcherSegmentStorage {
                 wasCorrupt = corruptMetadata;
                 corruptMetadata = false;
             }
-            parent.restartedAfterDataCorruption(wasCorrupt);
+            parent.restartedAfterDataCorruption();
             return;
         }
         boolean[] dataBlocksPresent = new boolean[dataBlocks.length];
@@ -986,7 +984,7 @@ public class SplitFileFetcherSegmentStorage {
         if(kill) {
             if(crossSegmentsByBlock == null) {
                 // Fail the whole splitfile immediately.
-                parent.failOnSegment(this);
+                parent.failOnSegment();
             } else {
                 // Could still succeed. But we're not gonna find any more blocks.
                 // Similar to DSOnly... finishedEncoding will fail eventually when all segments
@@ -1123,7 +1121,7 @@ public class SplitFileFetcherSegmentStorage {
         return totalBlocks() - blockChooser.successCount();
     }
 
-    synchronized public long countSendableKeys(long now, int maxRetries) {
+    synchronized public long countSendableKeys() {
         if(finished || tryDecode)
             return 0;
         return blockChooser.countFetchable();
@@ -1135,7 +1133,7 @@ public class SplitFileFetcherSegmentStorage {
         SplitFileSegmentKeys keyList = getSegmentKeys();
         for(int i=0;i<totalBlocks();i++) {
             if(!blockChooser.hasSucceeded(i))
-                keys.add(keyList.getNodeKey(i, null, false));
+                keys.add(keyList.getNodeKey(i, null));
         }
     }
 
@@ -1160,7 +1158,7 @@ public class SplitFileFetcherSegmentStorage {
         if(chosen == -1) {
             long cooldownTime = blockChooser.overallCooldownTime();
             if(cooldownTime > System.currentTimeMillis())
-                parent.increaseCooldown(this, cooldownTime);
+                parent.increaseCooldown(cooldownTime);
             return -1;
         } else {
             return chosen;
@@ -1261,7 +1259,7 @@ public class SplitFileFetcherSegmentStorage {
     }
 
     /** Called after checking datastore for a datastore-only request. */
-    public void onFinishedCheckingDatastoreNoFetch(ClientContext context) {
+    public void onFinishedCheckingDatastoreNoFetch() {
         synchronized(this) {
             if(tryDecode) return;
             if(succeeded) return;

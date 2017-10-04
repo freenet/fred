@@ -58,7 +58,7 @@ public class OfferedKeysList extends BaseSendableGet implements RequestClient {
 	private final short priorityClass;
 	private final boolean isSSK;
 	
-	OfferedKeysList(NodeClientCore core, RandomSource random, short priorityClass, boolean isSSK, boolean realTimeFlag) {
+	OfferedKeysList(RandomSource random, short priorityClass, boolean isSSK, boolean realTimeFlag) {
 		super(false, realTimeFlag);
 		this.keys = new HashSet<Key>();
 		this.keysList = new ArrayList<Key>();
@@ -82,13 +82,13 @@ public class OfferedKeysList extends BaseSendableGet implements RequestClient {
 	}
 
 	@Override
-	public long countAllKeys(ClientContext context) {
+	public long countAllKeys() {
 		// Not supported.
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public long countSendableKeys(ClientContext context) {
+	public long countSendableKeys() {
 		// Not supported.
 		throw new UnsupportedOperationException();
 	}
@@ -154,12 +154,12 @@ public class OfferedKeysList extends BaseSendableGet implements RequestClient {
 	}
 
 	@Override
-	public void internalError(Throwable t, RequestScheduler sched, ClientContext context, boolean persistent) {
+	public void internalError(Throwable t, RequestScheduler sched, boolean persistent) {
 		Logger.error(this, "Internal error: "+t, t);
 	}
 	
 	@Override
-	public SendableRequestSender getSender(ClientContext context) {
+	public SendableRequestSender getSender() {
 		return new SendableRequestSender() {
 
 			@Override

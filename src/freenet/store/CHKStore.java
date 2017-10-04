@@ -18,7 +18,7 @@ public class CHKStore extends StoreCallback<CHKBlock> {
 
 	@Override
 	public CHKBlock construct(byte[] data, byte[] headers,
-			byte[] routingKey, byte[] fullKey, boolean canReadClientCache, boolean canReadSlashdotCache, BlockMetadata meta, DSAPublicKey ignored) throws KeyVerifyException {
+			byte[] fullKey, boolean canReadClientCache, boolean canReadSlashdotCache, BlockMetadata meta, DSAPublicKey ignored) throws KeyVerifyException {
 		if(data == null || headers == null) throw new CHKVerifyException("Need either data and headers");
 		return CHKBlock.construct(data, headers, NodeCHK.cryptoAlgorithmFromFullKey(fullKey));
 	}

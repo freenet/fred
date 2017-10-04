@@ -236,7 +236,6 @@ public class SplitFileFetcherStorage {
      * @param topDontCompress
      * @param topCompatibilityMode
      * @param origFetchContext
-     * @param realTime
      * @param salt
      * @param thisKey
      * @param origKey
@@ -264,7 +263,7 @@ public class SplitFileFetcherStorage {
     public SplitFileFetcherStorage(Metadata metadata, SplitFileFetcherStorageCallback fetcher, 
             List<COMPRESSOR_TYPE> decompressors, ClientMetadata clientMetadata, 
             boolean topDontCompress, short topCompatibilityMode, FetchContext origFetchContext,
-            boolean realTime, KeySalter salt, FreenetURI thisKey, FreenetURI origKey, 
+            KeySalter salt, FreenetURI thisKey, FreenetURI origKey,
             boolean isFinalFetch, byte[] clientDetails, RandomSource random, 
             BucketFactory tempBucketFactory, LockableRandomAccessBufferFactory rafFactory, 
             PersistentJobRunner exec, Ticker ticker, MemoryLimitedJobRunner memoryLimitedJobRunner, 
@@ -426,7 +425,7 @@ public class SplitFileFetcherStorage {
             if((dataBlocks > origFetchContext.maxDataBlocksPerSegment)
                     || (checkBlocks > origFetchContext.maxCheckBlocksPerSegment))
                 throw new FetchException(FetchExceptionMode.TOO_MANY_BLOCKS_PER_SEGMENT, "Too many blocks per segment: "+blocksPerSegment+" data, "+checkBlocksPerSegment+" check");
-            segments[i] = new SplitFileFetcherSegmentStorage(this, i, splitfileType, 
+            segments[i] = new SplitFileFetcherSegmentStorage(this, i,
                     dataBlocks,
                     checkBlocks, crossCheckBlocks, dataOffset, 
                     completeViaTruncation ? crossCheckBlocksOffset : -1, // Put at end if truncating.
@@ -608,17 +607,15 @@ public class SplitFileFetcherStorage {
      * those on ClientContext, i.e. we'd be able to restore the splitfile download without knowing
      * anything about it.
      * @param newSalt True if the global salt has changed.
-     * @param salt The global salter. Should be passed in even if the global salt hasn't changed,
-     * as we may not have completed regenerating bloom filters.
-     * @throws IOException If the restore failed because of a failure to read from disk. 
+     * @throws IOException If the restore failed because of a failure to read from disk.
      * @throws StorageFormatException 
      * @throws FetchException If the request has already failed (but it wasn't processed before 
      * restarting). */
-    public SplitFileFetcherStorage(LockableRandomAccessBuffer raf, boolean realTime,  
+    public SplitFileFetcherStorage(LockableRandomAccessBuffer raf,
             SplitFileFetcherStorageCallback callback, FetchContext origContext,
             RandomSource random, PersistentJobRunner exec, KeysFetchingLocally keysFetching,
             Ticker ticker, MemoryLimitedJobRunner memoryLimitedJobRunner, ChecksumChecker checker, 
-            boolean newSalt, KeySalter salt, boolean resumed, boolean completeViaTruncation) 
+            boolean newSalt, boolean completeViaTruncation)
     throws IOException, StorageFormatException, FetchException {
         this.persistent = true;
         this.raf = raf;
@@ -1173,7 +1170,7 @@ public class SplitFileFetcherStorage {
         return new StreamGenerator() {
 
             @Override
-            public void writeTo(OutputStream os, ClientContext context)
+            public void writeTo(OutputStream os)
                     throws IOException {
                 LockableRandomAccessBuffer.RAFLock lock = raf.lockOpen();
                 try {
@@ -1369,10 +1366,8 @@ public class SplitFileFetcherStorage {
     }
 
     /** A segment ran out of retries. We have given up on that segment and therefore on the whole
-     * splitfile.
-     * @param segment The segment that failed.
-     */
-    public void failOnSegment(SplitFileFetcherSegmentStorage segment) {
+     * splitfile. */
+    public void failOnSegment() {
         fail(new FetchException(FetchExceptionMode.SPLITFILE_ERROR, errors));
     }
 
@@ -1425,7 +1420,7 @@ public class SplitFileFetcherStorage {
         long now = System.currentTimeMillis();
         long total = 0;
         for(SplitFileFetcherSegmentStorage segment : segments)
-            total += segment.countSendableKeys(now, maxRetries);
+            total += segment.countSendableKeys();
         return total;
     }
 
@@ -1527,12 +1522,12 @@ public class SplitFileFetcherStorage {
     /** Local only is true and we've finished checking the datastore. If all segments are not 
      * already finished/decoding, we need to fail with DNF. If the segments fail to decode due to
      * data corruption, we will retry as usual. */
-    public void finishedCheckingDatastoreOnLocalRequest(ClientContext context) {
+    public void finishedCheckingDatastoreOnLocalRequest() {
         // At this point, all the blocks will have been processed.
         if(hasFinished()) return; // Don't need to do anything.
         this.errors.inc(FetchExceptionMode.ALL_DATA_NOT_FOUND);
         for(SplitFileFetcherSegmentStorage segment : segments) {
-            segment.onFinishedCheckingDatastoreNoFetch(context);
+            segment.onFinishedCheckingDatastoreNoFetch();
         }
         maybeComplete();
     }
@@ -1587,7 +1582,7 @@ public class SplitFileFetcherStorage {
                 finalMinCompatMode.ordinal() < CompatibilityMode.COMPAT_1416.ordinal());
     }
 
-    public void restartedAfterDataCorruption(boolean wasCorrupt) {
+    public void restartedAfterDataCorruption() {
         jobRunner.queueNormalOrDrop(new PersistentJob() {
 
             @Override
@@ -1605,8 +1600,7 @@ public class SplitFileFetcherStorage {
     private final Object cooldownLock = new Object();
 
     /** Called when a segment goes into overall cooldown. */
-    void increaseCooldown(SplitFileFetcherSegmentStorage splitFileFetcherSegmentStorage,
-            final long cooldownTime) {
+    void increaseCooldown(final long cooldownTime) {
         // Risky locking-wise, so run as a separate job.
         jobRunner.queueNormalOrDrop(new PersistentJob() {
 

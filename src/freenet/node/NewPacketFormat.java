@@ -17,7 +17,6 @@ import freenet.crypt.HMAC;
 import freenet.crypt.PCFBMode;
 import freenet.io.comm.DMT;
 import freenet.io.comm.Message;
-import freenet.io.comm.Peer;
 import freenet.io.comm.Peer.LocalAddressException;
 import freenet.io.xfer.PacketThrottle;
 import freenet.node.NewPacketFormatKeyContext.AddedAcks;
@@ -119,7 +118,7 @@ public class NewPacketFormat implements PacketFormat {
 	}
 
 	@Override
-	public boolean handleReceivedPacket(byte[] buf, int offset, int length, long now, Peer replyTo) {
+	public boolean handleReceivedPacket(byte[] buf, int offset, int length) {
 		NPFPacket packet = null;
 		SessionKey s = null;
 		for(int i = 0; i < 3; i++) {
@@ -450,7 +449,7 @@ public class NewPacketFormat implements PacketFormat {
 	}
 
 	@Override
-	public boolean maybeSendPacket(long now, boolean ackOnly)
+	public boolean maybeSendPacket(boolean ackOnly)
 	throws BlockedTooLongException {
 		SessionKey sessionKey = pn.getPreviousKeyTracker();
 		if(sessionKey != null) {
@@ -539,7 +538,7 @@ public class NewPacketFormat implements PacketFormat {
 		packet.onSent(data.length, pn);
 
 		if(packet.getFragments().size() > 0) {
-			keyContext.sent(packet.getSequenceNumber(), packet.getLength());
+			keyContext.sent(packet.getSequenceNumber());
 		}
 
 		long now = System.currentTimeMillis();
@@ -567,7 +566,7 @@ public class NewPacketFormat implements PacketFormat {
 		checkForLostPackets();
 		
 		NPFPacket packet = new NPFPacket();
-		SentPacket sentPacket = new SentPacket(this, sessionKey);
+		SentPacket sentPacket = new SentPacket(this);
 		
 		boolean mustSend = false;
 		long now = System.currentTimeMillis();
@@ -637,7 +636,7 @@ addOldLoop:			for(Map<Integer, MessageWrapper> started : startedByPrio) {
 				if(!(addStatsBulk || addStatsRT)) break;
 				
 				if(addStatsBulk) {
-					MessageItem item = pn.makeLoadStats(false, false, true);
+					MessageItem item = pn.makeLoadStats();
 					if(item != null) {
 						byte[] buf = item.getData();
 						haveAddedStatsBulk = buf;
@@ -647,7 +646,7 @@ addOldLoop:			for(Map<Integer, MessageWrapper> started : startedByPrio) {
 				}
 				
 				if(addStatsRT) {
-					MessageItem item = pn.makeLoadStats(true, false, true);
+					MessageItem item = pn.makeLoadStats();
 					if(item != null) {
 						byte[] buf = item.getData();
 						haveAddedStatsRT = buf;
@@ -747,7 +746,7 @@ addOldLoop:			for(Map<Integer, MessageWrapper> started : startedByPrio) {
 		if((!ackOnly) && (!cantSend)) {
 			
 			if(sendStatsBulk) {
-				MessageItem item = pn.makeLoadStats(false, true, false);
+				MessageItem item = pn.makeLoadStats();
 				if(item != null) {
 					if(haveAddedStatsBulk != null) {
 						packet.removeLossyMessage(haveAddedStatsBulk);
@@ -758,7 +757,7 @@ addOldLoop:			for(Map<Integer, MessageWrapper> started : startedByPrio) {
 			}
 			
 			if(sendStatsRT) {
-				MessageItem item = pn.makeLoadStats(true, true, false);
+				MessageItem item = pn.makeLoadStats();
 				if(item != null) {
 					if(haveAddedStatsRT != null) {
 						packet.removeLossyMessage(haveAddedStatsRT);
@@ -857,7 +856,7 @@ addOldLoop:			for(Map<Integer, MessageWrapper> started : startedByPrio) {
 						if(!(addStatsBulk || addStatsRT)) break;
 						
 						if(addStatsBulk) {
-							MessageItem item = pn.makeLoadStats(false, false, true);
+							MessageItem item = pn.makeLoadStats();
 							if(item != null) {
 								byte[] buf = item.getData();
 								haveAddedStatsBulk = item.buf;
@@ -867,7 +866,7 @@ addOldLoop:			for(Map<Integer, MessageWrapper> started : startedByPrio) {
 						}
 						
 						if(addStatsRT) {
-							MessageItem item = pn.makeLoadStats(true, false, true);
+							MessageItem item = pn.makeLoadStats();
 							if(item != null) {
 								byte[] buf = item.getData();
 								haveAddedStatsRT = item.buf;
@@ -895,7 +894,7 @@ addOldLoop:			for(Map<Integer, MessageWrapper> started : startedByPrio) {
 		}
 
 		if(packet.getFragments().size() > 0) {
-			keyContext.sent(sentPacket, seqNum, packet.getLength());
+			keyContext.sent(sentPacket, seqNum);
 		}
 
 		return packet;
@@ -1139,7 +1138,7 @@ addOldLoop:			for(Map<Integer, MessageWrapper> started : startedByPrio) {
 		final List<int[]> ranges = new ArrayList<>();
 		long sentTime;
 
-		SentPacket(NewPacketFormat npf, SessionKey key) {
+		SentPacket(NewPacketFormat npf) {
 			this.npf = npf;
 		}
 
@@ -1219,7 +1218,7 @@ addOldLoop:			for(Map<Integer, MessageWrapper> started : startedByPrio) {
 			}
 		}
 
-		public void sent(int length) {
+		public void sent() {
 			sentTime = System.currentTimeMillis();
 		}
 

@@ -195,13 +195,8 @@ public abstract class UIDTag {
 
 	/** Add up the expected transfers in.
 	 * @param ignoreLocalVsRemote If true, pretend that the request is remote even if it's local.
-	 * @param outwardTransfersPerInsert Expected number of outward transfers for an insert.
-	 * @param forAccept If true, we are deciding whether to accept a request.
-	 * If false, we are deciding whether to SEND a request. We need to be more
-	 * careful for the latter than the former, to avoid unnecessary rejections 
-	 * and mandatory backoffs.
 	 */
-	public abstract int expectedTransfersIn(boolean ignoreLocalVsRemote, int outwardTransfersPerInsert, boolean forAccept);
+	public abstract int expectedTransfersIn(boolean ignoreLocalVsRemote);
 	
 	/** Add up the expected transfers out.
 	 * @param ignoreLocalVsRemote If true, pretend that the request is remote even if it's local.

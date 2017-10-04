@@ -256,7 +256,7 @@ public class PeerManager {
 				SimpleFieldSet fs;
 				fs = new SimpleFieldSet(br, false, true);
 				try {
-					PeerNode pn = PeerNode.create(fs, node, crypto, opennet, this);
+					PeerNode pn = PeerNode.create(fs, node, crypto, opennet);
 					if(oldOpennetPeers) {
 					    if(!(pn instanceof OpennetPeerNode))
 					        Logger.error(this, "Darknet node in old opennet peers?!: "+pn);
@@ -631,7 +631,7 @@ public class PeerManager {
 	 * Connect to a node provided the fieldset representing it.
 	 * @throws PeerTooOldException 
 	 */
-	public void connect(SimpleFieldSet noderef, OutgoingPacketMangler mangler, FRIEND_TRUST trust, FRIEND_VISIBILITY visibility) throws FSParseException, PeerParseException, ReferenceSignatureVerificationException, PeerTooOldException {
+	public void connect(SimpleFieldSet noderef, FRIEND_TRUST trust, FRIEND_VISIBILITY visibility) throws FSParseException, PeerParseException, ReferenceSignatureVerificationException, PeerTooOldException {
 		PeerNode pn = node.createNewDarknetNode(noderef, trust, visibility);
 		PeerNode[] peerList = myPeers();
 		for(PeerNode mp: peerList) {
@@ -1209,7 +1209,7 @@ public class PeerManager {
 									until = now + FailureTable.RECENTLY_FAILED_TIME;
 								}
 								if(!node.failureTable.hadAnyOffers(key)) {
-									recentlyFailed.fail(countWaiting, until);
+									recentlyFailed.fail(until);
 									return null;
 								} else {
 									if(logMINOR) Logger.minor(this, "Have an offer for the key so not sending RecentlyFailed");
@@ -2225,9 +2225,9 @@ public class PeerManager {
 		return null;
 	}
 	
-	void incrementSelectionSamples(long now, PeerNode pn) {
+	void incrementSelectionSamples(PeerNode pn) {
 		// TODO: reimplement with a bit field to spare memory
-		pn.incrementNumberOfSelections(now);
+		pn.incrementNumberOfSelections();
 	}
 	
 	/** Notifies the listeners about status change*/

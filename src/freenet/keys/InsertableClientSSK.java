@@ -101,7 +101,7 @@ public class InsertableClientSSK extends ClientSSK {
 		return new InsertableClientSSK(uri.getDocName(), pkHash, pubKey, privKey, uri.getCryptoKey(), keyType);
 	}
 	
-	public ClientSSKBlock encode(Bucket sourceData, boolean asMetadata, boolean dontCompress, short alreadyCompressedCodec, long sourceLength, RandomSource r, String compressordescriptor, boolean pre1254) throws SSKEncodeException, IOException, InvalidCompressionCodecException {
+	public ClientSSKBlock encode(Bucket sourceData, boolean asMetadata, boolean dontCompress, short alreadyCompressedCodec, long sourceLength, String compressordescriptor, boolean pre1254) throws SSKEncodeException, IOException, InvalidCompressionCodecException {
 		byte[] compressedData;
 		short compressionAlgo;
 		try {

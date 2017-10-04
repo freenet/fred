@@ -586,7 +586,7 @@ final class FCPPluginConnectionImpl implements FCPPluginConnection {
         // sendSynchronous().
         // If there was no sendSynchronous() thread, it returns false, and we must continue to
         // handle case 1.
-        if(dispatchMessageLocallyToSendSynchronousThreadIfExisting(direction, message))
+        if(dispatchMessageLocallyToSendSynchronousThreadIfExisting(message))
             return;
         
         // We now know that the message handler is not attached by network, and that it is not a
@@ -663,8 +663,7 @@ final class FCPPluginConnectionImpl implements FCPPluginConnection {
      *     An overview of how synchronous sends and especially their threading work internally is
      *     provided at the map which stores them.
      */
-    private boolean dispatchMessageLocallyToSendSynchronousThreadIfExisting(
-            final SendDirection direction, final FCPPluginMessage message) {
+    private boolean dispatchMessageLocallyToSendSynchronousThreadIfExisting(final FCPPluginMessage message) {
 
         // Since the message handler is determined to be local at this point, we now must check
         // whether it is a blocking sendSynchronous() thread instead of a regular

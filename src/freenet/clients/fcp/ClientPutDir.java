@@ -59,7 +59,7 @@ public class ClientPutDir extends ClientPutBase {
 
 	public ClientPutDir(FCPConnectionHandler handler, ClientPutDirMessage message, 
 			HashMap<String, Object> manifestElements, boolean wasDiskPut, FCPServer server) throws IdentifierCollisionException, MalformedURLException, TooManyFilesInsertException {
-		super(checkEmptySSK(message.uri, message.targetFilename != null ? message.targetFilename : "site", server.core.clientContext), message.identifier, message.verbosity, null,
+		super(checkEmptySSK(message.uri, message.targetFilename != null ? message.targetFilename : "site", server.core.clientContext), message.identifier, message.verbosity,
 				handler, message.priorityClass, message.persistence, message.clientToken,
 				message.global, message.getCHKOnly, message.dontCompress, message.localRequestOnly, message.maxRetries, message.earlyEncode, message.canWriteClientCache, message.forkOnCacheable, message.compressorDescriptor, message.extraInsertsSingleBlock, message.extraInsertsSplitfileHeaderBlock, message.realTimeFlag, message.compatibilityMode, message.ignoreUSKDatehints, server);
 		logMINOR = Logger.shouldLog(LogLevel.MINOR, this);
@@ -94,7 +94,7 @@ public class ClientPutDir extends ClientPutBase {
 	 * @throws InsertException 
 	*/
 	public ClientPutDir(PersistentRequestClient client, FreenetURI uri, String identifier, int verbosity, short priorityClass, Persistence persistence, String clientToken, boolean getCHKOnly, boolean dontCompress, int maxRetries, File dir, String defaultName, boolean allowUnreadableFiles, boolean includeHiddenFiles, boolean global, boolean earlyEncode, boolean canWriteClientCache, boolean forkOnCacheable, int extraInsertsSingleBlock, int extraInsertsSplitfileHeaderBlock, boolean realTimeFlag, byte[] overrideSplitfileCryptoKey, NodeClientCore core) throws FileNotFoundException, IdentifierCollisionException, MalformedURLException, TooManyFilesInsertException {
-		super(checkEmptySSK(uri, "site", core.clientContext), identifier, verbosity , null, null, client, priorityClass, persistence, clientToken, global, getCHKOnly, dontCompress, maxRetries, earlyEncode, canWriteClientCache, forkOnCacheable, false, extraInsertsSingleBlock, extraInsertsSplitfileHeaderBlock, realTimeFlag, null, InsertContext.CompatibilityMode.COMPAT_DEFAULT, false/*XXX ignoreUSKDatehints*/, core);
+		super(checkEmptySSK(uri, "site", core.clientContext), identifier, verbosity , null, client, priorityClass, persistence, clientToken, global, getCHKOnly, dontCompress, maxRetries, earlyEncode, canWriteClientCache, forkOnCacheable, false, extraInsertsSingleBlock, extraInsertsSplitfileHeaderBlock, realTimeFlag, null, InsertContext.CompatibilityMode.COMPAT_DEFAULT, false/*XXX ignoreUSKDatehints*/, core);
 		wasDiskPut = true;
 		this.overrideSplitfileCryptoKey = overrideSplitfileCryptoKey;
 		logMINOR = Logger.shouldLog(LogLevel.MINOR, this);
@@ -112,7 +112,7 @@ public class ClientPutDir extends ClientPutBase {
 	}
 
 	public ClientPutDir(PersistentRequestClient client, FreenetURI uri, String identifier, int verbosity, short priorityClass, Persistence persistence, String clientToken, boolean getCHKOnly, boolean dontCompress, int maxRetries, HashMap<String, Object> elements, String defaultName, boolean global, boolean earlyEncode, boolean canWriteClientCache, boolean forkOnCacheable, int extraInsertsSingleBlock, int extraInsertsSplitfileHeaderBlock, boolean realTimeFlag, byte[] overrideSplitfileCryptoKey, NodeClientCore core) throws IdentifierCollisionException, MalformedURLException, TooManyFilesInsertException {
-		super(checkEmptySSK(uri, "site", core.clientContext), identifier, verbosity , null, null, client, priorityClass, persistence, clientToken, global, getCHKOnly, dontCompress, maxRetries, earlyEncode, canWriteClientCache, forkOnCacheable, false, extraInsertsSingleBlock, extraInsertsSplitfileHeaderBlock, realTimeFlag, null, InsertContext.CompatibilityMode.COMPAT_DEFAULT, false/*XXX ignoreUSKDatehints*/, core);
+		super(checkEmptySSK(uri, "site", core.clientContext), identifier, verbosity , null, client, priorityClass, persistence, clientToken, global, getCHKOnly, dontCompress, maxRetries, earlyEncode, canWriteClientCache, forkOnCacheable, false, extraInsertsSingleBlock, extraInsertsSplitfileHeaderBlock, realTimeFlag, null, InsertContext.CompatibilityMode.COMPAT_DEFAULT, false/*XXX ignoreUSKDatehints*/, core);
 		wasDiskPut = false;
 		this.overrideSplitfileCryptoKey = overrideSplitfileCryptoKey;
 		logMINOR = Logger.shouldLog(LogLevel.MINOR, this);
@@ -187,7 +187,7 @@ public class ClientPutDir extends ClientPutBase {
 	private void makePutter(ClientContext context) throws TooManyFilesInsertException {
 	    putter = new DefaultManifestPutter(this,
 	            manifestElements, priorityClass, uri, defaultName, ctx,
-	            persistence == Persistence.FOREVER, overrideSplitfileCryptoKey, context);
+	            overrideSplitfileCryptoKey, context);
 	}
 
 	@Override
@@ -334,10 +334,10 @@ public class ClientPutDir extends ClientPutBase {
 		return true;
 	}
 
-	public void onFailure(FetchException e, ClientGetter state) {}
+	public void onFailure() {}
 
-	public void onSuccess(FetchResult result, ClientGetter state) {}
-	
+	public void onSuccess() {}
+
 	@Override
 	public void onSuccess(BaseClientPutter state) {
 		super.onSuccess(state);

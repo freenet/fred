@@ -240,6 +240,7 @@ public abstract class LocalFileBrowserToadlet extends Toadlet {
 		renderPage(persistenceFields(readGET(request)), request.getParam("path"), ctx, selectedValue(request));
 	}
 
+	@SuppressWarnings("UnusedParameters")
 	public void handleMethodPOST (URI uri, HTTPRequest request, final ToadletContext ctx)
 	        throws ToadletContextClosedException, IOException, RedirectException {
 		renderPage(persistenceFields(readPOST(request)), request.getPartAsStringFailsafe("path", MAX_POST_SIZE),

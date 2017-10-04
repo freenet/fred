@@ -82,7 +82,7 @@ public class CachingFreenetStore<T extends StorableBlock> extends ProxyFreenetSt
 		
 		if(block != null) {
 			try {
-				return this.callback.construct(block.data, block.header, routingKey, block.block.getFullKey(), canReadClientCache, canReadSlashdotCache, meta, null);
+				return this.callback.construct(block.data, block.header, block.block.getFullKey(), canReadClientCache, canReadSlashdotCache, meta, null);
 			} catch (KeyVerifyException e) {
 				Logger.error(this, "Error in fetching for CachingFreenetStore: "+e, e);
 			}

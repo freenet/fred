@@ -702,11 +702,6 @@ final public class FileUtil {
 			throw new IOException("Unable to delete file "+file);
 	}
 
-	@Deprecated
-    public static void secureDelete(File file, Random random) throws IOException {
-        secureDelete(file);
-    }
-    
 	/**
 	** Set owner-only RW on the given file.
 	*/

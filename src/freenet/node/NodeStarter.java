@@ -192,7 +192,7 @@ public class NodeStarter implements WrapperListener {
 
 		try {
 			node = new Node(cfg, null, null, logConfigHandler, this, executor);
-			node.start(false);
+			node.start();
 			System.out.println("Node initialization completed.");
 		} catch(NodeInitException e) {
 			System.err.println("Failed to load node: " + e.exitCode + " : " + e.getMessage());

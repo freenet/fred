@@ -83,7 +83,7 @@ public abstract class BaseManifestPutter extends ManifestPutter {
 
         private ArchivePutHandler(BaseManifestPutter bmp, PutHandler parent, String name, HashMap<String, Object> data, FreenetURI insertURI) {
 			super(bmp, parent, name, null, containerPutHandlers);
-			this.origSFI = new ContainerInserter(this, this, data, insertURI, ctx, false, false, null, ARCHIVE_TYPE.TAR, false, forceCryptoKey, cryptoAlgorithm, realTimeFlag);
+			this.origSFI = new ContainerInserter(this, this, data, insertURI, ctx, false, false, null, ARCHIVE_TYPE.TAR, forceCryptoKey, cryptoAlgorithm, realTimeFlag);
 		}
 
 		@Override
@@ -136,9 +136,9 @@ public abstract class BaseManifestPutter extends ManifestPutter {
 
         private static final long serialVersionUID = 1L;
 
-        private ContainerPutHandler(BaseManifestPutter bmp, PutHandler parent, String name, HashMap<String, Object> data, FreenetURI insertURI, Object object, HashSet<PutHandler> runningMap) {
+        private ContainerPutHandler(BaseManifestPutter bmp, PutHandler parent, String name, HashMap<String, Object> data, FreenetURI insertURI, HashSet<PutHandler> runningMap) {
 			super(bmp, parent, name, null, runningMap);
-			this.origSFI = new ContainerInserter(this, this, data, insertURI, ctx, false, false, null, ARCHIVE_TYPE.TAR, false, forceCryptoKey, cryptoAlgorithm, realTimeFlag);
+			this.origSFI = new ContainerInserter(this, this, data, insertURI, ctx, false, false, null, ARCHIVE_TYPE.TAR, forceCryptoKey, cryptoAlgorithm, realTimeFlag);
 		}
 
 		@Override
@@ -187,7 +187,7 @@ public abstract class BaseManifestPutter extends ManifestPutter {
         private ExternPutHandler(BaseManifestPutter bmp, PutHandler parent, String name, RandomAccessBucket data, ClientMetadata cm2) {
 			super(bmp, parent, name, cm2, runningPutHandlers);
 			InsertBlock block = new InsertBlock(data, cm, FreenetURI.EMPTY_CHK_URI);
-			this.origSFI = new SingleFileInserter(this, this, block, false, ctx, realTimeFlag, false, true, null, null, false, null, false, persistent(), 0, 0, null, cryptoAlgorithm, forceCryptoKey, -1);
+			this.origSFI = new SingleFileInserter(this, this, block, false, ctx, realTimeFlag, true, null, null, false, null, false, persistent(), 0, 0, null, cryptoAlgorithm, forceCryptoKey, -1);
 		}
 
 		@Override
@@ -282,7 +282,7 @@ public abstract class BaseManifestPutter extends ManifestPutter {
 		private MetaPutHandler(BaseManifestPutter smp, PutHandler parent, InsertBlock insertBlock) {
 			super(smp, parent, null, null, null);
 			// Treat as splitfile for purposes of determining number of reinserts.
-			this.origSFI = new SingleFileInserter(this, this, insertBlock, true, ctx, realTimeFlag, false, false, null, null, true, null, true, persistent(), 0, 0, null, cryptoAlgorithm, null, -1);
+			this.origSFI = new SingleFileInserter(this, this, insertBlock, true, ctx, realTimeFlag, false, null, null, true, null, true, persistent(), 0, 0, null, cryptoAlgorithm, null, -1);
 			if(logMINOR) Logger.minor(this, "Inserting root metadata: "+origSFI);
 		}
 
@@ -293,7 +293,7 @@ public abstract class BaseManifestPutter extends ManifestPutter {
 			metadata = toResolve;
 			// Treat as splitfile for purposes of determining number of reinserts.
 			InsertBlock ib = new InsertBlock(b, null, FreenetURI.EMPTY_CHK_URI);
-			this.origSFI = new SingleFileInserter(this, this, ib, true, ctx, realTimeFlag, false, false, toResolve, null, true, null, true, persistent(), 0, 0, null, cryptoAlgorithm, null, -1);
+			this.origSFI = new SingleFileInserter(this, this, ib, true, ctx, realTimeFlag, false, toResolve, null, true, null, true, persistent(), 0, 0, null, cryptoAlgorithm, null, -1);
 			if(logMINOR) Logger.minor(this, "Inserting subsidiary metadata: "+origSFI+" for "+toResolve);
 		}
 
@@ -535,7 +535,7 @@ public abstract class BaseManifestPutter extends ManifestPutter {
 					}
 				}
 			}
-			tryComplete(context);
+			tryComplete();
 		}
 
 		@Override
@@ -1043,7 +1043,7 @@ public abstract class BaseManifestPutter extends ManifestPutter {
 		}
 	}
 
-	private void tryComplete(ClientContext context) {
+	private void tryComplete() {
 		//debugDecompose("try complete");
 		if(logDEBUG) Logger.debug(this, "try complete", new Error("trace tryComplete()"));
 		synchronized(this) {
@@ -1072,10 +1072,10 @@ public abstract class BaseManifestPutter extends ManifestPutter {
 			}
 			finished = true;
 		}
-		complete(context);
+		complete();
 	}
 
-	private void complete(ClientContext context) {
+	private void complete() {
 		// FIXME we could remove the put handlers after inserting all files but not having finished the insert of the manifest
 		// However it would complicate matters for no real gain in most cases...
 		// Also doing it this way means we don't need to worry about
@@ -1466,7 +1466,7 @@ public abstract class BaseManifestPutter extends ManifestPutter {
 				selfHandle = new ContainerPutHandler(BaseManifestPutter.this,
 						parent, name, _rootDir,
 						(isRoot ? BaseManifestPutter.this.targetURI
-								: FreenetURI.EMPTY_CHK_URI), null, (isRoot ? null : containerPutHandlers));
+								: FreenetURI.EMPTY_CHK_URI), (isRoot ? null : containerPutHandlers));
 			currentDir = _rootDir;
 			if (isRoot) {
 				rootContainerPutHandler = (ContainerPutHandler)selfHandle;

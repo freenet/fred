@@ -16,7 +16,7 @@ public class PubkeyStore extends StoreCallback<DSAPublicKey> {
 	}
 
 	@Override
-	public DSAPublicKey construct(byte[] data, byte[] headers, byte[] routingKey,
+	public DSAPublicKey construct(byte[] data, byte[] headers,
 			byte[] fullKey, boolean canReadClientCache, boolean canReadSlashdotCache, BlockMetadata meta, DSAPublicKey ignored) throws KeyVerifyException {
 		if(data == null) throw new PubkeyVerifyException("Need data to construct pubkey");
 		try {
@@ -32,7 +32,7 @@ public class PubkeyStore extends StoreCallback<DSAPublicKey> {
 	
 	final private static byte[] empty = new byte[0];
 	
-	public void put(byte[] hash, DSAPublicKey key, boolean isOldBlock) throws IOException {
+	public void put(DSAPublicKey key, boolean isOldBlock) throws IOException {
 		try {
 			store.put(key, key.asPaddedBytes(), empty, false, isOldBlock);
 		} catch (KeyCollisionException e) {

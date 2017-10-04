@@ -79,7 +79,7 @@ public class SSKInsertSender extends BaseSender implements PrioRunnable, AnyInse
     /** Could not get off the node at all! */
     static final int ROUTE_REALLY_NOT_FOUND = 6;
     
-    SSKInsertSender(SSKBlock block, long uid, InsertTag tag, short htl, PeerNode source, Node node, boolean fromStore, boolean canWriteClientCache, boolean forkOnCacheable, boolean preferInsert, boolean ignoreLowBackoff, boolean realTimeFlag) {
+    SSKInsertSender(SSKBlock block, long uid, InsertTag tag, short htl, PeerNode source, Node node, boolean fromStore, boolean forkOnCacheable, boolean preferInsert, boolean ignoreLowBackoff, boolean realTimeFlag) {
     	super(block.getKey(), realTimeFlag, source, node, htl, uid);
     	this.fromStore = fromStore;
     	this.origUID = uid;
@@ -698,7 +698,7 @@ public class SSKInsertSender extends BaseSender implements PrioRunnable, AnyInse
 	}
 
 	@Override
-	protected void timedOutWhileWaiting(double load) {
+	protected void timedOutWhileWaiting() {
 		htl -= (short)Math.max(0, hopsForFatalTimeoutWaitingForPeer());
 		if(htl < 0) htl = 0;
         // Backtrack, i.e. RNF.

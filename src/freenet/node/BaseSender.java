@@ -170,7 +170,7 @@ public abstract class BaseSender implements ByteCounter {
 			 */
         	next.sendSync(req, this, realTimeFlag);
                 next.reportRoutedTo(key.toNormalizedDouble(), source == null, realTimeFlag, source, nodesRoutedTo, htl);
-			node.peers.incrementSelectionSamples(System.currentTimeMillis(), next);
+			node.peers.incrementSelectionSamples(next);
         } catch (NotConnectedException e) {
         	Logger.minor(this, "Not connected");
         	next.noLongerRoutingTo(origTag, false);
@@ -434,7 +434,7 @@ loadWaiterLoop:
     					
     					if(addedExtraNode) {
     						// Backtrack
-    						timedOutWhileWaiting(getLoad(waitedFor));
+    						timedOutWhileWaiting();
     						// Above is responsible for termination or rerouting.
     						return;
     					} else {
@@ -706,12 +706,9 @@ loadWaiterLoop:
 	}
 
 	protected abstract long getAcceptedTimeout();
-	
-	/** We timed out while waiting for a slot from any node. Fail the request.
-	 * @param load The proportion of requests getting timed out, on average,
-	 * across the nodes we are waiting for. This is used to decide how long the
-	 * RecentlyFailed should be for. */
-	protected abstract void timedOutWhileWaiting(double load);
+
+	/** We timed out while waiting for a slot from any node. Fail the request. */
+	protected abstract void timedOutWhileWaiting();
 	
 	protected abstract void onAccepted(PeerNode next);
 	

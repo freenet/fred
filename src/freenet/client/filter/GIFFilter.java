@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
-import java.util.HashMap;
 
 import freenet.l10n.NodeL10n;
 import freenet.support.io.FileUtil;
@@ -32,8 +31,7 @@ public class GIFFilter implements ContentDataFilter {
 		
 	
 	@Override
-	public void readFilter(InputStream input, OutputStream output, String charset, HashMap<String, String> otherParams,
-	        FilterCallback cb) throws DataFilterException, IOException {
+	public void readFilter(InputStream input, OutputStream output, String charset, FilterCallback cb) throws DataFilterException, IOException {
 		DataInputStream dis = new DataInputStream(input);
 		try {
 			// Check the header

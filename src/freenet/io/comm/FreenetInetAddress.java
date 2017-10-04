@@ -129,7 +129,7 @@ public class FreenetInetAddress {
 		hostname = null;
 	}
 
-	public FreenetInetAddress(String host, boolean allowUnknown) throws UnknownHostException {
+	public FreenetInetAddress(String host) throws UnknownHostException {
         InetAddress addr = null;
         if(host != null){
         	if(host.startsWith("/")) host = host.substring(1);

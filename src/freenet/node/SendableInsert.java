@@ -32,7 +32,7 @@ public abstract class SendableInsert extends SendableRequest {
 	public abstract void onFailure(LowLevelPutException e, SendableRequestItem keyNum, ClientContext context);
 
 	@Override
-	public void internalError(Throwable t, RequestScheduler sched, ClientContext context, boolean persistent) {
+	public void internalError(Throwable t, RequestScheduler sched, boolean persistent) {
 		Logger.error(this, "Internal error on "+this+" : "+t, t);
 		sched.callFailure(this, new LowLevelPutException(LowLevelPutException.INTERNAL_ERROR, t.getMessage(), t), NativeThread.MAX_PRIORITY, persistent);
 	}

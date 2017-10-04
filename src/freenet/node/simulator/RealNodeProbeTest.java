@@ -77,7 +77,7 @@ public class RealNodeProbeTest extends RealNodeRoutingTest {
 
 		for(int i = 0; i < NUMBER_OF_NODES; i++) {
 			System.err.println("Starting node " + i);
-			nodes[i].start(false);
+			nodes[i].start();
 		}
 
         System.out.println();

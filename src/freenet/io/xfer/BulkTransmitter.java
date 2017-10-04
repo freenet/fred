@@ -33,8 +33,8 @@ public class BulkTransmitter {
 	
 	public interface AllSentCallback {
 
-		void allSent(BulkTransmitter bulkTransmitter, boolean anyFailed);
-		
+		void allSent();
+
 	}
 
 	/** If no packets sent in this period, and no completion acknowledgement / cancellation, assume failure. */
@@ -330,7 +330,7 @@ outer:	while(true) {
 			// Congestion control and bandwidth limiting
 			try {
 				if(logMINOR) Logger.minor(this, "Sending packet "+blockNo);
-				Message msg = DMT.createFNPBulkPacketSend(uid, blockNo, buf, realTime);
+				Message msg = DMT.createFNPBulkPacketSend(uid, blockNo, buf);
 				UnsentPacketTag tag = new UnsentPacketTag();
 				peer.sendAsync(msg, tag, ctr);
 				synchronized(this) {
@@ -370,17 +370,17 @@ outer:	while(true) {
 				}
 			}
 			if(callAllSent) {
-				callAllSentCallbackInner(anyFailed);
+				callAllSentCallbackInner();
 			}
 		}
 	}
 	
-	private void callAllSentCallbackInner(final boolean anyFailed) {
+	private void callAllSentCallbackInner() {
 		prb.usm.getExecutor().execute(new PrioRunnable() {
 
 			@Override
 			public void run() {
-				allSentCallback.allSent(BulkTransmitter.this, anyFailed);
+				allSentCallback.allSent();
 			}
 
 			@Override
@@ -468,7 +468,7 @@ outer:	while(true) {
 				anyFailed = failedPacket;
 			}
 			if(logMINOR) Logger.minor(this, "Calling all sent callback on "+this);
-			callAllSentCallbackInner(anyFailed);
+			callAllSentCallbackInner();
 		}
 		
 	}

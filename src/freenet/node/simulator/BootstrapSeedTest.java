@@ -59,7 +59,7 @@ public class BootstrapSeedTest {
     	Logger.getChain().setThreshold(LogLevel.ERROR); // kill logging
     	long startTime = System.currentTimeMillis();
     	// Start it
-        node.start(true);
+        node.start();
         // Wait until we have 10 connected nodes...
         int seconds = 0;
 		int targetPeers = node.getOpennet().getAnnouncementThreshold();

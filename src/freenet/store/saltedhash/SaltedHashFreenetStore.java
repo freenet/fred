@@ -144,7 +144,7 @@ public class SaltedHashFreenetStore<T extends StorableBlock> implements FreenetS
 	}
 
 	public static <T extends StorableBlock> SaltedHashFreenetStore<T> construct(File baseDir, String name, StoreCallback<T> callback, Random random,
-	        long maxKeys, boolean useSlotFilter, SemiOrderedShutdownHook shutdownHook, boolean preallocate, boolean resizeOnStart, Ticker exec, byte[] masterKey)
+	        long maxKeys, boolean useSlotFilter, SemiOrderedShutdownHook shutdownHook, boolean preallocate, boolean resizeOnStart, byte[] masterKey)
 	        throws IOException {
 		return new SaltedHashFreenetStore<T>(baseDir, name, callback, random, maxKeys, useSlotFilter,
 		        shutdownHook, preallocate, resizeOnStart, masterKey);
@@ -743,7 +743,7 @@ public class SaltedHashFreenetStore<T extends StorableBlock> implements FreenetS
 			if (!cipherManager.decrypt(this, routingKey))
 				return null;
 
-			T block = callback.construct(data, header, routingKey, fullKey, canReadClientCache, canReadSlashdotCache, meta, knownKey);
+			T block = callback.construct(data, header, fullKey, canReadClientCache, canReadSlashdotCache, meta, knownKey);
 			byte[] blockRoutingKey = block.getRoutingKey();
 
 			if (!Arrays.equals(blockRoutingKey, routingKey)) {

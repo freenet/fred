@@ -3,8 +3,6 @@
  * http://www.gnu.org/ for further details of the GPL. */
 package freenet.support.math;
 
-import java.io.DataOutputStream;
-
 import freenet.support.Logger;
 import freenet.support.Logger.LogLevel;
 
@@ -133,11 +131,7 @@ public final class SimpleRunningAverage implements RunningAverage, Cloneable {
         report((double)d);
     }
 
-    /**
-     * 
-     * @param out
-     */
-    public void writeDataTo(DataOutputStream out) {
+    public void writeDataTo() {
         throw new UnsupportedOperationException();
     }
 

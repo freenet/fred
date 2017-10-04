@@ -635,7 +635,7 @@ public final class RequestSender extends BaseSender implements PrioRunnable {
 				public void onTimeout() {
 					Logger.warning(this, "Timeout awaiting reply to offer request on "+this+" to "+pn);
 					// Two stage timeout.
-					OFFER_STATUS status = handleOfferTimeout(offer, pn, offers);
+					OFFER_STATUS status = handleOfferTimeout(offer, pn);
 					tryOffers(offers, pn, status);
 				}
 				
@@ -679,8 +679,7 @@ public final class RequestSender extends BaseSender implements PrioRunnable {
     	}
 	}
 
-	private OFFER_STATUS handleOfferTimeout(final BlockOffer offer, final PeerNode pn,
-			OfferList offers) {
+	private OFFER_STATUS handleOfferTimeout(final BlockOffer offer, final PeerNode pn) {
 		try {
 			node.usm.addAsyncFilter(getOfferedKeyReplyFilter(pn, GET_OFFER_LONG_TIMEOUT), new SlowAsyncMessageFilterCallback() {
 				
@@ -841,9 +840,9 @@ public final class RequestSender extends BaseSender implements PrioRunnable {
         			notifyAll();
         		}
         		fireCHKTransferBegins();
-				
-        		BlockReceiver br = new BlockReceiver(node.usm, pn, uid, prb, this, node.getTicker(), true, realTimeFlag, myTimeoutHandler, true);
-        		
+
+        		BlockReceiver br = new BlockReceiver(node.usm, pn, uid, prb, this, node.getTicker(), realTimeFlag, myTimeoutHandler, true);
+
        			if(logMINOR) Logger.minor(this, "Receiving data (for offer reply)");
        			receivingAsync = true;
        			br.receive(new BlockReceiverCompletion() {
@@ -971,12 +970,12 @@ public final class RequestSender extends BaseSender implements PrioRunnable {
 		if(logMINOR) Logger.minor(this, "Handling message "+msg+" on "+this);
     	
     	if(msg.getSpec() == DMT.FNPDataNotFound) {
-    		handleDataNotFound(msg, wasFork, source);
+    		handleDataNotFound(wasFork, source);
     		return DO.FINISHED;
     	}
     	
     	if(msg.getSpec() == DMT.FNPRecentlyFailed) {
-    		handleRecentlyFailed(msg, wasFork, source);
+    		handleRecentlyFailed(msg, source);
     		// We will resolve finish() in routeRequests(), after recomputing.
     		return DO.NEXT_PEER;
     	}
@@ -1097,8 +1096,8 @@ public final class RequestSender extends BaseSender implements PrioRunnable {
     		fireCHKTransferBegins();
     	
     	final long tStart = System.currentTimeMillis();
-    	final BlockReceiver br = new BlockReceiver(node.usm, next, uid, prb, this, node.getTicker(), true, realTimeFlag, myTimeoutHandler, true);
-    	
+    	final BlockReceiver br = new BlockReceiver(node.usm, next, uid, prb, this, node.getTicker(), realTimeFlag, myTimeoutHandler, true);
+
     	if(failNow) {
     		if(logMINOR) Logger.minor(this, "Terminating forked transfer on "+this+" from "+next);
     		prb.abort(RetrievalException.CANCELLED_BY_RECEIVER, "Cancelling fork", true);
@@ -1272,7 +1271,7 @@ public final class RequestSender extends BaseSender implements PrioRunnable {
 		next.noLongerRoutingTo(origTag, false);
 	}
 
-	private void handleDataNotFound(Message msg, boolean wasFork, PeerNode next) {
+	private void handleDataNotFound(boolean wasFork, PeerNode next) {
 		next.successNotOverload(realTimeFlag);
 		node.failureTable.onFinalFailure(key, next, htl, origHTL, FailureTable.RECENTLY_FAILED_TIME, FailureTable.REJECT_TIME, source);
 		if(!wasFork)
@@ -1281,7 +1280,7 @@ public final class RequestSender extends BaseSender implements PrioRunnable {
 			next.noLongerRoutingTo(origTag, false);
 	}
 
-	private void handleRecentlyFailed(Message msg, boolean wasFork, PeerNode next) {
+	private void handleRecentlyFailed(Message msg, PeerNode next) {
 		next.successNotOverload(realTimeFlag);
 		/*
 		 * Must set a correct recentlyFailedTimeLeft before calling this finish(), because it will be
@@ -1717,7 +1716,7 @@ public final class RequestSender extends BaseSender implements PrioRunnable {
         		return false;
     		}
     		
-        	SimpleFieldSet ref = OpennetManager.validateNoderef(noderef, 0, noderef.length, next, false);
+        	SimpleFieldSet ref = OpennetManager.validateNoderef(noderef, next, false);
         	
         	if(ref == null) {
         		ackOpennet(next);
@@ -2125,7 +2124,7 @@ public final class RequestSender extends BaseSender implements PrioRunnable {
 	}
 
 	@Override
-	protected void timedOutWhileWaiting(double load) {
+	protected void timedOutWhileWaiting() {
 		htl -= (short)Math.max(0, hopsForFatalTimeoutWaitingForPeer());
 		if(htl < 0) htl = 0;
 		// Timeouts while waiting for a slot are relatively normal.

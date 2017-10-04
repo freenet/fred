@@ -491,7 +491,7 @@ public abstract class ConnectionsToadlet extends Toadlet {
 					totalSelectionRate += status.getSelectionRate();
 				}
 				for (PeerNodeStatus peerNodeStatus: peerNodeStatuses) {
-					drawRow(peerTable, peerNodeStatus, advancedMode, fProxyJavascriptEnabled, now, path, enablePeerActions, endCols, drawMessageTypes, totalSelectionRate, fix1);
+					drawRow(peerTable, peerNodeStatus, advancedMode, fProxyJavascriptEnabled, now, enablePeerActions, endCols, drawMessageTypes, totalSelectionRate, fix1);
 				}
 
 				if(peerForm != null) {
@@ -952,7 +952,7 @@ public abstract class ConnectionsToadlet extends Toadlet {
 
 	abstract protected SimpleFieldSet getNoderef();
 
-	private void drawRow(HTMLNode peerTable, PeerNodeStatus peerNodeStatus, boolean advancedModeEnabled, boolean fProxyJavascriptEnabled, long now, String path, boolean enablePeerActions, SimpleColumn[] endCols, boolean drawMessageTypes, double totalSelectionRate, DecimalFormat fix1) {
+	private void drawRow(HTMLNode peerTable, PeerNodeStatus peerNodeStatus, boolean advancedModeEnabled, boolean fProxyJavascriptEnabled, long now, boolean enablePeerActions, SimpleColumn[] endCols, boolean drawMessageTypes, double totalSelectionRate, DecimalFormat fix1) {
 		double selectionRate = peerNodeStatus.getSelectionRate();
 		int peerSelectionPercentage = 0;
 		if(totalSelectionRate > 0)

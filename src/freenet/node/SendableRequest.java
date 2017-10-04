@@ -70,19 +70,18 @@ public abstract class SendableRequest implements RandomGrabArrayItem, Serializab
 	
 	/** All key identifiers. Including those not currently eligible to be sent because 
 	 * they are on a cooldown queue, requests for them are in progress, etc. */
-	public abstract long countAllKeys(ClientContext context);
+	public abstract long countAllKeys();
 
 	/** All key identifiers currently eligible to be sent. Does not include those 
 	 * currently running, on the cooldown queue etc. */
-	public abstract long countSendableKeys(ClientContext context);
+	public abstract long countSendableKeys();
 
 	/**
 	 * Get or create a SendableRequestSender for this object. This is a non-persistent
 	 * object used to send the requests. @see SendableGet.getSender().
-	 * @param context A client context may also be necessary.
 	 * @return
 	 */
-	public abstract SendableRequestSender getSender(ClientContext context);
+	public abstract SendableRequestSender getSender();
 	
 	/** If true, the request has been cancelled, or has completed, either way it need not
 	 * be registered any more. isEmpty() on the other hand means there are no queued blocks.
@@ -152,7 +151,7 @@ public abstract class SendableRequest implements RandomGrabArrayItem, Serializab
 	public abstract boolean isInsert();
 	
 	/** Requeue after an internal error */
-	public abstract void internalError(Throwable t, RequestScheduler sched, ClientContext context, boolean persistent);
+	public abstract void internalError(Throwable t, RequestScheduler sched, boolean persistent);
 
 	public boolean realTimeFlag() {
 		return realTimeFlag;

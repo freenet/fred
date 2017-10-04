@@ -96,7 +96,7 @@ public class USKManager {
 	private ClientContext context;
 	
 	public USKManager(NodeClientCore core) {
-		HighLevelSimpleClient client = core.makeClient(RequestStarter.UPDATE_PRIORITY_CLASS, false, false);
+		HighLevelSimpleClient client = core.makeClient(RequestStarter.UPDATE_PRIORITY_CLASS, false);
 		client.setMaxIntermediateLength(FProxyToadlet.MAX_LENGTH_NO_PROGRESS);
 		client.setMaxLength(FProxyToadlet.MAX_LENGTH_NO_PROGRESS);
 		backgroundFetchContext = client.getFetchContext();
@@ -142,8 +142,8 @@ public class USKManager {
 		else return -1;
 	}
 
-	public USKFetcherTag getFetcher(USK usk, FetchContext ctx, boolean keepLast, boolean persistent, boolean realTime, 
-			USKFetcherCallback callback, boolean ownFetchContext, ClientContext context, boolean checkStoreOnly) {
+	public USKFetcherTag getFetcher(USK usk, FetchContext ctx, boolean keepLast, boolean persistent, boolean realTime,
+			USKFetcherCallback callback, boolean ownFetchContext, boolean checkStoreOnly) {
 		return USKFetcherTag.create(usk, callback, persistent, realTime, ctx, keepLast, 0, ownFetchContext, checkStoreOnly || ctx.localRequestOnly);
 	}
 
@@ -152,9 +152,9 @@ public class USKManager {
 		return new USKFetcher(usk, this, ctx, requester, 3, false, keepLastData, checkStoreOnly);
 	}
 	
-	public USKFetcherTag getFetcherForInsertDontSchedule(USK usk, short prioClass, USKFetcherCallback cb, RequestClient client, ClientContext context, boolean persistent, boolean ignoreUSKDatehints) {
+	public USKFetcherTag getFetcherForInsertDontSchedule(USK usk, USKFetcherCallback cb, RequestClient client, boolean persistent, boolean ignoreUSKDatehints) {
 		FetchContext fctx = ignoreUSKDatehints ? backgroundFetchContextIgnoreDBR : backgroundFetchContext;
-		return getFetcher(usk, persistent ? new FetchContext(fctx, FetchContext.IDENTICAL_MASK) : fctx, true, client.persistent(), client.realTimeFlag(), cb, true, context, false);
+		return getFetcher(usk, persistent ? new FetchContext(fctx, FetchContext.IDENTICAL_MASK) : fctx, true, client.persistent(), client.realTimeFlag(), cb, true, false);
 	}
 	
 	/**
@@ -279,7 +279,7 @@ public class USKManager {
 		}
 	}
 
-	public void startTemporaryBackgroundFetcher(USK usk, ClientContext context, final FetchContext fctx, boolean prefetchContent, boolean realTimeFlag) {
+	public void startTemporaryBackgroundFetcher(USK usk, final FetchContext fctx, boolean prefetchContent, boolean realTimeFlag) {
 		final USK clear = usk.clearCopy();
 		USKFetcher sched = null;
 		ArrayList<USKFetcher> toCancel = null;
@@ -607,7 +607,7 @@ public class USKManager {
 			}
 			USKFetcher f = backgroundFetchersByClearUSK.get(clear);
 			if(f != null) {
-				f.removeSubscriber(cb, context);
+				f.removeSubscriber(cb);
 				if(!f.hasSubscribers()) {
 						toCancel = f;
 						backgroundFetchersByClearUSK.remove(clear);
@@ -667,7 +667,7 @@ public class USKManager {
 		return ret;
 	}
 	
-	public void unsubscribeContent(USK origUSK, USKRetriever ret, boolean runBackgroundFetch) {
+	public void unsubscribeContent(USKRetriever ret) {
 		ret.unsubscribe(this);
 	}
 	
@@ -720,7 +720,7 @@ public class USKManager {
 		return context;
 	}
 
-	public void checkUSK(FreenetURI uri, boolean persistent, boolean isMetadata) {
+	public void checkUSK(FreenetURI uri, boolean isMetadata) {
 		try {
 			FreenetURI uu;
 			if(uri.isSSK() && uri.isSSKForUSK()) {

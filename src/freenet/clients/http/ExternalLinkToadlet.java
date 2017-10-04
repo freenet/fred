@@ -32,6 +32,7 @@ public class ExternalLinkToadlet extends Toadlet {
 		return PATH;
 	}
 
+	@SuppressWarnings("UnusedParameters")
 	public void handleMethodPOST(URI uri, HTTPRequest request, ToadletContext ctx) throws ToadletContextClosedException, IOException {
 		String url = request.getPartAsStringFailsafe(magicHTTPEscapeString, MAX_URL_LENGTH);
 		MultiValueTable<String, String> headers = new MultiValueTable<String, String>();

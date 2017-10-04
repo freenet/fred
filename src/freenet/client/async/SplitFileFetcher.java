@@ -143,7 +143,7 @@ public class SplitFileFetcher implements ClientGetState, SplitFileFetcherStorage
             // Construct the storage.
             ChecksumChecker checker = new CRCChecksumChecker();
             storage = new SplitFileFetcherStorage(metadata, this, decompressors, clientMetadata, 
-                    topDontCompress, topCompatibilityMode, fetchContext, realTimeFlag, getSalter(),
+                    topDontCompress, topCompatibilityMode, fetchContext, getSalter(),
                     thisKey, parent.getURI(), isFinalFetch, parent.getClientDetail(checker), 
                     context.random, context.tempBucketFactory, 
                     persistent ? context.persistentRAFFactory : context.tempRAFFactory, 
@@ -421,11 +421,11 @@ public class SplitFileFetcher implements ClientGetState, SplitFileFetcherStorage
         try {
             KeySalter salter = getSalter();
             raf.onResume(context);
-            this.storage = new SplitFileFetcherStorage(raf, realTimeFlag, this, blockFetchContext, 
+            this.storage = new SplitFileFetcherStorage(raf, this, blockFetchContext,
                     context.random, context.jobRunner, 
                     context.getChkFetchScheduler(realTimeFlag).fetchingKeys(), context.ticker, 
                     context.memoryLimitedJobRunner, new CRCChecksumChecker(), 
-                    context.jobRunner.newSalt(), salter, resumed, 
+                    context.jobRunner.newSalt(),
                     callbackCompleteViaTruncation != null);
         } catch (ResumeFailedException e) {
             raf.free();
@@ -492,7 +492,7 @@ public class SplitFileFetcher implements ClientGetState, SplitFileFetcherStorage
             if(fileCompleteViaTruncation.length() != rafSize)
                 throw new ResumeFailedException("Storage file is not of the correct length");
             // FIXME check against finalLength too, maybe we can finish straight away.
-            this.raf = new PooledFileRandomAccessBuffer(fileCompleteViaTruncation, false, rafSize, null, -1, true);
+            this.raf = new PooledFileRandomAccessBuffer(fileCompleteViaTruncation, false, rafSize, -1, true);
         } else {
             this.raf = BucketTools.restoreRAFFrom(dis, context.persistentFG, context.persistentFileTracker, context.getPersistentMasterSecret());
             fileCompleteViaTruncation = null;

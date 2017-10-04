@@ -38,7 +38,7 @@ public class SingleFileStreamGenerator implements StreamGenerator {
 	}
 
 	@Override
-	public void writeTo(OutputStream os, ClientContext context) throws IOException {
+	public void writeTo(OutputStream os) throws IOException {
 		try{
 			if(logMINOR) Logger.minor(this, "Generating Stream", new Exception("debug"));
 			InputStream data = bucket.getInputStream();

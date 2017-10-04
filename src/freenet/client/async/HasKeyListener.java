@@ -14,7 +14,7 @@ public interface HasKeyListener {
 	 * @return Null if the HasKeyListener is finished/cancelled/etc.
 	 * @throws IOException 
 	 */
-	KeyListener makeKeyListener(ClientContext context, boolean onStartup);
+	KeyListener makeKeyListener();
 
 	/**
 	 * Is it cancelled?

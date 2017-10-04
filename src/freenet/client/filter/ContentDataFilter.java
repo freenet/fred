@@ -6,7 +6,6 @@ package freenet.client.filter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashMap;
 
 /**
  * Data filter for a specific MIME type.
@@ -24,7 +23,6 @@ public interface ContentDataFilter {
 	 * @param input Stream to read potentially unsafe data from.
 	 * @param output Stream to write safe (but possibly incomplete) data to.
 	 * @param charset Character set of the data if appropriate for this MIME type.
-	 * @param otherParams Other type parameters if appropriate.
 	 * @param cb Filter callback for modifying HTML tags. Irrelevant for most MIME types. In future we
 	 * might need this for other types.
 	 * @throws DataFilterException If the data cannot be filtered. Any data
@@ -34,6 +32,5 @@ public interface ContentDataFilter {
 	 * if data is merely badly formatted - any such exceptions should be
 	 * caught and converted to a DataFilterException.
 	 */
-	public void readFilter(InputStream input, OutputStream output, String charset, HashMap<String, String> otherParams,
-		FilterCallback cb) throws DataFilterException, IOException;
+	public void readFilter(InputStream input, OutputStream output, String charset, FilterCallback cb) throws DataFilterException, IOException;
 }

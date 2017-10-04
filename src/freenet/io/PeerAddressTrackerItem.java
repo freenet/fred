@@ -35,7 +35,7 @@ public class PeerAddressTrackerItem extends AddressTrackerItem {
 	public PeerAddressTrackerItem(SimpleFieldSet fs) throws FSParseException {
 		super(fs);
 		try {
-			peer = new Peer(fs.getString("Address"), false);
+			peer = new Peer(fs.getString("Address"));
 		} catch (UnknownHostException e) {
 			throw (FSParseException)new FSParseException("Unknown domain name in Address: "+e).initCause(e);
 		} catch (PeerParseException e) {

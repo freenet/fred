@@ -26,8 +26,7 @@ public interface ArchiveHandler {
 	 * @throws FetchException If the container could not be fetched.
 	 * @throws MetadataParseException If there was an error parsing intermediary metadata.
 	 */
-	public abstract Bucket getMetadata(ArchiveContext archiveContext,
-			ArchiveManager manager)
+	public abstract Bucket getMetadata(ArchiveManager manager)
 			throws ArchiveFailureException, ArchiveRestartException,
 			MetadataParseException, FetchException;
 
@@ -42,8 +41,7 @@ public interface ArchiveHandler {
 	 * @throws FetchException 
 	 * @throws MetadataParseException 
 	 */
-	public abstract Bucket get(String internalName,
-			ArchiveContext archiveContext, ArchiveManager manager)
+	public abstract Bucket get(String internalName, ArchiveManager manager)
 			throws ArchiveFailureException, ArchiveRestartException,
 			MetadataParseException, FetchException;
 

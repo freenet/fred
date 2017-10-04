@@ -95,7 +95,7 @@ public class RealNodeBusyNetworkTest extends RealNodeRoutingTest {
         Logger.normal(RealNodeRoutingTest.class, "Added random links");
 
         for(int i=0;i<NUMBER_OF_NODES;i++) {
-            nodes[i].start(false);
+            nodes[i].start();
             System.err.println("Started node "+i+"/"+nodes.length);
         }
 
@@ -109,7 +109,7 @@ public class RealNodeBusyNetworkTest extends RealNodeRoutingTest {
 
         HighLevelSimpleClient[] clients = new HighLevelSimpleClient[nodes.length];
         for(int i=0;i<clients.length;i++) {
-        	clients[i] = nodes[i].clientCore.makeClient(RequestStarter.IMMEDIATE_SPLITFILE_PRIORITY_CLASS, false, false);
+        	clients[i] = nodes[i].clientCore.makeClient(RequestStarter.IMMEDIATE_SPLITFILE_PRIORITY_CLASS, false);
         }
 
         // Insert 100 keys into random nodes

@@ -200,7 +200,7 @@ public class SingleFileFetcher extends SimpleSingleFileFetcher {
 		}
 		Bucket data = extract(block, context);
 		if(key instanceof ClientSSK) {
-			context.uskManager.checkUSK(uri, persistent, data != null && !block.isMetadata());
+			context.uskManager.checkUSK(uri, data != null && !block.isMetadata());
 		}
 		if(data == null) {
 			if(logMINOR)
@@ -437,13 +437,13 @@ public class SingleFileFetcher extends SimpleSingleFileFetcher {
 					// Do loop detection on the archive that we are about to fetch.
 					actx.doLoopDetection(thisKey);
 					ah = context.archiveManager.makeHandler(thisKey, metadata.getArchiveType(), metadata.getCompressionCodec(),
-							(parent instanceof ClientGetter ? ((ClientGetter)parent).collectingBinaryBlob() : false), persistent);
+							(parent instanceof ClientGetter ? ((ClientGetter)parent).collectingBinaryBlob() : false));
 				}
 				archiveMetadata = metadata;
 				metadata = null; // Copied to archiveMetadata, so do not need to clear it
 				// ah is set. This means we are currently handling an archive.
 				Bucket metadataBucket;
-				metadataBucket = ah.getMetadata(actx, context.archiveManager);
+				metadataBucket = ah.getMetadata(context.archiveManager);
 				if(metadataBucket != null) {
 					try {
 						metadata = Metadata.construct(metadataBucket);
@@ -499,7 +499,7 @@ public class SingleFileFetcher extends SimpleSingleFileFetcher {
 					throw new FetchException(FetchExceptionMode.UNKNOWN_METADATA, "Archive redirect not in an archive manifest");
 				String filename = metadata.getArchiveInternalName();
 				if(logMINOR) Logger.minor(this, "Fetching "+filename);
-				Bucket dataBucket = ah.get(filename, actx, context.archiveManager);
+				Bucket dataBucket = ah.get(filename, context.archiveManager);
 				if(dataBucket != null) {
 					if(logMINOR) Logger.minor(this, "Returning data");
 					final Metadata newMetadata;
@@ -572,7 +572,7 @@ public class SingleFileFetcher extends SimpleSingleFileFetcher {
 					throw new FetchException(FetchExceptionMode.UNKNOWN_METADATA, "Archive redirect not in an archive manifest");
 				String filename = metadata.getArchiveInternalName();
 				if(logMINOR) Logger.minor(this, "Fetching "+filename);
-				Bucket dataBucket = ah.get(filename, actx, context.archiveManager);
+				Bucket dataBucket = ah.get(filename, context.archiveManager);
 				if(dataBucket != null) {
 					if(logMINOR) Logger.minor(this, "Returning data");
 					final Bucket out;
@@ -918,10 +918,10 @@ public class SingleFileFetcher extends SimpleSingleFileFetcher {
 					pipeIn = decompressorManager.execute();
 					ClientGetWorkerThread worker = new ClientGetWorkerThread(new BufferedInputStream(pipeIn), output, null, null, null, false, null, null, null, context.linkFilterExceptionProvider);
 					worker.start();
-					streamGenerator.writeTo(pipeOut, context);
+					streamGenerator.writeTo(pipeOut);
 					decompressorManager.waitFinished();
 					worker.waitFinished();
-				} else streamGenerator.writeTo(output, context);
+				} else streamGenerator.writeTo(output);
 				// We want to see anything thrown when these are closed.
 				output.close(); output = null;
 				pipeOut.close(); pipeOut = null;
@@ -937,7 +937,7 @@ public class SingleFileFetcher extends SimpleSingleFileFetcher {
 			}
 			if(key instanceof ClientSSK) {
 				// Fetching the container is essentially a full success, we should update the latest known good.
-				context.uskManager.checkUSK(uri, persistent, false);
+				context.uskManager.checkUSK(uri, false);
 			}
 
 			// Run directly, even if persistent.
@@ -1068,12 +1068,12 @@ public class SingleFileFetcher extends SimpleSingleFileFetcher {
 					pipeIn = decompressorManager.execute();
 					ClientGetWorkerThread worker = new ClientGetWorkerThread(new BufferedInputStream(pipeIn), output, null, null, null, false, null, null, null, context.linkFilterExceptionProvider);
 					worker.start();
-					streamGenerator.writeTo(pipeOut, context);
+					streamGenerator.writeTo(pipeOut);
 					decompressorManager.waitFinished();
 					worker.waitFinished();
 					// ClientGetWorkerThread will close output.
 				} else {
-				    streamGenerator.writeTo(output, context);
+				    streamGenerator.writeTo(output);
 				    output.close();
 				}
 
@@ -1187,7 +1187,7 @@ public class SingleFileFetcher extends SimpleSingleFileFetcher {
 			// Return the latest known version but at least suggestedEdition.
 			long edition = context.uskManager.lookupKnownGood(usk);
 			if(edition <= usk.suggestedEdition) {
-				context.uskManager.startTemporaryBackgroundFetcher(usk, context, ctx, true, realTimeFlag);
+				context.uskManager.startTemporaryBackgroundFetcher(usk, ctx, true, realTimeFlag);
 				edition = context.uskManager.lookupKnownGood(usk);
 				if(edition > usk.suggestedEdition) {
 					if(logMINOR) Logger.minor(SingleFileFetcher.class, "Redirecting to edition "+edition);
@@ -1198,7 +1198,7 @@ public class SingleFileFetcher extends SimpleSingleFileFetcher {
 					// Check the datastore first.
 					USKFetcherTag tag = 
 						context.uskManager.getFetcher(usk.copy(usk.suggestedEdition), ctx, false, requester.persistent(),
-								realTimeFlag, new MyUSKFetcherCallback(requester, cb, usk, metaStrings, ctx, actx, realTimeFlag, maxRetries, recursionLevel, dontTellClientGet, l, requester.persistent(), true), false, context, true);
+								realTimeFlag, new MyUSKFetcherCallback(requester, cb, usk, metaStrings, ctx, actx, realTimeFlag, maxRetries, recursionLevel, dontTellClientGet, l, requester.persistent(), true), false, true);
 					if(isEssential)
 						requester.addMustSucceedBlocks(1);
 					return tag;
@@ -1222,7 +1222,7 @@ public class SingleFileFetcher extends SimpleSingleFileFetcher {
 			// Do a thorough, blocking search
 			USKFetcherTag tag = 
 				context.uskManager.getFetcher(usk.copy(-usk.suggestedEdition), ctx, false, requester.persistent(),
-						realTimeFlag, new MyUSKFetcherCallback(requester, cb, usk, metaStrings, ctx, actx, realTimeFlag, maxRetries, recursionLevel, dontTellClientGet, l, requester.persistent(), false), false, context, false);
+						realTimeFlag, new MyUSKFetcherCallback(requester, cb, usk, metaStrings, ctx, actx, realTimeFlag, maxRetries, recursionLevel, dontTellClientGet, l, requester.persistent(), false), false, false);
 			if(isEssential)
 				requester.addMustSucceedBlocks(1);
 			return tag;

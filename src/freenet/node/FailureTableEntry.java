@@ -375,7 +375,7 @@ class FailureTableEntry implements TimedOutNodesList {
 	/**
 	 * Has any node asked for this key?
 	 */
-	public synchronized boolean othersWant(PeerNodeUnlocked peer) {
+	public synchronized boolean othersWant() {
 		boolean anyValid = false;
 		for(int i=0;i<requestorNodes.length;i++) {
 			WeakReference<? extends PeerNodeUnlocked> ref = requestorNodes[i];
@@ -465,7 +465,7 @@ class FailureTableEntry implements TimedOutNodesList {
 		return ret;
 	}
 
-	public synchronized boolean isEmpty(long now) {
+	public synchronized boolean isEmpty() {
 		if(requestedNodes.length > 0) return false;
 		if(requestorNodes.length > 0) return false;
 		return true;
@@ -565,10 +565,6 @@ class FailureTableEntry implements TimedOutNodesList {
 			requestedTimeoutHTLs = Arrays.copyOf(requestedTimeoutHTLs, x);
 		}
 		return empty;
-	}
-
-	public boolean isEmpty() {
-		return isEmpty(System.currentTimeMillis());
 	}
 
 	public synchronized short minRequestorHTL(short htl) {

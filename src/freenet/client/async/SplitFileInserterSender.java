@@ -106,12 +106,12 @@ public class SplitFileInserterSender extends SendableInsert {
     }
 
     @Override
-    public long countAllKeys(ClientContext context) {
+    public long countAllKeys() {
         return storage.countAllKeys();
     }
 
     @Override
-    public long countSendableKeys(ClientContext context) {
+    public long countSendableKeys() {
         return storage.countSendableKeys();
     }
     
@@ -181,7 +181,7 @@ public class SplitFileInserterSender extends SendableInsert {
     final MySendableRequestSender sender = new MySendableRequestSender();
     
     @Override
-    public SendableRequestSender getSender(ClientContext context) {
+    public SendableRequestSender getSender() {
         return sender;
     }
 
@@ -207,11 +207,11 @@ public class SplitFileInserterSender extends SendableInsert {
 
     public void schedule(ClientContext context) {
         if(getParentGrabArray() != null) return; // If change priority will unregister first.
-        context.getChkInsertScheduler(parent.realTime).registerInsert(this, persistent);
+        context.getChkInsertScheduler(parent.realTime).registerInsert(this);
     }
     
     @Override
     public long getWakeupTime(ClientContext context, long now) {
-        return storage.getWakeupTime(context, now);
+        return storage.getWakeupTime();
     }
 }

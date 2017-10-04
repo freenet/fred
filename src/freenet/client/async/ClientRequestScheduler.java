@@ -80,7 +80,7 @@ public class ClientRequestScheduler implements RequestScheduler {
 		
 		this.choosenPriorityScheduler = PRIORITY_HARD; // Will be reset later.
 		if(!forInserts) {
-			offeredKeys = new OfferedKeysList(core, random, (short)0, forSSKs, forRT);
+			offeredKeys = new OfferedKeysList(random, (short)0, forSSKs, forRT);
 		} else {
 			offeredKeys = null;
 		}
@@ -100,11 +100,11 @@ public class ClientRequestScheduler implements RequestScheduler {
 	}
 	
 	static final int QUEUE_THRESHOLD = 100;
-	
-	public void registerInsert(final SendableRequest req, boolean persistent) {
+
+	public void registerInsert(final SendableRequest req) {
 		if(!isInsertScheduler)
 			throw new IllegalArgumentException("Adding a SendableInsert to a request scheduler!!");
-		selector.innerRegister(req, clientContext, null);
+		selector.innerRegister(req, clientContext);
 		starter.wakeUp();
 	}
 	
@@ -129,7 +129,7 @@ public class ClientRequestScheduler implements RequestScheduler {
 		}
 		final KeyListener listener;
 		if(hasListener != null) {
-		    listener = hasListener.makeKeyListener(clientContext, false);
+		    listener = hasListener.makeKeyListener();
 		    if(listener != null)
 		        (persistent ? schedCore : schedTransient).addPendingKeys(listener);
 		    else
@@ -154,7 +154,7 @@ public class ClientRequestScheduler implements RequestScheduler {
 		if(isInsertScheduler) {
 			IllegalStateException e = new IllegalStateException("finishRegister on an insert scheduler");
 			for(SendableGet getter : getters) {
-				getter.internalError(e, this, clientContext, persistent);
+				getter.internalError(e, this, persistent);
 			}
 			throw e;
 		}
@@ -169,7 +169,7 @@ public class ClientRequestScheduler implements RequestScheduler {
 						if(!(getter.isCancelled())) {
 							wereAnyValid = true;
 							if(!getter.preRegister(clientContext, true)) {
-								selector.innerRegister(getter, clientContext, getters);
+								selector.innerRegister(getter, clientContext);
 							}
 						} else
 							getter.preRegister(clientContext, false);
@@ -192,7 +192,7 @@ public class ClientRequestScheduler implements RequestScheduler {
 					if(getter.preRegister(clientContext, true)) continue;
 				}
 				if(!getter.isCancelled())
-					selector.innerRegister(getter, clientContext, getters);
+					selector.innerRegister(getter, clientContext);
 			}
 			starter.wakeUp();
 		}
@@ -266,7 +266,7 @@ public class ClientRequestScheduler implements RequestScheduler {
 	}
 
 	public void reregisterAll(final ClientRequester request, short oldPrio) {
-		selector.reregisterAll(request, this, clientContext, oldPrio);
+		selector.reregisterAll(request, clientContext, oldPrio);
 		starter.wakeUp();
 	}
 	
@@ -288,7 +288,7 @@ public class ClientRequestScheduler implements RequestScheduler {
 			offeredKeys.remove(block.getKey());
 		}
 		final Key key = block.getKey();
-		if(schedTransient.anyProbablyWantKey(key, clientContext)) {
+		if(schedTransient.anyProbablyWantKey(key)) {
 			this.clientContext.mainExecutor.execute(new PrioRunnable() {
 
 				@Override
@@ -304,7 +304,7 @@ public class ClientRequestScheduler implements RequestScheduler {
 			}, "Trip pending key (transient)");
 		}
 		if(schedCore == null) return;
-		if(schedCore.anyProbablyWantKey(key, clientContext)) {
+		if(schedCore.anyProbablyWantKey(key)) {
 			try { 
 			    // This is definitely NOT an internal job. 
 			    // It can wait until after the next checkpoint if necessary. So use queue().
@@ -333,13 +333,13 @@ public class ClientRequestScheduler implements RequestScheduler {
 	 * RequestHandler (onAbort() handler). */
 	@Override
 	public boolean wantKey(Key key) {
-		if(schedTransient.anyProbablyWantKey(key, clientContext)) return true;
-		if(schedCore != null && schedCore.anyProbablyWantKey(key, clientContext)) return true;
+		if(schedTransient.anyProbablyWantKey(key)) return true;
+		if(schedCore != null && schedCore.anyProbablyWantKey(key)) return true;
 		return false;
 	}
 
 	/** Queue the offered key */
-	public void queueOfferedKey(final Key key, boolean realTime) {
+	public void queueOfferedKey(final Key key) {
 		if(logMINOR)
 			Logger.minor(this, "queueOfferedKey("+key);
 		offeredKeys.queueKey(key);

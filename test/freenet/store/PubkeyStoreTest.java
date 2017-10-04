@@ -28,7 +28,7 @@ public class PubkeyStoreTest extends TestCase {
 			byte[] hash = key.asBytesHash();
 			ByteArrayWrapper w = new ByteArrayWrapper(hash);
 			map.put(w, key.cloneKey());
-			pk.put(hash, key, false);
+			pk.put(key, false);
 			assertTrue(pk.fetch(hash, false, false, null).equals(key));
 		}
 		int x = 0;

@@ -2,11 +2,9 @@ package freenet.node;
 
 import java.util.List;
 
-import freenet.io.comm.Peer;
-
 public interface PacketFormat {
 
-	boolean handleReceivedPacket(byte[] buf, int offset, int length, long now, Peer replyTo);
+	boolean handleReceivedPacket(byte[] buf, int offset, int length);
 
 	/**
 	 * Maybe send something. A SINGLE PACKET. Don't send everything at once, for two reasons:
@@ -18,8 +16,7 @@ public interface PacketFormat {
 	 * </ol>
 	 * @param ackOnly 
 	 */
-	boolean maybeSendPacket(long now, boolean ackOnly)
-	                throws BlockedTooLongException;
+	boolean maybeSendPacket(boolean ackOnly) throws BlockedTooLongException;
 
 	/**
 	 * Called when the peer has been disconnected.

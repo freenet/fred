@@ -135,20 +135,20 @@ public class NodeGetPubkey implements GetPubkey {
 		try {
 			if (canWriteClientCache && !(canWriteDatastore || writeLocalToDatastore)) {
 				if(pubKeyClientcache != null) {
-					pubKeyClientcache.put(hash, key, false);
+					pubKeyClientcache.put(key, false);
 				}
 			}
 			if (forULPR && !(canWriteDatastore || writeLocalToDatastore)) {
 				if(pubKeySlashdotcache!= null) {
-					pubKeySlashdotcache.put(hash, key, false);
+					pubKeySlashdotcache.put(key, false);
 				}
 			}
 			// Cannot write to the store or cache if request started nearby.
 			if(!(canWriteDatastore || writeLocalToDatastore)) return;
 			if (deep) {
-				pubKeyDatastore.put(hash, key, !canWriteDatastore);
+				pubKeyDatastore.put(key, !canWriteDatastore);
 			}
-			pubKeyDatacache.put(hash, key, !canWriteDatastore);
+			pubKeyDatacache.put(key, !canWriteDatastore);
 		} catch (IOException e) {
 			// FIXME deal with disk full, access perms etc; tell user about it.
 			Logger.error(this, "Error accessing pubkey store: " + e, e);

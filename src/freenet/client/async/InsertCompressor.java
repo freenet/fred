@@ -290,7 +290,7 @@ public class InsertCompressor implements CompressJob {
 	}
 
 	@Override
-	public void onFailure(final InsertException e, ClientPutState c, ClientContext context) {
+	public void onFailure(final InsertException e, ClientContext context) {
 		if(persistent) {
 			try {
 				context.jobRunner.queue(new PersistentJob() {

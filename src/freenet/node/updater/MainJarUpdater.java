@@ -51,7 +51,7 @@ public class MainJarUpdater extends NodeUpdater implements Deployer {
 
 	MainJarUpdater(NodeUpdateManager manager, FreenetURI URI, int current, int min, int max, String blobFilenamePrefix) {
 		super(manager, URI, current, min, max, blobFilenamePrefix);
-		dependencyCtx = core.makeClient((short) 0, true, false).getFetchContext();
+		dependencyCtx = core.makeClient((short) 0, false).getFetchContext();
 		dependencyCtx.allowSplitfiles = true;
 		dependencyCtx.dontEnterImplicitArchives = false;
 		dependencyCtx.maxNonSplitfileRetries = -1;
@@ -73,7 +73,7 @@ public class MainJarUpdater extends NodeUpdater implements Deployer {
 	}
 	
 	@Override
-	protected void maybeParseManifest(FetchResult result, int build) {
+	protected void maybeParseManifest(FetchResult result) {
 		// Do nothing.
 	}
 

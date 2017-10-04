@@ -106,7 +106,7 @@ public class RealNodeRequestInsertTest extends RealNodeRoutingTest {
         Logger.normal(RealNodeRoutingTest.class, "Added random links");
         
         for(int i=0;i<NUMBER_OF_NODES;i++) {
-            nodes[i].start(false);
+            nodes[i].start();
             System.err.println("Started node "+i+"/"+nodes.length);
         }
         
@@ -187,7 +187,7 @@ public class RealNodeRequestInsertTest extends RealNodeRoutingTest {
         	insertKey = InsertableClientSSK.create(testKey);
         	fetchKey = ClientKSK.create(testKey);
         	
-        	block = ((InsertableClientSSK)insertKey).encode(new ArrayBucket(buf), false, false, (short)-1, buf.length, random, COMPRESSOR_TYPE.DEFAULT_COMPRESSORDESCRIPTOR, false);
+        	block = ((InsertableClientSSK)insertKey).encode(new ArrayBucket(buf), false, false, (short)-1, buf.length, COMPRESSOR_TYPE.DEFAULT_COMPRESSORDESCRIPTOR, false);
         } else {
         	block = ClientCHKBlock.encode(buf, false, false, (short)-1, buf.length, COMPRESSOR_TYPE.DEFAULT_COMPRESSORDESCRIPTOR, false);
         	insertKey = fetchKey = block.getClientKey();

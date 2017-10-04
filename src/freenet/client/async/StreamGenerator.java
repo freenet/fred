@@ -12,10 +12,9 @@ public interface StreamGenerator {
 
 	/** Writes the data.
 	 * @param os Stream to which the data will be written
-	 * @param context
 	 * @throws IOException
 	 */
-	public void writeTo(OutputStream os, ClientContext context) throws IOException;
+	public void writeTo(OutputStream os) throws IOException;
 
 	/**
 	 * @return The size of the underlying structure

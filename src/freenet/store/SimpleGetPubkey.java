@@ -30,7 +30,7 @@ public class SimpleGetPubkey implements GetPubkey {
 			boolean canWriteClientCache, boolean canWriteDatastore,
 			boolean forULPR, boolean writeLocalToDatastore) {
 		try {
-			store.put(hash, key, false);
+			store.put(key, false);
 		} catch (IOException e) {
 			Logger.error(this, "Caught "+e+" storing pubkey for "+HexUtil.bytesToHex(hash));
 		}

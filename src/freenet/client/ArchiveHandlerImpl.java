@@ -31,8 +31,7 @@ class ArchiveHandlerImpl implements ArchiveHandler, Serializable {
 	}
 
 	@Override
-	public Bucket get(String internalName, ArchiveContext archiveContext,
-			ArchiveManager manager)
+	public Bucket get(String internalName, ArchiveManager manager)
 			throws ArchiveFailureException, ArchiveRestartException,
 			MetadataParseException, FetchException {
 
@@ -51,10 +50,9 @@ class ArchiveHandlerImpl implements ArchiveHandler, Serializable {
 	}
 
 	@Override
-	public Bucket getMetadata(ArchiveContext archiveContext,
-			ArchiveManager manager) throws ArchiveFailureException,
+	public Bucket getMetadata(ArchiveManager manager) throws ArchiveFailureException,
 			ArchiveRestartException, MetadataParseException, FetchException {
-		return get(".metadata", archiveContext, manager);
+		return get(".metadata", manager);
 	}
 
 	@Override
@@ -63,7 +61,7 @@ class ArchiveHandlerImpl implements ArchiveHandler, Serializable {
 			ArchiveManager manager, ClientContext context) throws ArchiveFailureException,
 			ArchiveRestartException {
 		forceRefetchArchive = false; // now we don't need to force refetch any more
-		ArchiveStoreContext ctx = manager.makeContext(key, archiveType, compressorType, false);
+		ArchiveStoreContext ctx = manager.makeContext(key, archiveType, false);
 		manager.extractToCache(key, archiveType, compressorType, bucket, actx, ctx, element, callback, context);
 	}
 

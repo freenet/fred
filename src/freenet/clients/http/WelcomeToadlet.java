@@ -150,7 +150,8 @@ public class WelcomeToadlet extends Toadlet {
         }
     }
 
-	public void handleMethodPOST(URI uri, HTTPRequest request, ToadletContext ctx) throws ToadletContextClosedException, IOException {
+    @SuppressWarnings("UnusedParameters")
+    public void handleMethodPOST(URI uri, HTTPRequest request, ToadletContext ctx) throws ToadletContextClosedException, IOException {
         if(!ctx.checkFullAccess(this))
             return;
 

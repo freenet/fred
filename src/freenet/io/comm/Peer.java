@@ -75,18 +75,16 @@ public class Peer implements WritableToDataOutputStream {
 	 * getHandshakeAddress() will do a new lookup on the name, and change the IP address
 	 * if the domain name has changed.
 	 * @param physical The string to be parsed, in the format [ ip or domain name ]:[ port number].
-	 * @param allowUnknown If true, allow construction of the Peer even if the domain name
-	 * lookup fails.
 	 * @throws PeerParseException If the string is not valid e.g. if it doesn't contain a 
 	 * port.
 	 * @throws UnknownHostException If allowUnknown is not set, and a domain name which does
 	 * not exist was passed in.
 	 */
-    public Peer(String physical, boolean allowUnknown) throws PeerParseException, UnknownHostException {
+    public Peer(String physical) throws PeerParseException, UnknownHostException {
         int offset = physical.lastIndexOf(':'); // ipv6
         if(offset < 0) throw new PeerParseException();
         String host = physical.substring(0, offset);
-        addr = new FreenetInetAddress(host, allowUnknown);
+        addr = new FreenetInetAddress(host);
         String strport = physical.substring(offset+1);
         try {
             _port = Integer.parseInt(strport);

@@ -92,7 +92,7 @@ public abstract class FCPMessage {
 		if(name.equals(SendTextMessage.NAME))
 			return new SendTextMessage(fs);
 		if(name.equals(DisconnectMessage.NAME))
-			return new DisconnectMessage(fs);
+			return new DisconnectMessage();
         if(name.equals(FCPPluginClientMessage.NAME))
             return new FCPPluginClientMessage(fs);
 		if(name.equals(GenerateSSKMessage.NAME))

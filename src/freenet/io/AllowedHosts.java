@@ -66,12 +66,7 @@ public class AllowedHosts {
 		}
 	}
 
-	public boolean allowed(InetAddress clientAddress) {
-		AddressType clientAddressType = AddressIdentifier.getAddressType(clientAddress.getHostAddress());
-		return allowed(clientAddressType, clientAddress);
-	}
-
-	public synchronized boolean allowed(AddressType clientAddressType, InetAddress clientAddress) {
+	public synchronized boolean allowed(InetAddress clientAddress) {
 		for(AddressMatcher matcher: addressMatchers) {
 			if(matcher.matches(clientAddress)) return true;
 		}

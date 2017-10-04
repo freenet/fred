@@ -268,12 +268,12 @@ public class FCPConnectionHandler implements Closeable {
 
 	public void setClientName(final String name) {
 		this.clientName = name;
-		rebootClient = server.registerRebootClient(name, server.core, this);
+		rebootClient = server.registerRebootClient(name, this);
 		rebootClient.queuePendingMessagesOnConnectionRestartAsync(outputHandler, server.core.clientContext);
 		// Create foreverClient lazily. Everything that needs it (especially creating ClientGet's etc) runs on a database job.
 		if(logMINOR)
 			Logger.minor(this, "Set client name: "+name);
-		PersistentRequestClient client = server.getForeverClient(name, server.core, this);
+		PersistentRequestClient client = server.getForeverClient(name, this);
 		if(client != null) {
 		    synchronized(this) {
 		        foreverClient = client;
@@ -286,7 +286,7 @@ public class FCPConnectionHandler implements Closeable {
 		synchronized(FCPConnectionHandler.this) {
 			if(foreverClient != null) return foreverClient;
 		}
-		PersistentRequestClient client = server.registerForeverClient(name, server.core, FCPConnectionHandler.this);
+		PersistentRequestClient client = server.registerForeverClient(name, FCPConnectionHandler.this);
 		synchronized(FCPConnectionHandler.this) {
 			foreverClient = client;
 			FCPConnectionHandler.this.notifyAll();
@@ -877,7 +877,7 @@ public class FCPConnectionHandler implements Closeable {
 			getRebootClient();
 		ClientRequest req = client.getRequest(identifier);
 		if(req != null) {
-			client.removeByIdentifier(identifier, true, server, server.core.clientContext);
+			client.removeByIdentifier(identifier, true, server.core.clientContext);
 		}
 		return req;
 	}
@@ -888,7 +888,7 @@ public class FCPConnectionHandler implements Closeable {
 			getForeverClient();
 		ClientRequest req = client.getRequest(identifier);
 		if(req != null) {
-			client.removeByIdentifier(identifier, true, server, server.core.clientContext);
+			client.removeByIdentifier(identifier, true, server.core.clientContext);
 		}
 		return req;
 	}

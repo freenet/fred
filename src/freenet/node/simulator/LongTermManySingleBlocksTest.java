@@ -212,7 +212,7 @@ public class LongTermManySingleBlocksTest extends LongTermTest {
 			Logger.getChain().setThreshold(LogLevel.ERROR);
 
 			// Start it
-			node.start(true);
+			node.start();
 			t1 = System.currentTimeMillis();
 			if (!TestUtil.waitForNodes(node)) {
 				exitCode = EXIT_FAILED_TARGET;
@@ -223,7 +223,7 @@ public class LongTermManySingleBlocksTest extends LongTermTest {
 			System.out.println("SEED-TIME:" + (t2 - t1));
 			csvLine.add(String.valueOf(t2 - t1));
 
-			HighLevelSimpleClient client = node.clientCore.makeClient((short) 0, false, false);
+			HighLevelSimpleClient client = node.clientCore.makeClient((short) 0, false);
 
 			int successes = 0;
 			

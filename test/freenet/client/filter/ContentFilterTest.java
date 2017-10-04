@@ -282,7 +282,7 @@ public class ContentFilterTest extends TestCase {
 		FileOutputStream fos;
 		try {
 			ArrayBucket out = new ArrayBucket();
-			filter.readFilter(new ArrayBucket(total).getInputStream(), out.getOutputStream(), "UTF-16", null, null);
+			filter.readFilter(new ArrayBucket(total).getInputStream(), out.getOutputStream(), "UTF-16", null);
 			fos = new FileOutputStream("output.utf16");
 			fos.write(out.toByteArray());
 			fos.close();

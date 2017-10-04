@@ -152,7 +152,6 @@ public class BlockReceiver implements AsyncMessageFilterCallback {
 	 * @param prb
 	 * @param ctr
 	 * @param ticker
-	 * @param doTooLong
 	 * @param realTime
 	 * @param timeoutHandler
 	 * @param completeAfterAckedAllReceived If true, we need to call completion
@@ -161,7 +160,7 @@ public class BlockReceiver implements AsyncMessageFilterCallback {
 	 * be reused by the other side; senders want to complete late, so they don't 
 	 * end up reusing the slot before the handler has completed (=true).
 	 */
-	public BlockReceiver(MessageCore usm, PeerContext sender, long uid, PartiallyReceivedBlock prb, ByteCounter ctr, Ticker ticker, boolean doTooLong, boolean realTime, BlockReceiverTimeoutHandler timeoutHandler, boolean completeAfterAckedAllReceived) {
+	public BlockReceiver(MessageCore usm, PeerContext sender, long uid, PartiallyReceivedBlock prb, ByteCounter ctr, Ticker ticker, boolean realTime, BlockReceiverTimeoutHandler timeoutHandler, boolean completeAfterAckedAllReceived) {
 		BlockReceiverTimeoutHandler nullTimeoutHandler = new BlockReceiverTimeoutHandler() {
 
 			@Override

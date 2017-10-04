@@ -154,10 +154,10 @@ public class NewPacketFormatKeyContext {
 		}
 	}
 
-	public void sent(int sequenceNumber, int length) {
+	public void sent(int sequenceNumber) {
 		synchronized(sentPackets) {
 			SentPacket sentPacket = sentPackets.get(sequenceNumber);
-			if(sentPacket != null) sentPacket.sent(length);
+			if(sentPacket != null) sentPacket.sent();
 		}
 	}
 
@@ -218,8 +218,8 @@ public class NewPacketFormatKeyContext {
 		}
 	}
 
-	public void sent(SentPacket sentPacket, int seqNum, int length) {
-	    sentPacket.sent(length);
+	public void sent(SentPacket sentPacket, int seqNum) {
+	    sentPacket.sent();
 		synchronized(sentPackets) {
 			sentPackets.put(seqNum, sentPacket);
 			int inFlight = sentPackets.size();

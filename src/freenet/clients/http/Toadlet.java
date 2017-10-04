@@ -154,12 +154,11 @@ public abstract class Toadlet {
 	/**
 	 * Client calls from the above messages to run a Freenet request.
 	 * This method may block (or suspend).
-	 * @param maxSize Maximum length of returned content.
 	 * @param clientContext Client context object. This should be the same for any group of related requests, but different
 	 * for any two unrelated requests. Request selection round-robin's over these, within any priority and retry count class,
 	 * and above the level of individual block fetches.
 	 */
-	FetchResult fetch(FreenetURI uri, long maxSize, RequestClient clientContext, FetchContext fctx) throws FetchException {
+	FetchResult fetch(FreenetURI uri, RequestClient clientContext, FetchContext fctx) throws FetchException {
 		// For now, just run it blocking.
 		FetchWaiter fw = new FetchWaiter(clientContext);
 		@SuppressWarnings("unused")

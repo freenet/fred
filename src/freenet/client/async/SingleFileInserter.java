@@ -109,7 +109,6 @@ class SingleFileInserter implements ClientPutState, Serializable {
 	 * @param block
 	 * @param metadata
 	 * @param ctx
-	 * @param dontCompress
 	 * @param getCHKOnly
 	 * @param reportMetadataOnly If true, don't insert the metadata, just report it.
 	 * @param insertAsArchiveManifest If true, insert the metadata as an archive manifest.
@@ -120,7 +119,7 @@ class SingleFileInserter implements ClientPutState, Serializable {
 	 * @throws InsertException
 	 */
 	SingleFileInserter(BaseClientPutter parent, PutCompletionCallback cb, InsertBlock block, 
-			boolean metadata, InsertContext ctx, boolean realTimeFlag, boolean dontCompress, 
+			boolean metadata, InsertContext ctx, boolean realTimeFlag,
 			boolean reportMetadataOnly, Object token, ARCHIVE_TYPE archiveType,
 			boolean freeData, String targetFilename, boolean forSplitfile, boolean persistent, long origDataLength, long origCompressedDataLength, HashResult[] origHashes, byte cryptoAlgorithm, byte[] forceCryptoKey, long metadataThreshold) {
 		hashCode = super.hashCode();
@@ -264,7 +263,7 @@ class SingleFileInserter implements ClientPutState, Serializable {
 					Logger.minor(this, "Inserting without metadata: "+bi+" for "+this);
 				cb.onTransition(this, bi, context);
 				if(ctx.earlyEncode && bi instanceof SingleBlockInserter && isCHK)
-					((SingleBlockInserter)bi).getBlock(context, true);
+					((SingleBlockInserter)bi).getBlock(context);
 				bi.schedule(context);
 				if(!isUSK)
 					cb.onBlockSetFinished(this, context);
@@ -325,7 +324,7 @@ class SingleFileInserter implements ClientPutState, Serializable {
 				mcb.arm(context);
 				dataPutter.schedule(context);
 				if(ctx.earlyEncode && metaPutter instanceof SingleBlockInserter)
-					((SingleBlockInserter)metaPutter).getBlock(context, true);
+					((SingleBlockInserter)metaPutter).getBlock(context);
 				metaPutter.schedule(context);
 				if(!isUSK)
 					cb.onBlockSetFinished(this, context);
@@ -759,7 +758,7 @@ class SingleFileInserter implements ClientPutState, Serializable {
 			InsertBlock newBlock = new InsertBlock(metadataBucket, m, block.desiredURI);
 			synchronized(this) {
 			    // Only the bottom layer in a multi-level splitfile pyramid has randomised keys. The rest are unpredictable anyway, and this ensures we only need to supply one key when reinserting.
-			    metadataPutter = new SingleFileInserter(parent, this, newBlock, true, ctx, realTimeFlag, false, false, token, archiveType, true, metaPutterTargetFilename, true, persistent, origDataLength, origCompressedDataLength, origHashes, cryptoAlgorithm, forceCryptoKey, metadataThreshold);
+			    metadataPutter = new SingleFileInserter(parent, this, newBlock, true, ctx, realTimeFlag, false, token, archiveType, true, metaPutterTargetFilename, true, persistent, origDataLength, origCompressedDataLength, origHashes, cryptoAlgorithm, forceCryptoKey, metadataThreshold);
 			    if(origHashes != null) {
 			        // It gets passed on, and the last one deletes it.
 			        SingleFileInserter.this.origHashes = null;

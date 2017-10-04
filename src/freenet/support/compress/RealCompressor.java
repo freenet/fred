@@ -49,7 +49,7 @@ public class RealCompressor {
                             try {
                                 j.tryCompress(context);
                             } catch (InsertException e) {
-                                j.onFailure(e, null, context);
+                                j.onFailure(e, context);
                             } catch (Throwable t) {
                                 Logger.error(this, "Caught in OffThreadCompressor: " + t, t);
                                 System.err.println("Caught in OffThreadCompressor: " + t);
@@ -58,7 +58,7 @@ public class RealCompressor {
                                 j.onFailure(
                                     new InsertException(InsertExceptionMode.INTERNAL_ERROR, t,
                                                         null),
-                                    null, context);
+                                    context);
                             }
 
                         } catch (Throwable t) {

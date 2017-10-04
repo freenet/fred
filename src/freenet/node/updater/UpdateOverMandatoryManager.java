@@ -1020,7 +1020,7 @@ public class UpdateOverMandatoryManager implements RequestClient {
 
 		// Fetch our revocation key from the datastore plus the binary blob
 
-		FetchContext seedContext = updateManager.node.clientCore.makeClient((short) 0, true, false).getFetchContext();
+		FetchContext seedContext = updateManager.node.clientCore.makeClient((short) 0, false).getFetchContext();
 		FetchContext tempContext = new FetchContext(seedContext, FetchContext.IDENTICAL_MASK, true, blocks);
 		// If it is too big, we get a TOO_BIG. This is fatal so we will blow, which is the right thing as it means the top block is valid.
 		tempContext.maxOutputLength = NodeUpdateManager.MAX_REVOCATION_KEY_LENGTH;
@@ -1044,7 +1044,7 @@ public class UpdateOverMandatoryManager implements RequestClient {
 
 					System.err.println("Got revocation certificate from " + source + " (fatal error i.e. someone with the key inserted bad data) : "+e);
 					// Blow the update, and propagate the revocation certificate.
-					updateManager.revocationChecker.onFailure(e, state, cleanedBlob);
+					updateManager.revocationChecker.onFailure(e, cleanedBlob);
 					// Don't delete it if it's from disk, as it's already in the right place.
 					if(!fromDisk)
 						temp.free();
@@ -1067,7 +1067,7 @@ public class UpdateOverMandatoryManager implements RequestClient {
 			@Override
 			public void onSuccess(FetchResult result, ClientGetter state) {
 				System.err.println("Got revocation certificate from " + source);
-				updateManager.revocationChecker.onSuccess(result, state, cleanedBlob);
+				updateManager.revocationChecker.onSuccess(result, cleanedBlob);
 				if(!fromDisk)
 					temp.free();
 				insertBlob(updateManager.revocationChecker.getBlobBucket(), "revocation", RequestStarter.INTERACTIVE_PRIORITY_CLASS);
@@ -1142,10 +1142,10 @@ public class UpdateOverMandatoryManager implements RequestClient {
 
 		};
 		// We are inserting a binary blob so we don't need to worry about CompatibilityMode etc.
-		InsertContext ctx = updateManager.node.clientCore.makeClient(RequestStarter.INTERACTIVE_PRIORITY_CLASS, false, false).getInsertContext(true);
+		InsertContext ctx = updateManager.node.clientCore.makeClient(RequestStarter.INTERACTIVE_PRIORITY_CLASS, false).getInsertContext(true);
 		ClientPutter putter = new ClientPutter(callback, bucket,
 			FreenetURI.EMPTY_CHK_URI, null, ctx,
-			priority, false, null, true, updateManager.node.clientCore.clientContext, null, -1);
+			priority, false, null, true, null, -1);
 		try {
 			updateManager.node.clientCore.clientContext.start(putter);
 		} catch(InsertException e1) {
@@ -1468,7 +1468,7 @@ public class UpdateOverMandatoryManager implements RequestClient {
 
 		// Fetch the jar from the datastore plus the binary blob
 
-		FetchContext seedContext = updateManager.node.clientCore.makeClient((short) 0, true, false).getFetchContext();
+		FetchContext seedContext = updateManager.node.clientCore.makeClient((short) 0, false).getFetchContext();
 		FetchContext tempContext = new FetchContext(seedContext, FetchContext.IDENTICAL_MASK, true, blocks);
 		tempContext.localRequestOnly = true;
 
@@ -1525,7 +1525,7 @@ public class UpdateOverMandatoryManager implements RequestClient {
 					System.err.println("Not updating because updater is disabled!");
 					return;
 				}
-				mainUpdater.onSuccess(result, state, cleanedBlobFile, version);
+				mainUpdater.onSuccess(result, cleanedBlobFile, version);
 				temp.delete();
 				
 				maybeInsertMainJar(mainUpdater, source, version);

@@ -231,9 +231,9 @@ public class LocationManager implements ByteCounter {
                                     node.writeNodeFile();
                                 }
                             } finally {
-                                unlock(false);
+                                unlock();
                             }
-                        } else unlock(false);
+                        } else unlock();
                     } else {
                         continue;
                     }
@@ -442,7 +442,7 @@ public class LocationManager implements ByteCounter {
         } catch (Throwable t) {
             Logger.error(this, "Caught "+t, t);
         } finally {
-            unlock(reachedEnd); // we only count the time taken by our outgoing swap requests
+            unlock(); // we only count the time taken by our outgoing swap requests
             removeRecentlyForwardedItem(item);
         }
         }
@@ -635,7 +635,7 @@ public class LocationManager implements ByteCounter {
             } catch (Throwable t) {
                 Logger.error(this, "Caught "+t, t);
             } finally {
-                unlock(reachedEnd);
+                unlock();
                 if(item != null)
                     removeRecentlyForwardedItem(item);
             }
@@ -712,10 +712,8 @@ public class LocationManager implements ByteCounter {
         return true;
     }
 
-    /**
-     * Unlock the node for swapping.
-     * @param logSwapTime If true, log the swap time. */
-    void unlock(boolean logSwapTime) {
+    /** Unlock the node for swapping.  */
+    void unlock() {
     	Message nextMessage;
     	synchronized(this) {
         if(!locked)
@@ -1038,7 +1036,7 @@ public class LocationManager implements ByteCounter {
     			completed = true;
     		} finally {
     			if(!completed)
-    				unlock(false);
+    				unlock();
     		}
     	}
     }

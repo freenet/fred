@@ -103,7 +103,7 @@ public class NodeCryptoConfig {
 		config.register("bindTo", "0.0.0.0", sortOrder++, true, true, "Node.bindTo", "Node.bindToLong", new NodeBindtoCallback());
 		
 		try {
-			bindTo = new FreenetInetAddress(config.getString("bindTo"), false);
+			bindTo = new FreenetInetAddress(config.getString("bindTo"));
 			
 		} catch (UnknownHostException e) {
 			throw new NodeInitException(NodeInitException.EXIT_COULD_NOT_BIND_USM, "Invalid bindTo: "+config.getString("bindTo"));
@@ -266,11 +266,11 @@ public class NodeCryptoConfig {
 		if(crypto != null) throw new IllegalStateException("Replacing existing NodeCrypto "+crypto+" with "+crypto2);
 	}
 	
-	synchronized void maybeStarted(NodeCrypto crypto2) {
+	synchronized void maybeStarted() {
 
 	}
 	
-	synchronized void stopping(NodeCrypto crypto2) {
+	synchronized void stopping() {
 		crypto = null;
 	}
 	

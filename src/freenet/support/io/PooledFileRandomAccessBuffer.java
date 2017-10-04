@@ -8,7 +8,6 @@ import java.io.RandomAccessFile;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.Random;
 
 import freenet.client.async.ClientContext;
 import freenet.support.Logger;
@@ -75,16 +74,15 @@ public class PooledFileRandomAccessBuffer implements LockableRandomAccessBuffer,
      * @param file 
      * @param readOnly
      * @param forceLength
-     * @param seedRandom
      * @param persistentTempID The tempfile ID, or -1.
      * @throws IOException
      */
-    public PooledFileRandomAccessBuffer(File file, boolean readOnly, long forceLength, Random seedRandom, long persistentTempID, boolean deleteOnFree) throws IOException {
-        this(file, readOnly, forceLength, seedRandom, persistentTempID, deleteOnFree, DEFAULT_FDTRACKER);
+    public PooledFileRandomAccessBuffer(File file, boolean readOnly, long forceLength, long persistentTempID, boolean deleteOnFree) throws IOException {
+        this(file, readOnly, forceLength, persistentTempID, deleteOnFree, DEFAULT_FDTRACKER);
     }
 
     // For unit testing
-    PooledFileRandomAccessBuffer(File file, boolean readOnly, long forceLength, Random seedRandom, long persistentTempID, boolean deleteOnFree, FDTracker fds) throws IOException {
+    PooledFileRandomAccessBuffer(File file, boolean readOnly, long forceLength, long persistentTempID, boolean deleteOnFree, FDTracker fds) throws IOException {
         this.file = file;
         this.readOnly = readOnly;
         this.persistentTempID = persistentTempID;
@@ -117,7 +115,7 @@ public class PooledFileRandomAccessBuffer implements LockableRandomAccessBuffer,
         }
     }
 
-    public PooledFileRandomAccessBuffer(File file, String mode, byte[] initialContents,
+    public PooledFileRandomAccessBuffer(File file, byte[] initialContents,
             int offset, int size, long persistentTempID, boolean deleteOnFree, boolean readOnly) throws IOException {
         this.file = file;
         this.readOnly = readOnly;

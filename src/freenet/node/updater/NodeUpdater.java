@@ -82,7 +82,7 @@ public abstract class NodeUpdater implements ClientGetCallback, USKCallback, Req
 		this.maxDeployVersion = max;
 		this.minDeployVersion = min;
 
-		FetchContext tempContext = core.makeClient((short) 0, true, false).getFetchContext();
+		FetchContext tempContext = core.makeClient((short) 0, false).getFetchContext();
 		tempContext.allowSplitfiles = true;
 		tempContext.dontEnterImplicitArchives = false;
 		this.ctx = tempContext;
@@ -256,10 +256,10 @@ public abstract class NodeUpdater implements ClientGetCallback, USKCallback, Req
 	
 	@Override
 	public void onSuccess(FetchResult result, ClientGetter state) {
-		onSuccess(result, state, tempBlobFile, fetchingVersion);
+		onSuccess(result, tempBlobFile, fetchingVersion);
 	}
 
-	void onSuccess(FetchResult result, ClientGetter state, File tempBlobFile, int fetchedVersion) {
+	void onSuccess(FetchResult result, File tempBlobFile, int fetchedVersion) {
 		logMINOR = Logger.shouldLog(LogLevel.MINOR, this);
 		File blobFile = null;
 		synchronized(this) {
@@ -303,7 +303,7 @@ public abstract class NodeUpdater implements ClientGetCallback, USKCallback, Req
 			System.out.println("Found " + jarName() + " version " + fetchedVersion);
 			if(fetchedVersion > currentVersion)
 				Logger.normal(this, "Found version " + fetchedVersion + ", setting up a new UpdatedVersionAvailableUserAlert");
-			maybeParseManifest(result, fetchedVersion);
+			maybeParseManifest(result);
 			this.cg = null;
 		}
 		processSuccess(fetchedVersion, result, blobFile);
@@ -314,7 +314,7 @@ public abstract class NodeUpdater implements ClientGetCallback, USKCallback, Req
 
 	/** Called with locks held 
 	 * @param result */
-	protected abstract void maybeParseManifest(FetchResult result, int build);
+	protected abstract void maybeParseManifest(FetchResult result);
 
 	protected void parseManifest(FetchResult result) {
 		InputStream is = null;

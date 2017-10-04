@@ -518,7 +518,7 @@ public abstract class BaseFileBucket implements RandomAccessBucket {
         setReadOnly();
         long size = size();
         if(size == 0) throw new IOException("Must not be empty");
-        return new PooledFileRandomAccessBuffer(getFile(), true, size, null, 
+        return new PooledFileRandomAccessBuffer(getFile(), true, size,
                 getPersistentTempID(), deleteOnFree());
     }
     

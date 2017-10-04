@@ -124,7 +124,7 @@ public class FProxyFetchInProgress implements ClientEventListener, ClientGetCall
 	private boolean cancelled = false;
 	private final RequestClient rc;
 	
-	public FProxyFetchInProgress(FProxyFetchTracker tracker, FreenetURI key, long maxSize2, long identifier, ClientContext context, FetchContext fctx, RequestClient rc, REFILTER_POLICY refilter) {
+	public FProxyFetchInProgress(FProxyFetchTracker tracker, FreenetURI key, long maxSize2, FetchContext fctx, RequestClient rc, REFILTER_POLICY refilter) {
 		this.refilterPolicy = refilter;
 		this.tracker = tracker;
 		this.uri = key;
@@ -418,7 +418,7 @@ public class FProxyFetchInProgress implements ClientEventListener, ClientGetCall
 			if(!results.isEmpty()) return;
 			if(!waiters.isEmpty()) return;
 		}
-		tracker.queueCancel(this);
+		tracker.queueCancel();
 	}
 
 	/** Keep for 30 seconds after last access */
@@ -470,7 +470,7 @@ public class FProxyFetchInProgress implements ClientEventListener, ClientGetCall
 			if(!results.isEmpty()) return;
 			if(!waiters.isEmpty()) return;
 		}
-		tracker.queueCancel(this);
+		tracker.queueCancel();
 	}
 	
 	public synchronized long getETA() {

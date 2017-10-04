@@ -54,7 +54,7 @@ public class FProxyFetchTracker implements Runnable {
 			if(waiter!=null){
 				return waiter;
 			}
-			progress = new FProxyFetchInProgress(this, key, maxSize, fetchIdentifiers++, context, fctx != null ? fctx : this.fctx, rc, refilterPolicy);
+			progress = new FProxyFetchInProgress(this, key, maxSize, fctx != null ? fctx : this.fctx, rc, refilterPolicy);
 			fetchers.put(key, progress);
 		}
 		try {
@@ -110,7 +110,7 @@ public class FProxyFetchTracker implements Runnable {
 		return null;
 	}
 
-	public void queueCancel(FProxyFetchInProgress progress) {
+	public void queueCancel() {
 		if(logMINOR) Logger.minor(this, "Queueing removal of old FProxyFetchInProgress's");
 		synchronized(this) {
 			if(queuedJob) {

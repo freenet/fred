@@ -83,7 +83,7 @@ public abstract class ClientRequest implements Serializable {
 		});
 	}
 
-	public ClientRequest(FreenetURI uri2, String identifier2, int verbosity2, String charset, 
+	public ClientRequest(FreenetURI uri2, String identifier2, int verbosity2,
 			FCPConnectionHandler handler, PersistentRequestClient client, short priorityClass2, Persistence persistenceType2, boolean realTime, String clientToken2, boolean global) {
 		int hash = super.hashCode();
 		if(hash == 0) hash = 1;
@@ -118,7 +118,7 @@ public abstract class ClientRequest implements Serializable {
 		this.realTime = realTime;
 	}
 
-	public ClientRequest(FreenetURI uri2, String identifier2, int verbosity2, String charset, 
+	public ClientRequest(FreenetURI uri2, String identifier2, int verbosity2,
 			FCPConnectionHandler handler, short priorityClass2, Persistence persistenceType2, final boolean realTime, String clientToken2, boolean global) {
 		int hash = super.hashCode();
 		if(hash == 0) hash = 1;

@@ -394,7 +394,7 @@ public class NetworkInterface implements Closeable {
 					AddressType clientAddressType = AddressIdentifier.getAddressType(clientAddress.getHostAddress());
 
 					/* check if the ip address is allowed */
-					if (allowedHosts.allowed(clientAddressType, clientAddress) && acceptedSockets.size() <= maxQueueLength) {
+					if (allowedHosts.allowed(clientAddress) && acceptedSockets.size() <= maxQueueLength) {
 						lock.lock();
 						try {
 							acceptedSockets.add(clientSocket);

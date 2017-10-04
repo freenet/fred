@@ -142,19 +142,19 @@ public class NodeCrypto {
 		anonSetupCipher = new Rijndael(256,256);
 
 		} catch (NodeInitException e) {
-			config.stopping(this);
+			config.stopping();
 			throw e;
 		} catch (RuntimeException e) {
-			config.stopping(this);
+			config.stopping();
 			throw e;
 		} catch (Error e) {
-			config.stopping(this);
+			config.stopping();
 			throw e;
 		} catch (UnsupportedCipherException e) {
-			config.stopping(this);
+			config.stopping();
 			throw new Error(e);
 		} finally {
-			config.maybeStarted(this);
+			config.maybeStarted();
 		}
 	}
 
@@ -343,7 +343,7 @@ public class NodeCrypto {
 
 	SimpleFieldSet exportPublicCryptoFieldSet(boolean forSetup, boolean forAnonInitiator) {
 		SimpleFieldSet fs = new SimpleFieldSet(true);
-		int[] negTypes = packetMangler.supportedNegTypes(true);
+		int[] negTypes = packetMangler.supportedNegTypes();
 		if(!forSetup) {
 			// These are invariant. They cannot change on connection setup. They can safely be excluded.
 			fs.put("ecdsa", ecdsaP256.asFieldSet(false));
@@ -458,7 +458,7 @@ public class NodeCrypto {
 	}
 
 	public void stop() {
-		config.stopping(this);
+		config.stopping();
 		socket.close();
 	}
 
@@ -538,7 +538,7 @@ public class NodeCrypto {
 	/**
 	 * Get my identity.
 	 */
-	public byte[] getIdentity(int negType) {
+	public byte[] getIdentity() {
 	    return ecdsaPubKeyHash;
 	}
 

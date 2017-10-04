@@ -50,8 +50,8 @@ public class RealNodePingTest {
         node1.connect(node2, trust, visibility);
         node2.connect(node1, trust, visibility);
         // No swapping
-        node1.start(true);
-        node2.start(true);
+        node1.start();
+        node2.start();
         // Ping
         PeerNode pn = node1.getPeerNodes()[0];
         int pingID = 0;

@@ -61,21 +61,21 @@ public class IncomingPacketFilterImpl implements IncomingPacketFilter {
 		PeerNode opn = node.peers.getByPeer(peer, mangler);
 
 		if(opn != null) {
-			if(opn.handleReceivedPacket(buf, offset, length, now, peer)) {
+			if(opn.handleReceivedPacket(buf, offset, length)) {
 				if(logMINOR) successfullyDecodedPackets.incrementAndGet();
 				return DECODED.DECODED;
 			}
 		} else {
 			Logger.normal(this, "Got packet from unknown address");
 		}
-		DECODED decoded = mangler.process(buf, offset, length, peer, opn, now);
+		DECODED decoded = mangler.process(buf, offset, length, peer, opn);
 		if(decoded == DECODED.DECODED) {
 			if(logMINOR) successfullyDecodedPackets.incrementAndGet();
 		} else if(decoded == DECODED.NOT_DECODED) {
 			
 			for(PeerNode pn : crypto.getPeerNodes()) {
 				if(pn == opn) continue;
-				if(pn.handleReceivedPacket(buf, offset, length, now, peer)) {
+				if(pn.handleReceivedPacket(buf, offset, length)) {
 					if(logMINOR) successfullyDecodedPackets.incrementAndGet();
 					return DECODED.DECODED;
 				}

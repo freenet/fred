@@ -453,8 +453,7 @@ public class RandomGrabArray implements RemoveRandom, RequestSelectionTreeNode {
 	
 	// REDFLAG this method does not move cooldown items.
 	// At present it is only called on startup so this is okay.
-	public void moveElementsTo(RandomGrabArray existingGrabber,
-			boolean canCommit) {
+	public void moveElementsTo(RandomGrabArray existingGrabber) {
 		WrapperManager.signalStarting((int) MINUTES.toMillis(5));
 		for(Block block: blocks) {
 			for(int j=0;j<block.reqs.length;j++) {

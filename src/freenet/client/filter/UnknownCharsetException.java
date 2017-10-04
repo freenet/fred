@@ -1,7 +1,5 @@
 package freenet.client.filter;
 
-import java.io.UnsupportedEncodingException;
-
 import freenet.l10n.NodeL10n;
 
 public class UnknownCharsetException extends DataFilterException {
@@ -13,7 +11,7 @@ public class UnknownCharsetException extends DataFilterException {
 		this.charset = charset;
 	}
 
-	public static UnknownCharsetException create(UnsupportedEncodingException e, String charset) {
+	public static UnknownCharsetException create(String charset) {
 		String explTitle = l10nDF("unknownCharsetTitle");
 		String expl = l10nDF("unknownCharset");
 

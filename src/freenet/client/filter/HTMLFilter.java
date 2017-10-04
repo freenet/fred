@@ -62,8 +62,7 @@ public class HTMLFilter implements ContentDataFilter, CharsetExtractor {
 	public static int metaRefreshRedirectMinInterval = 30;
 	
 	@Override
-	public void readFilter(InputStream input, OutputStream output, String charset, HashMap<String, String> otherParams,
-	        FilterCallback cb) throws DataFilterException, IOException {
+	public void readFilter(InputStream input, OutputStream output, String charset, FilterCallback cb) throws DataFilterException, IOException {
 		if(cb == null) cb = new NullFilterCallback();
 		logMINOR = Logger.shouldLog(LogLevel.MINOR, this);
 		logDEBUG = Logger.shouldLog(LogLevel.DEBUG, this);
@@ -78,7 +77,7 @@ public class HTMLFilter implements ContentDataFilter, CharsetExtractor {
 			r = new BufferedReader(isr, 4096);
 			w = new BufferedWriter(osw, 4096);
 		} catch(UnsupportedEncodingException e) {
-			throw UnknownCharsetException.create(e, charset);
+			throw UnknownCharsetException.create(charset);
 		}
 		HTMLParseContext pc = new HTMLParseContext(r, w, charset, cb, false);
 		pc.run();
@@ -2189,14 +2188,13 @@ public class HTMLFilter implements ContentDataFilter, CharsetExtractor {
 			HTMLParseContext pc) throws DataFilterException {
 			Map<String, Object> hn = super.sanitizeHash(h, p, pc);
 			if (p.startSlash) {
-				return finish(h, hn, pc);
+				return finish(hn, pc);
 			} else {
 				return start(h, hn, pc);
 			}
 		}
 
-		Map<String, Object> finish(Map<String, Object> h, Map<String, Object> hn,
-			HTMLParseContext pc) throws DataFilterException {
+		Map<String, Object> finish(Map<String, Object> hn, HTMLParseContext pc) throws DataFilterException {
 			if(logDEBUG) Logger.debug(this, "Finishing script/style");
 			// Finishing
 			setStyle(false, pc);
@@ -2316,7 +2314,7 @@ public class HTMLFilter implements ContentDataFilter, CharsetExtractor {
 		@Override
 		void processStyle(HTMLParseContext pc) {
 			pc.currentStyleScriptChunk =
-				sanitizeScripting(pc.currentStyleScriptChunk);
+				sanitizeScripting();
 		}
 	}
 
@@ -2444,7 +2442,7 @@ public class HTMLFilter implements ContentDataFilter, CharsetExtractor {
 			for (String name: eventAttrs) {
 				String arg = getHashString(h, name);
 				if (arg != null) {
-					arg = sanitizeScripting(arg);
+					arg = sanitizeScripting();
 					if (arg != null)
 						hn.put(name, arg);
 				}
@@ -3165,7 +3163,7 @@ public class HTMLFilter implements ContentDataFilter, CharsetExtractor {
 		Writer w = new StringWriter();
 		style = style.trim();
 		if(logMINOR) Logger.minor(HTMLFilter.class, "Sanitizing style: " + style);
-		CSSParser pc = new CSSParser(r, w, false, cb, hpc.charset, false, isInline);
+		CSSParser pc = new CSSParser(r, w, cb, hpc.charset, false, isInline);
 		try {
 			pc.parse();
 		} catch (IOException e) {
@@ -3204,7 +3202,7 @@ public class HTMLFilter implements ContentDataFilter, CharsetExtractor {
 		return buf.toString();
 	}
 
-	static String sanitizeScripting(String script) {
+	static String sanitizeScripting() {
 		// Kill it. At some point we may want to allow certain recipes - FIXME
 		return null;
 	}

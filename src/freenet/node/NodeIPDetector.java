@@ -510,7 +510,7 @@ public class NodeIPDetector {
 				}
 				if(overrideIPAddress != null) return;
 				try {
-					oldIPAddress = new FreenetInetAddress(val, false);
+					oldIPAddress = new FreenetInetAddress(val);
 				} catch (UnknownHostException e) {
 					throw new InvalidConfigValueException("Unknown host: "+e.getMessage());
 				}
@@ -521,7 +521,7 @@ public class NodeIPDetector {
 		String ipHintString = nodeConfig.getString("tempIPAddressHint");
 		if(ipHintString.length() > 0) {
 			try {
-				oldIPAddress = new FreenetInetAddress(ipHintString, false);
+				oldIPAddress = new FreenetInetAddress(ipHintString);
 			} catch (UnknownHostException e) {
 				String msg = "Unknown host: "+ipHintString+" in config: "+e.getMessage();
 				Logger.error(this, msg);

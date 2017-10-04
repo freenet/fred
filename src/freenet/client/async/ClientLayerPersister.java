@@ -228,16 +228,16 @@ public class ClientLayerPersister extends PersistentJobRunnerImpl {
         boolean failedSerialize = false;
         PartialLoad loaded = new PartialLoad();
         if(clientDatExists) {
-            innerLoad(loaded, makeBucket(dir, baseName, false, null), noSerialize, context, requestStarters, random);
+            innerLoad(loaded, makeBucket(dir, baseName, false, null), noSerialize, context, requestStarters);
         }
         if(clientDatCryptExists && loaded.needsMore()) {
-            innerLoad(loaded, makeBucket(dir, baseName, false, encryptionKey), noSerialize, context, requestStarters, random);
+            innerLoad(loaded, makeBucket(dir, baseName, false, encryptionKey), noSerialize, context, requestStarters);
         }
         if(clientDatBakExists) {
-            innerLoad(loaded, makeBucket(dir, baseName, true, null), noSerialize, context, requestStarters, random);
+            innerLoad(loaded, makeBucket(dir, baseName, true, null), noSerialize, context, requestStarters);
         }
         if(clientDatBakCryptExists && loaded.needsMore()) {
-            innerLoad(loaded, makeBucket(dir, baseName, true, encryptionKey), noSerialize, context, requestStarters, random);
+            innerLoad(loaded, makeBucket(dir, baseName, true, encryptionKey), noSerialize, context, requestStarters);
         }
         
         deleteAfterSuccessfulWrite = writeEncrypted ? clientDat : clientDatCrypt;
@@ -413,13 +413,13 @@ public class ClientLayerPersister extends PersistentJobRunnerImpl {
     }
     
     private void innerLoad(PartialLoad loaded, Bucket bucket, boolean noSerialize,
-            ClientContext context, RequestStarterGroup requestStarters, Random random) {
+            ClientContext context, RequestStarterGroup requestStarters) {
         long length = bucket.size();
         InputStream fis = null;
         try {
             fis = bucket.getInputStream();
-            innerLoad(loaded, fis, length, !noSerialize && !loaded.doneSomething(), context, 
-                    requestStarters, random, noSerialize);
+            innerLoad(loaded, fis, length, !noSerialize && !loaded.doneSomething(), context,
+                    requestStarters, noSerialize);
         } catch (IOException e) {
             // FIXME tell user more obviously.
             Logger.error(this, "Failed to load persistent requests from "+bucket+" : "+e, e);
@@ -440,9 +440,9 @@ public class ClientLayerPersister extends PersistentJobRunnerImpl {
             }
         }
     }
-    
-    private void innerLoad(PartialLoad loaded, InputStream fis, long length, boolean latest, 
-            ClientContext context, RequestStarterGroup requestStarters, Random random, boolean noSerialize) throws NodeInitException, IOException {
+
+    private void innerLoad(PartialLoad loaded, InputStream fis, long length, boolean latest,
+            ClientContext context, RequestStarterGroup requestStarters, boolean noSerialize) throws NodeInitException, IOException {
         ObjectInputStream ois = new ObjectInputStream(fis);
         long magic = ois.readLong();
         if(magic != MAGIC) throw new IOException("Bad magic");
@@ -526,7 +526,7 @@ public class ClientLayerPersister extends PersistentJobRunnerImpl {
         if(latest) {
             try {
                 // Don't bother with the buckets to free or the stats unless reading from the latest version (client.dat not client.dat.bak).
-                readStatsAndBuckets(ois, length, context);
+                readStatsAndBuckets(ois, length);
             } catch (Throwable t) {
                 Logger.error(this, "Failed to restore stats and delete old temp files: "+t, t);
             }
@@ -535,7 +535,7 @@ public class ClientLayerPersister extends PersistentJobRunnerImpl {
         fis = null;
     }
 
-    private void readStatsAndBuckets(ObjectInputStream ois, long length, ClientContext context) throws IOException, ClassNotFoundException {
+    private void readStatsAndBuckets(ObjectInputStream ois, long length) throws IOException, ClassNotFoundException {
         PersistentStatsPutter storedStatsPutter = (PersistentStatsPutter) ois.readObject();
         this.bandwidthStatsPutter.addFrom(storedStatsPutter);
         int count = ois.readInt();
