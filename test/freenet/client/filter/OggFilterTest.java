@@ -20,7 +20,7 @@ public class OggFilterTest extends TestCase {
 		DataInputStream input = new DataInputStream(getClass().getResourceAsStream("./ogg/invalid_header.ogg"));
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
 		try {
-			filter.readFilter(input, output, null, null, null);
+			filter.readFilter(input, output, null, null, null, null);
 			fail("Expected Exception not caught. Output size: "+output.toByteArray().length);
 		} catch(DataFilterException e) {}
 	}
@@ -29,7 +29,7 @@ public class OggFilterTest extends TestCase {
 		DataInputStream input = new DataInputStream(getClass().getResourceAsStream("./ogg/contains_subpages.ogg"));
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
 		try {
-			filter.readFilter(input, output, null, null, null);
+			filter.readFilter(input, output, null, null, null, null);
 		} catch(DataFilterException e) {}
 		Assert.assertTrue(Arrays.equals(new byte[]{}, output.toByteArray()));
 		input.close();

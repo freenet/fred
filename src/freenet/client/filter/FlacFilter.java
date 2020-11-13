@@ -20,9 +20,10 @@ public class FlacFilter implements ContentDataFilter {
 	static final byte[] magicNumber = new byte[] {0x66, 0x4C, 0x61, 0x43};
 	enum State {UNINITIALIZED, STREAMINFO_FOUND, METADATA_FOUND, STREAM_FINISHED};
 
-	public void readFilter(InputStream input, OutputStream output,
-			String charset, HashMap<String, String> otherParams,
-			FilterCallback cb) throws DataFilterException, IOException {
+	public void readFilter(
+      InputStream input, OutputStream output,
+      String charset, HashMap<String, String> otherParams,
+      String schemeHostAndPort, FilterCallback cb) throws DataFilterException, IOException {
 		boolean logMINOR = Logger.shouldLog(LogLevel.MINOR, this.getClass());
 		FlacPacketFilter parser = new FlacPacketFilter();
 		DataInputStream in = new DataInputStream(input);

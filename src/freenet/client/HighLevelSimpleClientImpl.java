@@ -200,7 +200,7 @@ public class HighLevelSimpleClientImpl implements HighLevelSimpleClient, Request
 	public ClientGetter fetch(FreenetURI uri, long maxSize, ClientGetCallback callback, FetchContext fctx, short prio) throws FetchException {
 		return fetch(uri, callback, fctx, prio);
 	}
-	
+
 	@Override
 	public ClientGetter fetch(FreenetURI uri, ClientGetCallback callback, FetchContext fctx, short prio) throws FetchException {
 		if(uri == null) throw new NullPointerException();
@@ -229,7 +229,7 @@ public class HighLevelSimpleClientImpl implements HighLevelSimpleClient, Request
 	public FreenetURI insert(InsertBlock insert, boolean getCHKOnly, String filenameHint) throws InsertException {
 		return insert(insert, getCHKOnly, filenameHint, priorityClass);
 	}
-	
+
 	@Override
 	public FreenetURI insert(InsertBlock insert, boolean getCHKOnly, String filenameHint, short priority) throws InsertException {
 		return insert(insert, getCHKOnly, filenameHint, false, priority);
@@ -240,16 +240,16 @@ public class HighLevelSimpleClientImpl implements HighLevelSimpleClient, Request
 		context.getCHKOnly = getCHKOnly;
 		return insert(insert, filenameHint, isMetadata, priority, context);
 	}
-	
+
 	@Override
 	public FreenetURI insert(InsertBlock insert, String filenameHint, short priority, InsertContext ctx) throws InsertException {
 		return insert(insert, filenameHint, false, priority, ctx);
 	}
-	
+
 	public FreenetURI insert(InsertBlock insert, String filenameHint, boolean isMetadata, short priority, InsertContext ctx) throws InsertException {
 		return insert(insert, filenameHint, isMetadata, priority, ctx, null);
 	}
-	
+
 	public FreenetURI insert(InsertBlock insert, String filenameHint, boolean isMetadata, short priority, InsertContext ctx, byte[] forceCryptoKey) throws InsertException {
 		PutWaiter pw = new PutWaiter(this);
 		ClientPutter put = new ClientPutter(pw, insert.getData(), insert.desiredURI, insert.clientMetadata,
@@ -267,7 +267,7 @@ public class HighLevelSimpleClientImpl implements HighLevelSimpleClient, Request
 	public ClientPutter insert(InsertBlock insert, String filenameHint, boolean isMetadata, InsertContext ctx, ClientPutCallback cb) throws InsertException {
 		return insert(insert, filenameHint, isMetadata, ctx, cb, priorityClass);
 	}
-	
+
 	@Override
 	public ClientPutter insert(InsertBlock insert, String filenameHint, boolean isMetadata, InsertContext ctx, ClientPutCallback cb, short priority) throws InsertException {
 		ClientPutter put = new ClientPutter(cb, insert.getData(), insert.desiredURI, insert.clientMetadata,
@@ -310,7 +310,7 @@ public class HighLevelSimpleClientImpl implements HighLevelSimpleClient, Request
 	public FreenetURI insertManifest(FreenetURI insertURI, HashMap<String, Object> bucketsByName, String defaultName, short priorityClass) throws InsertException {
 		return insertManifest(insertURI, bucketsByName, defaultName, priorityClass, null);
 	}
-	
+
 	@Override
 	public FreenetURI insertManifest(FreenetURI insertURI, HashMap<String, Object> bucketsByName, String defaultName, short priorityClass, byte[] forceCryptoKey) throws InsertException {
 		PutWaiter pw = new PutWaiter(this);
@@ -340,6 +340,11 @@ public class HighLevelSimpleClientImpl implements HighLevelSimpleClient, Request
 
 	@Override
 	public FetchContext getFetchContext(long overrideMaxSize) {
+		return getFetchContext(-1, null);
+	}
+
+	@Override
+	public FetchContext getFetchContext(long overrideMaxSize, String schemeHostAndPort) {
 		long maxLength = curMaxLength;
 		long maxTempLength = curMaxTempLength;
 		if(overrideMaxSize >= 0) {
@@ -351,21 +356,21 @@ public class HighLevelSimpleClientImpl implements HighLevelSimpleClient, Request
 				MAX_RECURSION, MAX_ARCHIVE_RESTARTS, MAX_ARCHIVE_LEVELS, DONT_ENTER_IMPLICIT_ARCHIVES,
 				SPLITFILE_BLOCK_RETRIES, NON_SPLITFILE_RETRIES, USK_RETRIES,
 				FETCH_SPLITFILES, FOLLOW_REDIRECTS, LOCAL_REQUESTS_ONLY,
-				FILTER_DATA, MAX_SPLITFILE_BLOCKS_PER_SEGMENT, MAX_SPLITFILE_CHECK_BLOCKS_PER_SEGMENT, 
+				FILTER_DATA, MAX_SPLITFILE_BLOCKS_PER_SEGMENT, MAX_SPLITFILE_CHECK_BLOCKS_PER_SEGMENT,
 				bucketFactory, eventProducer,
-				false, CAN_WRITE_CLIENT_CACHE, null, null);
+				false, CAN_WRITE_CLIENT_CACHE, null, null, schemeHostAndPort);
 	}
-	
-	public static FetchContext makeDefaultFetchContext(long maxLength, long maxTempLength, 
+
+	public static FetchContext makeDefaultFetchContext(long maxLength, long maxTempLength,
 	        BucketFactory bucketFactory, SimpleEventProducer eventProducer) {
         return
         new FetchContext(maxLength, maxTempLength, 1024*1024,
             MAX_RECURSION, MAX_ARCHIVE_RESTARTS, MAX_ARCHIVE_LEVELS, DONT_ENTER_IMPLICIT_ARCHIVES,
             SPLITFILE_BLOCK_RETRIES, NON_SPLITFILE_RETRIES, USK_RETRIES,
             FETCH_SPLITFILES, FOLLOW_REDIRECTS, LOCAL_REQUESTS_ONLY,
-            FILTER_DATA, MAX_SPLITFILE_BLOCKS_PER_SEGMENT, MAX_SPLITFILE_CHECK_BLOCKS_PER_SEGMENT, 
+            FILTER_DATA, MAX_SPLITFILE_BLOCKS_PER_SEGMENT, MAX_SPLITFILE_CHECK_BLOCKS_PER_SEGMENT,
             bucketFactory, eventProducer,
-            false, CAN_WRITE_CLIENT_CACHE, null, null);
+            false, CAN_WRITE_CLIENT_CACHE, null, null, null);
 	}
 
 	@Override
@@ -373,18 +378,18 @@ public class HighLevelSimpleClientImpl implements HighLevelSimpleClient, Request
 		return new InsertContext(
 				INSERT_RETRIES, CONSECUTIVE_RNFS_ASSUME_SUCCESS,
 				SPLITFILE_BLOCKS_PER_SEGMENT, SPLITFILE_CHECK_BLOCKS_PER_SEGMENT,
-				eventProducer, CAN_WRITE_CLIENT_CACHE_INSERTS, Node.FORK_ON_CACHEABLE_DEFAULT, false, 
-				Compressor.DEFAULT_COMPRESSORDESCRIPTOR, EXTRA_INSERTS_SINGLE_BLOCK, 
+				eventProducer, CAN_WRITE_CLIENT_CACHE_INSERTS, Node.FORK_ON_CACHEABLE_DEFAULT, false,
+				Compressor.DEFAULT_COMPRESSORDESCRIPTOR, EXTRA_INSERTS_SINGLE_BLOCK,
 				EXTRA_INSERTS_SPLITFILE_HEADER, InsertContext.CompatibilityMode.COMPAT_DEFAULT);
 	}
 
-    public static InsertContext makeDefaultInsertContext(BucketFactory bucketFactory, 
+    public static InsertContext makeDefaultInsertContext(BucketFactory bucketFactory,
             SimpleEventProducer eventProducer) {
         return new InsertContext(
                 INSERT_RETRIES, CONSECUTIVE_RNFS_ASSUME_SUCCESS,
                 SPLITFILE_BLOCKS_PER_SEGMENT, SPLITFILE_CHECK_BLOCKS_PER_SEGMENT,
-                eventProducer, CAN_WRITE_CLIENT_CACHE_INSERTS, Node.FORK_ON_CACHEABLE_DEFAULT, false, 
-                Compressor.DEFAULT_COMPRESSORDESCRIPTOR, EXTRA_INSERTS_SINGLE_BLOCK, 
+                eventProducer, CAN_WRITE_CLIENT_CACHE_INSERTS, Node.FORK_ON_CACHEABLE_DEFAULT, false,
+                Compressor.DEFAULT_COMPRESSORDESCRIPTOR, EXTRA_INSERTS_SINGLE_BLOCK,
                 EXTRA_INSERTS_SPLITFILE_HEADER, InsertContext.CompatibilityMode.COMPAT_DEFAULT);
     }
 

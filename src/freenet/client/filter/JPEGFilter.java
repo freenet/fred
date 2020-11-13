@@ -22,7 +22,7 @@ import freenet.support.io.CountedInputStream;
 /**
  * Content filter for JPEG's.
  * Just check the header.
- * 
+ *
  * http://www.obrador.com/essentialjpeg/headerinfo.htm
  * Also the JFIF spec.
  * Also http://cs.haifa.ac.il/~nimrod/Compression/JPEG/J6sntx2005.pdf
@@ -68,8 +68,9 @@ public class JPEGFilter implements ContentDataFilter {
 	};
 
 	@Override
-	public void readFilter(InputStream input, OutputStream output, String charset, HashMap<String, String> otherParams,
-			FilterCallback cb) throws DataFilterException, IOException {
+	public void readFilter(
+      InputStream input, OutputStream output, String charset, HashMap<String, String> otherParams,
+      String schemeHostAndPort, FilterCallback cb) throws DataFilterException, IOException {
 		readFilter(input, output, charset, otherParams, cb, deleteComments, deleteExif);
 		output.flush();
 	}
@@ -234,7 +235,7 @@ public class JPEGFilter implements ContentDataFilter {
 			} else {
 				boolean valid = false;
 				// We used to support only DB C4 C0, because some website said they were
-				// sufficient for decoding a JPEG. Unfortunately they are not, JPEG is a 
+				// sufficient for decoding a JPEG. Unfortunately they are not, JPEG is a
 				// very complex standard and the full spec is only available for a fee.
 				// FIXME somebody who has access to the spec should have a look at this,
 				// and ideally write some chunk sanitizers.
@@ -378,7 +379,7 @@ public class JPEGFilter implements ContentDataFilter {
 	private void throwError(String shortReason, String reason) throws DataFilterException {
 		// Throw an exception
 		String message = l10n("notJpeg");
-		if(reason != null) 
+		if(reason != null)
 			message += ' ' + reason;
 		if(shortReason != null)
 			message += " - " + shortReason;

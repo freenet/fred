@@ -10,10 +10,11 @@ public interface URIProcessor {
 
 	/**
 	 * Makes an URI absolute
-	 * 
+	 *
 	 * @param uri
 	 *            - The uri to be absolutize
 	 * @return The absolute URI
 	 */
 	public String makeURIAbsolute(String uri) throws URISyntaxException;
+
 }

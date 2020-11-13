@@ -22,7 +22,7 @@ public class JPEGFilterTest extends TestCase {
 		byte[] jpegFile = createValidJpegFileWithThumbnail();
 		InputStream inputStream = new ByteArrayInputStream(jpegFile);
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		jpegFilter.readFilter(inputStream, outputStream, "UTF-8", new HashMap<String, String>(), new NullFilterCallback());
+		jpegFilter.readFilter(inputStream, outputStream, "UTF-8", new HashMap<>(), null, new NullFilterCallback());
 		byte[] filteredJpegFile = outputStream.toByteArray();
 		assertTrue(Arrays.equals(jpegFile, filteredJpegFile));
 	}

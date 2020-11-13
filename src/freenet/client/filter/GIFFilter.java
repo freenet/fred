@@ -28,11 +28,12 @@ public class GIFFilter implements ContentDataFilter {
 		{ (byte)'G', (byte)'I', (byte)'F', (byte)'8', (byte)'7', (byte)'a' };
 	static final byte[] gif89aHeader =
 		{ (byte)'G', (byte)'I', (byte)'F', (byte)'8', (byte)'9', (byte)'a' };
-		
-	
+
+
 	@Override
-	public void readFilter(InputStream input, OutputStream output, String charset, HashMap<String, String> otherParams,
-	        FilterCallback cb) throws DataFilterException, IOException {
+	public void readFilter(
+      InputStream input, OutputStream output, String charset, HashMap<String, String> otherParams,
+      String schemeHostAndPort, FilterCallback cb) throws DataFilterException, IOException {
 		DataInputStream dis = new DataInputStream(input);
 		try {
 			// Check the header

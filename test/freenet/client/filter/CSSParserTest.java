@@ -141,7 +141,7 @@ public class CSSParserTest extends TestCase {
 		CSS2_BAD_SELECTOR.add("h1[foo=\"hello\\202\r\n\"] {}");
 	}
 
-	
+
 	/** CSS3 Selectors */
 	private final static HashMap<String,String> CSS3_SELECTOR= new HashMap<String,String>();
 	static
@@ -178,7 +178,7 @@ public class CSSParserTest extends TestCase {
 		CSS3_SELECTOR.put("h1:nth-last-of-type(odd) {}","h1:nth-last-of-type(odd)");
 		CSS3_SELECTOR.put("h1:nth-last-of-type(even) {}","h1:nth-last-of-type(even)");
 	}
-	
+
 	private final static HashSet<String> CSS3_BAD_SELECTOR= new HashSet<String>();
 	static
 	{
@@ -806,7 +806,7 @@ public class CSSParserTest extends TestCase {
 		propertyTests.put("@media speech { .phone { speak-punctuation: code; speak-numeral: digits }}", "@media speech { .phone { speak-punctuation: code; speak-numeral: digits }}");
 		propertyTests.put("@media speech { table { speak-header: always } table.quick { speak-header: once } table.sub { speak-header: inherit }}", "@media speech { table { speak-header: always } table.quick { speak-header: once } table.sub { speak-header: inherit }}");
 		propertyTests.put("@media speech { h1 { voice-family: announcer, male } p.part.romeo  { voice-family: romeo, male } p.part.juliet { voice-family: juliet, female }}", "@media speech { h1 { voice-family: announcer, male } p.part.romeo { voice-family: romeo, male } p.part.juliet { voice-family: juliet, female }}");
-		
+
 		// Banned selectors
 		propertyTests.put(":visited { color:red }", "");
 		propertyTests.put("a:visited { color:red }", "");
@@ -816,7 +816,7 @@ public class CSSParserTest extends TestCase {
 		propertyTests.put(":active,a:visited { color:red }", ":active { color:red }");
 		propertyTests.put(":focus,:visited,:active { color:red }", ":focus,:active { color:red }");
 		propertyTests.put(":focus,a:visited,:active { color:red }", ":focus,:active { color:red }");
-		
+
 		// Flex-box Test
 		propertyTests.put("nav > ul { display: flex; }", "nav>ul { display: flex; }");
 		propertyTests.put("nav > ul > li {\n  min-width: 100px;\n  /* Prevent items from getting too small for their content. */\n  }", "nav>ul>li {\n  min-width: 100px;\n  \n  }");
@@ -853,7 +853,7 @@ public class CSSParserTest extends TestCase {
 		propertyTests.put("div { justify-self: true center; }", "div { justify-self: true center; }");
 		propertyTests.put("div { justify-self: center true; }", "div { justify-self: center true; }");
 		propertyTests.put("div { justify-self: center true center; }", "div { }");
-		
+
 		propertyTests.put("div { align-content: flex-start; }", "div { align-content: flex-start; }");
 		propertyTests.put("div { align-content: space-between; }", "div { align-content: space-between; }");
 		propertyTests.put("div { align-content: true flex-start; }", "div { align-content: true flex-start; }");
@@ -868,7 +868,7 @@ public class CSSParserTest extends TestCase {
 		propertyTests.put("div { display: list-item flow flow; }", "div { }");
 		propertyTests.put("div { display: invalidItem; }", "div { }");
 		propertyTests.put("div { display: block invalidItem; }", "div { }");
-		
+
 		// Navigation Attributes for CSS3 UI
 		propertyTests.put("body { nav-down: auto; }",  "body { nav-down: auto; }");
 		propertyTests.put("body { nav-down: h2#java current; }",  "body { nav-down: h2#java current; }");
@@ -1087,7 +1087,8 @@ public class CSSParserTest extends TestCase {
 		assertTrue("Charset detected \""+detectedCharset+"\" should be \""+charset+"\" or \""+family+"\" from getCharsetByBOM", detectedCharset == null || charset.equalsIgnoreCase(detectedCharset) || (family != null && family.equalsIgnoreCase(detectedCharset)));
 		detectedCharset = ContentFilter.detectCharset(bytes, bytes.length, cssMIMEType, null);
 		assertTrue("Charset detected \""+detectedCharset+"\" should be \""+charset+"\" from ContentFilter.detectCharset bom=\""+bomCharset+"\"", charset.equalsIgnoreCase(detectedCharset));
-		FilterStatus filterStatus = ContentFilter.filter(inputStream, outputStream, "text/css", new URI("/CHK@OR904t6ylZOwoobMJRmSn7HsPGefHSP7zAjoLyenSPw,x2EzszO4oobMJRmSn7HsPGefHSP7zAjoLyenSPw,x2EzszO4Kqot8akqmKYXJbkD-fSj6noOVGB-K2YisZ4,AAIC--8/1-works.html"), null, null, null);
+		FilterStatus filterStatus = ContentFilter.filter(inputStream, outputStream, "text/css", new URI("/CHK@OR904t6ylZOwoobMJRmSn7HsPGefHSP7zAjoLyenSPw,x2EzszO4oobMJRmSn7HsPGefHSP7zAjoLyenSPw,x2EzszO4Kqot8akqmKYXJbkD-fSj6noOVGB-K2YisZ4,AAIC--8/1-works.html"),
+        null, null, null, null);
 		inputStream.close();
 		outputStream.close();
 		assertEquals("text/css", filterStatus.mimeType);
@@ -1111,7 +1112,8 @@ public class CSSParserTest extends TestCase {
 		detectedCharset = ContentFilter.detectCharset(bytes, bytes.length, cssMIMEType, null);
 		assertTrue("Charset detected \""+detectedCharset+"\" should be unknown testing unsupported charset \""+charset+"\" from ContentFilter.detectCharset bom=\""+bomCharset+"\"", charset == null || "utf-8".equalsIgnoreCase(detectedCharset));
 		try {
-			FilterStatus filterStatus = ContentFilter.filter(inputStream, outputStream, "text/css", new URI("/CHK@OR904t6ylZOwoobMJRmSn7HsPGefHSP7zAjoLyenSPw,x2EzszO4Kqot8akqmKYXJbkD-fSj6noOVGB-K2YisZ4,AAIC--8/1-works.html"), null, null, null);
+			FilterStatus filterStatus = ContentFilter.filter(inputStream, outputStream, "text/css", new URI("/CHK@OR904t6ylZOwoobMJRmSn7HsPGefHSP7zAjoLyenSPw,x2EzszO4Kqot8akqmKYXJbkD-fSj6noOVGB-K2YisZ4,AAIC--8/1-works.html"),
+          null,null, null, null);
 			// It is safe to return utf-8, as long as we clobber the actual content; utf-8 is the default, but other stuff decoded to it is unlikely to be coherent...
 			assertTrue("ContentFilter.filter() returned charset \""+filterStatus.charset+"\" should be unknown testing  unsupported charset \""+charset+"\"", filterStatus.charset.equalsIgnoreCase(charset) || filterStatus.charset.equalsIgnoreCase("utf-8"));//If we switch to JUnit 4, this may be replaced with an assertThat
 			assertEquals("text/css", filterStatus.mimeType);
@@ -1143,7 +1145,8 @@ public class CSSParserTest extends TestCase {
 		Bucket outputBucket = new ArrayBucket();
 		InputStream inputStream = inputBucket.getInputStream();
 		OutputStream outputStream = outputBucket.getOutputStream();
-		FilterStatus filterStatus = ContentFilter.filter(inputStream, outputStream, "text/css", new URI("/CHK@OR904t6ylZOwoobMJRmSn7HsPGefHSP7zAjoLyenSPw,x2EzszO4Kqot8akqmKYXJbkD-fSj6noOVGB-K2YisZ4,AAIC--8/1-works.html"), null, null, charset);
+		FilterStatus filterStatus = ContentFilter.filter(inputStream, outputStream, "text/css", new URI("/CHK@OR904t6ylZOwoobMJRmSn7HsPGefHSP7zAjoLyenSPw,x2EzszO4Kqot8akqmKYXJbkD-fSj6noOVGB-K2YisZ4,AAIC--8/1-works.html"),
+        null,null, null, charset);
 		inputStream.close();
 		outputStream.close();
 		assertEquals(charset, filterStatus.charset);

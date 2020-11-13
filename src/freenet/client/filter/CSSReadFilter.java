@@ -38,8 +38,9 @@ public class CSSReadFilter implements ContentDataFilter, CharsetExtractor {
 	}
 
 	@Override
-	public void readFilter(InputStream input, OutputStream output, String charset, HashMap<String, String> otherParams,
-			FilterCallback cb) throws DataFilterException, IOException {
+	public void readFilter(
+      InputStream input, OutputStream output, String charset, HashMap<String, String> otherParams,
+      String schemeHostAndPort, FilterCallback cb) throws DataFilterException, IOException {
 		if (logDEBUG)
 			Logger.debug(
 				this,
@@ -64,7 +65,7 @@ public class CSSReadFilter implements ContentDataFilter, CharsetExtractor {
 		finally {
 			w.flush();
 		}
-		
+
 	}
 
 	@Override
@@ -102,7 +103,7 @@ public class CSSReadFilter implements ContentDataFilter, CharsetExtractor {
 	// In all cases these will be confirmed by calling getCharset().
 	// We do not use all of the BOMs suggested.
 	// Also, we do not use true BOMs.
-	
+
 	// We do check for ascii, even though it's the first one to check for anyway, because of the "as specified" rule: if it starts with @charset in ascii, it MUST have a valid charset, or we ignore the whole sheet, as per the spec.
 	static final byte[] ascii = parse("40 63 68 61 72 73 65 74 20 22");
 	static final byte[] utf16be = parse("00 40 00 63 00 68 00 61 00 72 00 73 00 65 00 74 00 20 00 22");
@@ -116,14 +117,14 @@ public class CSSReadFilter implements ContentDataFilter, CharsetExtractor {
 	static final byte[] utf32_2143 = parse("00 00 40 00 00 00 63 00 00 00 68 00 00 00 61 00 00 00 72 00 00 00 73 00 00 00 65 00 00 00 74 00 00 00 20 00 00 00 22 00");
 	static final byte[] utf32_3412 = parse("00 40 00 00 00 63 00 00 00 68 00 00 00 61 00 00 00 72 00 00 00 73 00 00 00 65 00 00 00 74 00 00 00 20 00 00 00 22 00 00");
 	static final byte[] gsm = parse("00 63 68 61 72 73 65 74 20 22");
-	
+
 	static final int maxBOMLength = Math.max(utf16be.length, Math.max(utf16le.length, Math.max(utf32_le.length, Math.max(utf32_be.length, Math.max(ebcdic.length, Math.max(ibm1026.length, Math.max(utf32_2143.length, Math.max(utf32_3412.length, gsm.length))))))));
-	
+
 	static byte[] parse(String s) {
 		s = s.replaceAll(" ", "");
 		return HexUtil.hexToBytes(s);
 	}
-	
+
 	@Override
 	public BOMDetection getCharsetByBOM(byte[] input, int length) throws DataFilterException, IOException {
 		if(ContentFilter.startsWith(input, ascii, length))

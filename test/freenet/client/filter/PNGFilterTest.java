@@ -112,7 +112,9 @@ public class PNGFilterTest extends TestCase {
 			}
 
 			try {
-				filter.readFilter(ib.getInputStream(), new NullBucket().getOutputStream(), "", null, null);
+				filter.readFilter(ib.getInputStream(), new NullBucket().getOutputStream(), "", null,
+            null,
+            null);
 
 				assertTrue(filename + " should " + (valid ? "" : "not ") + "be valid", valid);
 			} catch (DataFilterException dfe) {

@@ -34,7 +34,7 @@ import freenet.support.Logger.LogLevel;
 import freenet.support.io.NativeThread;
 
 /**
- * Poll a USK, and when a new slot is found, fetch it. 
+ * Poll a USK, and when a new slot is found, fetch it.
  */
 public class USKRetriever extends BaseClientGetter implements USKCallback {
 	private static final long serialVersionUID = 5913500655676487409L;
@@ -43,7 +43,7 @@ public class USKRetriever extends BaseClientGetter implements USKCallback {
 	final FetchContext ctx;
 	final USKRetrieverCallback cb;
 	final USK origUSK;
-	// In wierd 
+	// In wierd
 	/** The USKCallback that is actually subscribed. This is used when we may
 	 * be going through a USKSparseProxyCallback. */
 	private USKCallback proxy;
@@ -61,7 +61,7 @@ public class USKRetriever extends BaseClientGetter implements USKCallback {
 		});
 	}
 
-	public USKRetriever(FetchContext fctx, short prio,  
+	public USKRetriever(FetchContext fctx, short prio,
 			final RequestClient client, USKRetrieverCallback cb, USK origUSK) {
 		super(prio, client);
 		if(client.persistent()) throw new UnsupportedOperationException("USKRetriever cannot be persistent");
@@ -89,7 +89,7 @@ public class USKRetriever extends BaseClientGetter implements USKCallback {
 		FreenetURI uri = key.getSSK(l).getURI();
 		try {
 			SingleFileFetcher getter =
-				(SingleFileFetcher) SingleFileFetcher.create(this, this, uri, ctx, new ArchiveContext(ctx.maxTempLength, ctx.maxArchiveLevels), 
+				(SingleFileFetcher) SingleFileFetcher.create(this, this, uri, ctx, new ArchiveContext(ctx.maxTempLength, ctx.maxArchiveLevels),
 						ctx.maxNonSplitfileRetries, 0, true, l, true, false, context, realTimeFlag, false);
 			getter.schedule(context);
 		} catch (MalformedURLException e) {
@@ -133,7 +133,7 @@ public class USKRetriever extends BaseClientGetter implements USKCallback {
 				pipeOut = new PipedOutputStream(pipeIn);
 				decompressorManager = new DecompressorThreadManager(pipeIn, decompressors, maxLen);
 				pipeIn = decompressorManager.execute();
-				ClientGetWorkerThread worker = new ClientGetWorkerThread(new BufferedInputStream(pipeIn), output, null, null, null, false, null, null, null, context.linkFilterExceptionProvider);
+				ClientGetWorkerThread worker = new ClientGetWorkerThread(new BufferedInputStream(pipeIn), output, null, null, ctx.getSchemeHostAndPort(), null, false, null, null, null, context.linkFilterExceptionProvider);
 				worker.start();
 				streamGenerator.writeTo(pipeOut, context);
 				worker.waitFinished();
@@ -169,9 +169,9 @@ public class USKRetriever extends BaseClientGetter implements USKCallback {
 			public int getPriority() {
 				return NativeThread.NORM_PRIORITY;
 			}
-			
+
 		});
-		
+
 	}
 
 	@Override
@@ -265,29 +265,29 @@ public class USKRetriever extends BaseClientGetter implements USKCallback {
 	public void onSplitfileCompatibilityMode(CompatibilityMode min, CompatibilityMode max, byte[] splitfileKey, boolean compressed, boolean bottomLayer, boolean definitiveAnyway, ClientContext context) {
 		// Ignore
 	}
-	
+
 	@Override
 	public void onHashes(HashResult[] hashes, ClientContext context) {
 		// Ignore
 	}
-	
+
 	/** Called when we subscribe() in USKManager, if we don't directly subscribe
 	 * the USKRetriever. Usually this happens when we put a proxy between them,
-	 * e.g. USKProxyCompletionCallback, which hides updates for efficiency. 
+	 * e.g. USKProxyCompletionCallback, which hides updates for efficiency.
 	 * @param cb The callback that is actually USKManager.subscribe()'ed.
 	 */
 	synchronized void setProxy(USKCallback cb) {
 		proxy = cb;
 	}
-	
+
 	synchronized USKCallback getProxy() {
 		return proxy;
 	}
-	
+
 	synchronized void setFetcher(USKFetcher f) {
 		fetcher = f;
 	}
-	
+
 	synchronized USKFetcher getFetcher() {
 		return fetcher;
 	}
@@ -304,10 +304,10 @@ public class USKRetriever extends BaseClientGetter implements USKCallback {
 		if(p != null)
 			manager.unsubscribe(origUSK, p);
 	}
-	
+
 	/** Only works if setFetcher() has been called, i.e. if this was created
 	 * through USKManager.subscribeContentCustom().
-	 * FIXME this is a special case hack, 
+	 * FIXME this is a special case hack,
 	 * For a generic solution see https://bugs.freenetproject.org/view.php?id=4984
 	 * @param time The new cooldown time. At least 30 minutes or we throw.
 	 * @param tries The new number of tries after each cooldown. Greater than 0

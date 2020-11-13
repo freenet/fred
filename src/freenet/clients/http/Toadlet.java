@@ -29,14 +29,14 @@ import freenet.support.api.Bucket;
 import freenet.support.api.HTTPRequest;
 
 /**
- * API similar to Servlets. Originally the reason for not using servlets was to support 
+ * API similar to Servlets. Originally the reason for not using servlets was to support
  * continuations, but that hasn't been implemented, and modern servlets do support continuations
  * anyway. Also it was supposed to be simpler, which may not be true any more. Many plugins wrap
  * their own API around this!
- * FIXME consider using servlets. 
- * 
+ * FIXME consider using servlets.
+ *
  * Important API complexity: The methods for handling the actual requests are synthetic:
- * 
+ *
  * Methods are handled via handleMethodGET/POST/whatever ( URI uri, HTTPRequest request, ToadletContext ctx )
  * Typically this throws IOException and ToadletContextClosedException.
  */
@@ -47,40 +47,40 @@ public abstract class Toadlet {
 	 * are expected to support GET.
 	 * @param uri The URI being fetched.
 	 * @param request The original HTTPRequest, convenient for e.g. fetching ?blah=blah parameters.
-	 * @param ctx The request context. Mainly used for sending a reply; this identifies which 
+	 * @param ctx The request context. Mainly used for sending a reply; this identifies which
 	 * request we are replying to. Also gives access to lots of important objects e.g. PageMaker. */
 	public abstract void handleMethodGET(URI uri, HTTPRequest request, ToadletContext ctx) throws ToadletContextClosedException, IOException, RedirectException;
-	
+
 	public static final String HANDLE_METHOD_PREFIX = "handleMethod";
 
 	public abstract String path();
-	
+
 	/**
 	 * Primary purpose of this function is being overridden in your Toadlet implementations - for the following purpose:
-	 * 
-	 * When displaying this Toadlet, the web interface should show the menu from which it was selected as opened, and mark the 
+	 *
+	 * When displaying this Toadlet, the web interface should show the menu from which it was selected as opened, and mark the
 	 * appropriate entry as selected in the menu. This function may return the Toadlet whose menu shall be opened and whose
 	 * entry shall be marked as selected in the menu.
-	 * 
+	 *
 	 * It is necessary to have this function instead of just marking <code>Toadlet.this</code> as selected:
 	 * Some Toadlets won't be added to a menu. They will be only accessible through other Toadlets. For example
 	 * a Toadlet for deleting a single download might only be accessible through the Toadlet which shows all downloads.
 	 * For still being able to figure out the menu entry through which those so-called invisible Toadlets where accessed,
 	 * this function is necessary.
-	 * 
+	 *
 	 * @param context Can be used to decide the return value, for example to check session cookies using {@link SessionManager}.
      * @return
      *     The result of {@link #showAsToadlet()}, which is <code>this</code> by default.<br>
      *     This behavior is for backwards compatibility with existing code which overrides that
      *     function.<br><br>
-     *     
+     *
      *     Override this function to return something else for invisible Toadlets as explained
      *     above.
 	 */
 	public Toadlet showAsToadlet(ToadletContext context) {
 	    return showAsToadlet();
 	}
-	
+
 	/**
 	 * @deprecated Use {@link #showAsToadlet(ToadletContext)} instead. Internally fred will always call that function, which calls this function by default,
 	 *             so old code which only overrides this function still works.
@@ -94,7 +94,7 @@ public abstract class Toadlet {
         // contract of its JavaDoc.
         return this;
 	}
-	
+
 	/**
 	 * Override to return true if the toadlet should handle POSTs that don't have the correct form
 	 * password. Otherwise they will be rejected and not passed to the toadlet.
@@ -102,7 +102,7 @@ public abstract class Toadlet {
 	public boolean allowPOSTWithoutPassword() {
 		return false;
 	}
-	
+
 	protected Toadlet(HighLevelSimpleClient client) {
 		this.client = client;
 	}
@@ -172,9 +172,9 @@ public abstract class Toadlet {
 	 * @param maxSize The maximum allowable size of the fetch's result
 	 * @return A default FetchContext
 	 */
-	FetchContext getFetchContext(long maxSize) {
+	FetchContext getFetchContext(long maxSize, String schemeHostAndPort) {
 		//We want to retrieve a FetchContext we may override
-		return client.getFetchContext(maxSize);
+		return client.getFetchContext(maxSize, schemeHostAndPort);
 	}
 
 	FreenetURI insert(InsertBlock insert, String filenameHint, boolean getCHKOnly) throws InsertException {
@@ -214,9 +214,9 @@ public abstract class Toadlet {
 	protected void writeReply(ToadletContext ctx, int code, String mimeType, String desc, Bucket data) throws ToadletContextClosedException, IOException {
 		writeReply(ctx, code, mimeType, desc, null, data);
 	}
-	
+
 	/**
-	 * Write an HTTP response, e.g. a page, an image, an error message, possibly with custom 
+	 * Write an HTTP response, e.g. a page, an image, an error message, possibly with custom
 	 * headers, for example, we may want to send a redirect, or a file with a specified filename.
 	 * @param ctx The specific request to reply to.
 	 * @param code The HTTP reply code to use.
@@ -241,13 +241,13 @@ public abstract class Toadlet {
 	 * @param code The HTTP reply code to use.
 	 * @param mimeType The MIME type of the data we are returning.
 	 * @param desc The HTTP response description for the code.
-	 * @param reply The reply data, as a String (so only use this for text-based replies, e.g. 
+	 * @param reply The reply data, as a String (so only use this for text-based replies, e.g.
 	 * HTML, plain text etc).
 	 */
 	protected void writeReply(ToadletContext ctx, int code, String mimeType, String desc, String reply) throws ToadletContextClosedException, IOException {
 		writeReply(ctx, code, mimeType, desc, null, reply, false);
 	}
-	
+
 	/**
 	 * Write an HTTP response as HTML.
 	 * @param ctx The specific request to reply to.
@@ -258,7 +258,7 @@ public abstract class Toadlet {
 	protected void writeHTMLReply(ToadletContext ctx, int code, String desc, String reply) throws ToadletContextClosedException, IOException {
 		writeReply(ctx, code, "text/html; charset=utf-8", desc, null, reply, false);
 	}
-	
+
 	/**
 	 * Write an HTTP response as plain text.
 	 * @param ctx The specific request to reply to.
@@ -271,8 +271,8 @@ public abstract class Toadlet {
 	}
 
     /**
-     * Write an HTTP response as HTML, possibly with custom headers, for example, we may want to 
-     * send a redirect, or a file with a specified filename. 
+     * Write an HTTP response as HTML, possibly with custom headers, for example, we may want to
+     * send a redirect, or a file with a specified filename.
      * @param ctx The specific request to reply to.
      * @param code The HTTP reply code to use.
      * @param desc The HTTP response description for the code.
@@ -282,10 +282,10 @@ public abstract class Toadlet {
     protected void writeHTMLReply(ToadletContext ctx, int code, String desc, MultiValueTable<String, String> headers, String reply) throws ToadletContextClosedException, IOException {
         writeHTMLReply(ctx, code, desc, headers, reply, false);
     }
-	
+
 	/**
-	 * Write an HTTP response as HTML, possibly with custom headers, for example, we may want to 
-	 * send a redirect, or a file with a specified filename. 
+	 * Write an HTTP response as HTML, possibly with custom headers, for example, we may want to
+	 * send a redirect, or a file with a specified filename.
 	 * @param ctx The specific request to reply to.
 	 * @param code The HTTP reply code to use.
 	 * @param desc The HTTP response description for the code.
@@ -295,9 +295,9 @@ public abstract class Toadlet {
 	protected void writeHTMLReply(ToadletContext ctx, int code, String desc, MultiValueTable<String, String> headers, String reply, boolean forceDisableJavascript) throws ToadletContextClosedException, IOException {
 		writeReply(ctx, code, "text/html; charset=utf-8", desc, headers, reply, forceDisableJavascript);
 	}
-	
+
 	/**
-	 * Write an HTTP response as plain text, possibly with custom headers, for example, we may want 
+	 * Write an HTTP response as plain text, possibly with custom headers, for example, we may want
 	 * to send a redirect, or a file with a specified filename.
 	 * @param ctx The specific request to reply to.
 	 * @param code The HTTP reply code to use.
@@ -312,15 +312,15 @@ public abstract class Toadlet {
 	protected void writeReply(ToadletContext context, int code, String mimeType, String desc, MultiValueTable<String, String> headers, String reply) throws ToadletContextClosedException, IOException {
 	    writeReply(context, code, mimeType, desc, headers, reply, false);
 	}
-	
+
 	protected void writeReply(ToadletContext context, int code, String mimeType, String desc, MultiValueTable<String, String> headers, String reply, boolean forceDisableJavascript) throws ToadletContextClosedException, IOException {
 	    byte[] buffer = reply.getBytes("UTF-8");
 	    writeReply(context, code, mimeType, desc, headers, buffer, 0, buffer.length, forceDisableJavascript);
 	}
 
 	/**
-	 * Write a generated HTTP response, e.g. a page, an image, an error message, possibly with 
-	 * custom headers, for example, we may want to send a redirect, or a file with a specified 
+	 * Write a generated HTTP response, e.g. a page, an image, an error message, possibly with
+	 * custom headers, for example, we may want to send a redirect, or a file with a specified
 	 * filename. This should not be used for fproxy content i.e. content downloaded from Freenet.
 	 * @param context The specific request to reply to.
 	 * @param code The HTTP reply code to use.
@@ -335,7 +335,7 @@ public abstract class Toadlet {
 	    context.sendReplyHeaders(code, desc, headers, mimeType, length, forceDisableJavascript);
 		context.writeData(buffer, startIndex, length);
 	}
-	
+
 	/**
 	 * Do a permanent redirect (HTTP Status 301).
 	 *
@@ -366,7 +366,7 @@ public abstract class Toadlet {
 		ctx.sendReplyHeaders(301, "Moved Permanently", mvt, "text/html; charset=UTF-8", buf.length);
 		ctx.writeData(buf, 0, buf.length);
 	}
-	
+
 	/**
 	 * Do a temporary redirect (HTTP Status 302).
 	 *
@@ -398,7 +398,7 @@ public abstract class Toadlet {
 		ctx.sendReplyHeaders(302, "Found", mvt, "text/html; charset=UTF-8", buf.length);
 		ctx.writeData(buf, 0, buf.length);
 	}
-	
+
 	/**
 	 * Send a simple error page.
 	 */
@@ -413,14 +413,14 @@ public abstract class Toadlet {
 		PageNode page = ctx.getPageMaker().getPageNode(desc, ctx);
 		HTMLNode pageNode = page.outer;
 		HTMLNode contentNode = page.content;
-		
+
 		HTMLNode infoboxContent = ctx.getPageMaker().getInfobox("infobox-error", desc, contentNode, null, true);
 		infoboxContent.addChild(message);
 		infoboxContent.addChild("br");
 		infoboxContent.addChild("a", "href", ".", l10n("returnToPrevPage"));
 		infoboxContent.addChild("br");
 		addHomepageLink(infoboxContent);
-		
+
 		writeHTMLReply(ctx, code, desc, pageNode.generate());
 	}
 
@@ -437,7 +437,7 @@ public abstract class Toadlet {
 		PageNode page = ctx.getPageMaker().getPageNode(desc, ctx);
 		HTMLNode pageNode = page.outer;
 		HTMLNode contentNode = page.content;
-		
+
 		HTMLNode infoboxContent = ctx.getPageMaker().getInfobox("infobox-error", desc, contentNode, null, true);
 		infoboxContent.addChild("#", message);
 		infoboxContent.addChild("br");
@@ -451,10 +451,10 @@ public abstract class Toadlet {
 		infoboxContent.addChild("br");
 		infoboxContent.addChild("a", "href", ".", l10n("returnToPrevPage"));
 		addHomepageLink(infoboxContent);
-		
+
 		writeHTMLReply(ctx, 500, desc, pageNode.generate());
 	}
-	
+
 	/**
 	 * @throws IOException See {@link #sendErrorPage(ToadletContext, int, String, String)}
 	 * @throws ToadletContextClosedException See {@link #sendErrorPage(ToadletContext, int, String, String)}
@@ -477,7 +477,7 @@ public abstract class Toadlet {
 		msg = msg + sw.toString() + "</pre></body></html>";
 		writeHTMLReply(ctx, 500, "Internal Error", msg);
 	}
-	
+
 	protected static void addHomepageLink(HTMLNode content) {
 		content.addChild("a", new String[]{"href", "title"}, new String[]{"/", l10n("homepage")}, l10n("returnToNodeHomepage"));
 	}

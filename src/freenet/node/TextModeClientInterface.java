@@ -64,9 +64,9 @@ import freenet.support.io.FileBucket;
 
 /**
  * @author amphibian
- * 
+ *
  * Read commands to fetch or put from stdin.
- * 
+ *
  * Execute them.
  */
 public class TextModeClientInterface implements Runnable {
@@ -90,7 +90,7 @@ public class TextModeClientInterface implements Runnable {
             }
         });
     }
-    
+
     public TextModeClientInterface(TextModeClientInterfaceServer server, InputStream in, OutputStream out) {
     	this.n = server.n;
     	this.core = server.n.clientCore;
@@ -120,7 +120,7 @@ public class TextModeClientInterface implements Runnable {
 			throw new Error(e);
 		}
     }
-    
+
     @Override
     public void run() {
 	    freenet.support.Logger.OSThread.logPID(this);
@@ -132,7 +132,7 @@ public class TextModeClientInterface implements Runnable {
     		Logger.error(this, "Caught "+t, t);
     	}
     }
-	
+
 	public void realRun() throws IOException {
 		printHeader(w);
 
@@ -162,10 +162,10 @@ public class TextModeClientInterface implements Runnable {
 			}
 		}
 	}
-    
+
 	private void printHeader(Writer sw) throws IOException {
     	StringBuilder sb = new StringBuilder();
-    	
+
         sb.append("Trivial Text Mode Client Interface\r\n");
         sb.append("---------------------------------------\r\n");
         sb.append("Freenet 0.7.5 Build #").append(Version.buildNumber()).append(" r" + Version.cvsRevision() + "\r\n");
@@ -438,7 +438,7 @@ public class TextModeClientInterface implements Runnable {
     }else if(uline.startsWith("FILTER:")) {
     	line = line.substring("FILTER:".length()).trim();
     	outsb.append("Here is the result:\r\n");
-    	
+
     	final String content = readLines(reader, false);
     	final Bucket input = new ArrayBucket(content.getBytes("UTF-8"));
     	final Bucket output = new ArrayBucket();
@@ -448,7 +448,7 @@ public class TextModeClientInterface implements Runnable {
     	try {
     		inputStream = input.getInputStream();
     		outputStream = output.getOutputStream();
-    		ContentFilter.filter(inputStream, outputStream, "text/html", new URI("http://127.0.0.1:8888/"), null, null, null, core.getLinkFilterExceptionProvider());
+    		ContentFilter.filter(inputStream, outputStream, "text/html", new URI("http://127.0.0.1:8888/"), null, null, null, null, core.getLinkFilterExceptionProvider());
     		inputStream.close();
 			inputStream = null;
     		outputStream.close();
@@ -554,7 +554,7 @@ public class TextModeClientInterface implements Runnable {
             }
             // Insert
             byte[] data = content.getBytes(ENCODING);
-            
+
             InsertBlock block = new InsertBlock(new ArrayBucket(data), null, FreenetURI.EMPTY_CHK_URI);
 
             FreenetURI uri;
@@ -590,9 +590,9 @@ public class TextModeClientInterface implements Runnable {
         		System.err.println("Impossible");
         		outsb.append("Impossible");
         	}
-        	
+
         	line = line.trim();
-        	
+
         	if(line.length() < 1) {
         		printHeader(w);
 			outsb.append("\r\n");
@@ -600,11 +600,11 @@ public class TextModeClientInterface implements Runnable {
 			w.flush();
         		return false;
         	}
-        	
+
         	String defaultFile = null;
-        	
+
         	FreenetURI insertURI = FreenetURI.EMPTY_CHK_URI;
-        	
+
         	// set default file?
         	if (line.matches("^.*#.*$")) {
         		String[] split = line.split("#");
@@ -618,21 +618,21 @@ public class TextModeClientInterface implements Runnable {
         			line = split[0];
         		}
         	}
-        	
+
         	HashMap<String, Object> bucketsByName =
         		makeBucketsByName(line);
-        	
+
         	if(defaultFile == null) {
-        		String[] defaultFiles = 
+        		String[] defaultFiles =
         			new String[] { "index.html", "index.htm", "default.html", "default.htm" };
         		for(String file: defaultFiles) {
         			if(bucketsByName.containsKey(file)) {
         				defaultFile = file;
         				break;
-        			}        				
+        			}
         		}
         	}
-        	
+
         	FreenetURI uri;
 			try {
 				uri = client.insertManifest(insertURI, bucketsByName, defaultFile);
@@ -653,7 +653,7 @@ public class TextModeClientInterface implements Runnable {
             	}
             	Logger.error(this, "Caught "+e, e);
 			}
-            
+
         } else if(uline.startsWith("PUTFILE:") || (getCHKOnly = uline.startsWith("GETCHKFILE:"))) {
             // Just insert to local store
         	if(getCHKOnly) {
@@ -674,18 +674,18 @@ public class TextModeClientInterface implements Runnable {
             	if(!(f.exists() && f.canRead())) {
             		throw new FileNotFoundException();
             	}
-            	
+
             	// Guess MIME type
                 outsb.append(" using MIME type: ").append(mimeType).append("\r\n");
             	if(mimeType.equals(DefaultMIMETypes.DEFAULT_MIME_TYPE))
             		mimeType = ""; // don't need to override it
-            	
+
             	FileBucket fb = new FileBucket(f, true, false, false, false);
             	InsertBlock block = new InsertBlock(fb, new ClientMetadata(mimeType), FreenetURI.EMPTY_CHK_URI);
 
             	startTime = System.currentTimeMillis();
             	FreenetURI uri = client.insert(block, getCHKOnly, f.getName());
-            	
+
             	// FIXME depends on CHK's still being renamable
                 //uri = uri.setDocName(f.getName());
 
@@ -750,7 +750,7 @@ public class TextModeClientInterface implements Runnable {
                     outsb.append("URI would have been: ").append(e.uri);
             	}
 			}
-        	
+
         } else if(uline.startsWith("STATUS")) {
         	outsb.append("DARKNET:\n");
             SimpleFieldSet fs = n.exportDarknetPublicFieldSet();
@@ -771,7 +771,7 @@ public class TextModeClientInterface implements Runnable {
             } else {
                 key = line.substring("ADDPEER:".length()).trim();
             }
-            
+
             String content = null;
             if(key.length() > 0) {
                 // Filename
@@ -794,12 +794,12 @@ public class TextModeClientInterface implements Runnable {
             if(content == null) return false;
             if(content.equals("")) return false;
             addPeer(content);
-        
+
         } else if(uline.startsWith("NAME:")) {
             outsb.append("Node name currently: ").append(n.getMyName());
             String key = line.substring("NAME:".length()).trim();
             outsb.append("New name: ").append(key);
-            
+
             try{
             	n.setName(key);
                 if(logMINOR)
@@ -1002,7 +1002,7 @@ public class TextModeClientInterface implements Runnable {
 				public void noMoreNodes() {
 					write("Route Not Found");
 				}
-				
+
 				@Override
 				public void nodeNotWanted() {
 					write("Hop doesn't want me.");
@@ -1019,7 +1019,7 @@ public class TextModeClientInterface implements Runnable {
 				public void relayedNoderef() {
 					write("Announcement returned a noderef that we relayed downstream. THIS SHOULD NOT HAPPEN!");
 				}
-        		
+
         	});
         } else {
         	if(uline.length() > 0)
@@ -1036,27 +1036,27 @@ public class TextModeClientInterface implements Runnable {
      * and its subdirs.
      */
     private HashMap<String, Object> makeBucketsByName(String directory) {
-    	
+
     	if (!directory.endsWith("/"))
     		directory = directory + '/';
     	File thisdir = new File(directory);
-    	
+
     	System.out.println("Listing dir: "+thisdir);
-    	
+
     	HashMap<String, Object> ret = new HashMap<String, Object>();
-    	
+
     	File filelist[] = thisdir.listFiles();
     	if(filelist == null)
     		throw new IllegalArgumentException("No such directory");
     	for(int i = 0 ; i < filelist.length ; i++) {
                 //   Skip unreadable files and dirs
-		//   Skip files nonexistant (dangling symlinks) - check last 
-	        if (filelist[i].canRead() && filelist[i].exists()) {   	 
+		//   Skip files nonexistant (dangling symlinks) - check last
+	        if (filelist[i].canRead() && filelist[i].exists()) {
     		if (filelist[i].isFile()) {
     			File f = filelist[i];
-    			
+
     			FileBucket bucket = new FileBucket(f, true, false, false, false);
-    			
+
     			ret.put(f.getName(), bucket);
     		} else if(filelist[i].isDirectory()) {
     			HashMap<String, Object> subdir = makeBucketsByName(directory + filelist[i].getName());
@@ -1069,8 +1069,8 @@ public class TextModeClientInterface implements Runnable {
 
     /**
      * @return A block of text, input from stdin, ending with a
-     * . on a line by itself. Does some mangling for a fieldset if 
-     * isFieldSet. 
+     * . on a line by itself. Does some mangling for a fieldset if
+     * isFieldSet.
      */
     private String readLines(BufferedReader reader, boolean isFieldSet) {
         StringBuilder sb = new StringBuilder(1000);
@@ -1092,7 +1092,7 @@ public class TextModeClientInterface implements Runnable {
                 if(line.equals("End")) {
                     breakflag = true;
                 } else {
-                    if(line.endsWith("End") && 
+                    if(line.endsWith("End") &&
                             Character.isWhitespace(line.charAt(line.length()-("End".length()+1)))) {
                         line = "End";
                         breakflag = true;
@@ -1218,7 +1218,7 @@ public class TextModeClientInterface implements Runnable {
 		}
 		return false;
 	}
-    
+
     /**
      * Check for a peer of the node given its ip and port, name or identity, as a String
      * Report peer existence as boolean
@@ -1240,7 +1240,7 @@ public class TextModeClientInterface implements Runnable {
     	}
     	return false;
     }
-    
+
     /**
      * Remove a peer from the node given its ip and port, name or identity, as a String
      * Report peer removal successfulness as boolean

@@ -40,35 +40,35 @@ import freenet.support.Logger.LogLevel;
 import freenet.support.api.Bucket;
 import freenet.support.io.Closer;
 
-/** 
+/**
  * Fetching a page for a browser.
- * 
+ *
  * LOCKING: The lock on this object is always taken last.
  */
 public class FProxyFetchInProgress implements ClientEventListener, ClientGetCallback {
-	
-	/** What to do when we find data which matches the request but it has already been 
+
+	/** What to do when we find data which matches the request but it has already been
 	 * filtered, assuming we want a filtered copy. */
 	public enum REFILTER_POLICY {
 		RE_FILTER, // Re-run the filter over data that has already been filtered. Probably requires allocating a new temp file.
 		ACCEPT_OLD, // Accept the old filtered data. Only as safe as the filter when the data was originally downloaded.
 		RE_FETCH // Fetch the data again. Unnecessary in most cases, avoids any possibility of filter artefacts.
 	}
-	
+
 	private final REFILTER_POLICY refilterPolicy;
-	
+
 	private static volatile boolean logMINOR;
-	
+
 	static {
 		Logger.registerLogThresholdCallback(new LogThresholdCallback() {
-			
+
 			@Override
 			public void shouldUpdate() {
 				logMINOR = Logger.shouldLog(LogLevel.MINOR, this);
 			}
 		});
 	}
-	
+
 	/** The key we are fetching */
 	public final FreenetURI uri;
 	/** The maximum size specified by the client */
@@ -123,7 +123,7 @@ public class FProxyFetchInProgress implements ClientEventListener, ClientGetCall
 	private FetchContext fctx;
 	private boolean cancelled = false;
 	private final RequestClient rc;
-	
+
 	public FProxyFetchInProgress(FProxyFetchTracker tracker, FreenetURI key, long maxSize2, long identifier, ClientContext context, FetchContext fctx, RequestClient rc, REFILTER_POLICY refilter) {
 		this.refilterPolicy = refilter;
 		this.tracker = tracker;
@@ -139,18 +139,18 @@ public class FProxyFetchInProgress implements ClientEventListener, ClientGetCall
 		results = new ArrayList<FProxyFetchResult>();
 		getter = new ClientGetter(this, uri, alteredFctx, FProxyToadlet.PRIORITY, null, null, null);
 	}
-	
+
 	public synchronized FProxyFetchWaiter getWaiter() {
 		lastTouched = System.currentTimeMillis();
 		FProxyFetchWaiter waiter = new FProxyFetchWaiter(this);
 		waiters.add(waiter);
 		return waiter;
 	}
-	
+
 	public FProxyFetchTracker getTracker() {
 		return tracker;
 	}
-	
+
 	public synchronized void addCustomWaiter(FProxyFetchWaiter waiter){
 		waiters.add(waiter);
 	}
@@ -212,7 +212,7 @@ public class FProxyFetchInProgress implements ClientEventListener, ClientGetCall
 				tracker.removeFetcher(this);
 				onSuccess(new FetchResult(new ClientMetadata(fctx.overrideMIME), result.asBucket()), null);
 				return true;
-			} 
+			}
 		} else if(result.alreadyFiltered) {
 			if(refilterPolicy == REFILTER_POLICY.RE_FETCH || !fctx.filterData) {
 				// Can't use it.
@@ -260,7 +260,7 @@ public class FProxyFetchInProgress implements ClientEventListener, ClientGetCall
 				output = context.tempBucketFactory.makeBucket(-1);
 				is = data.getInputStream();
 				os = output.getOutputStream();
-				ContentFilter.filter(is, os, fullMimeType, uri.toURI("/"), null, null, fctx.charset, context.linkFilterExceptionProvider);
+				ContentFilter.filter(is, os, fullMimeType, uri.toURI("/"), fctx.getSchemeHostAndPort(), null, null, fctx.charset, context.linkFilterExceptionProvider);
 				is.close();
 				is = null;
 				os.close();
@@ -286,13 +286,13 @@ public class FProxyFetchInProgress implements ClientEventListener, ClientGetCall
 		}
 	}
 
-	/** If the key is a USK and a) we are requested to do an exhaustive search, or b) 
+	/** If the key is a USK and a) we are requested to do an exhaustive search, or b)
 	 * there is a later version, then we can't use the download queue as a cache.
 	 * @return True if we can't use the download queue, false if we can. */
 	private boolean bogusUSK(ClientContext context) {
 		if(!uri.isUSK()) return false;
 		long edition = uri.getSuggestedEdition();
-		if(edition < 0) 
+		if(edition < 0)
 			return true; // Need to do the fetch.
 		USK usk;
 		try {
@@ -423,8 +423,8 @@ public class FProxyFetchInProgress implements ClientEventListener, ClientGetCall
 
 	/** Keep for 30 seconds after last access */
 	static final long LIFETIME = SECONDS.toMillis(30);
-	
-	/** Caller should take the lock on FProxyToadlet.fetchers, then call this 
+
+	/** Caller should take the lock on FProxyToadlet.fetchers, then call this
 	 * function, if it returns true then finish the cancel outside the lock.
 	 */
 	public synchronized boolean canCancel() {
@@ -438,7 +438,7 @@ public class FProxyFetchInProgress implements ClientEventListener, ClientGetCall
 		if(logMINOR) Logger.minor(this, "Can cancel for "+this+" : "+uri+" : "+maxSize);
 		return true;
 	}
-	
+
 	/** Finish the cancel process, freeing the data if necessary. The fetch
 	 * must have been removed from the tracker already, so it won't be reused. */
 	public void finishCancel() {
@@ -472,7 +472,7 @@ public class FProxyFetchInProgress implements ClientEventListener, ClientGetCall
 		}
 		tracker.queueCancel(this);
 	}
-	
+
 	public synchronized long getETA() {
 		if(!goneToNetwork) return -1;
 		if(requiredBlocks <= 0) return -1;
@@ -492,7 +492,7 @@ public class FProxyFetchInProgress implements ClientEventListener, ClientGetCall
 			return true;
 		return false;
 	}
-	
+
 	public synchronized boolean hasNotifiedFailure() {
 		return true;
 	}
@@ -504,7 +504,7 @@ public class FProxyFetchInProgress implements ClientEventListener, ClientGetCall
 	public synchronized void setHasWaited() {
 		hasWaited = true;
 	}
-	
+
 	/** Adds a listener that will be notified when a change occurs to this fetch
 	 * @param listener - The listener to be added*/
 	public synchronized void addListener(FProxyFetchListener listener){
@@ -513,7 +513,7 @@ public class FProxyFetchInProgress implements ClientEventListener, ClientGetCall
 		}
 		this.listener.add(listener);
 	}
-	
+
 	/** Removes a listener
 	 * @param listener - The listener to be removed*/
 	public synchronized void removeListener(FProxyFetchListener listener){
@@ -525,7 +525,7 @@ public class FProxyFetchInProgress implements ClientEventListener, ClientGetCall
 			Logger.minor(this,"can cancel now?:"+canCancel());
 		}
 	}
-	
+
 	/** Allows the fetch to be removed immediately*/
 	public synchronized void requestImmediateCancel(){
 		requestImmediateCancel=true;
@@ -534,7 +534,7 @@ public class FProxyFetchInProgress implements ClientEventListener, ClientGetCall
 	public synchronized long lastTouched() {
 		return lastTouched;
 	}
-	
+
 	public boolean fetchContextEquivalent(FetchContext context) {
 		if(this.fctx.filterData != context.filterData) return false;
 		if(this.fctx.maxOutputLength != context.maxOutputLength) return false;

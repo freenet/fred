@@ -29,9 +29,10 @@ import freenet.support.io.CountedOutputStream;
  */
 public class OggFilter implements ContentDataFilter{
 
-	public void readFilter(InputStream input, OutputStream output,
-			String charset, HashMap<String, String> otherParams,
-			FilterCallback cb) throws DataFilterException, IOException {
+	public void readFilter(
+      InputStream input, OutputStream output,
+      String charset, HashMap<String, String> otherParams,
+      String schemeHostAndPort, FilterCallback cb) throws DataFilterException, IOException {
 		HashMap<Integer, OggBitstreamFilter> streamFilters = new HashMap<Integer, OggBitstreamFilter>();
 		LinkedList<OggPage> splitPages = new LinkedList<OggPage>();
 		CountedOutputStream out = new CountedOutputStream(output);
@@ -130,7 +131,7 @@ public class OggFilter implements ContentDataFilter{
 			String charset, HashMap<String, String> otherParams,
 			FilterCallback cb) throws DataFilterException, IOException {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	private static String l10n(String key) {

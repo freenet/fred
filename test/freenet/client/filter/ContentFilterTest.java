@@ -108,7 +108,7 @@ public class ContentFilterTest extends TestCase {
 	private static final String FRAME_SRC_CHARSET_BAD1C = "<frame src=\"test.html?type=text/html\">";
 
 	private static final String SPAN_WITH_STYLE = "<span style=\"font-family: verdana, sans-serif; color: red;\">";
-	
+
 	private static final String BASE_HREF = "<base href=\"/"+BASE_KEY+"\">";
 	private static final String BAD_BASE_HREF = "<base href=\"/\">";
 	private static final String BAD_BASE_HREF2 = "<base href=\"//www.google.com\">";
@@ -116,7 +116,7 @@ public class ContentFilterTest extends TestCase {
 	private static final String BAD_BASE_HREF4 = "<base id=\"blah\">";
 	private static final String BAD_BASE_HREF5 = "<base href=\"http://www.google.com/\">";
 	private static final String DELETED_BASE_HREF = "<!-- deleted invalid base href -->";
-	
+
 	// From CSS spec
 
 	private static final String CSS_SPEC_EXAMPLE1 = "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\">\n<HTML>\n  <HEAD>\n  <TITLE>Bach's home page</TITLE>\n  <STYLE type=\"text/css\">\n    body {\n      font-family: \"Gill Sans\", sans-serif;\n      font-size: 12pt;\n      margin: 3em;\n\n    }\n  </STYLE>\n  </HEAD>\n  <BODY>\n    <H1>Bach's home page</H1>\n    <P>Johann Sebastian Bach was a prolific composer.\n  </BODY>\n</HTML>";
@@ -178,7 +178,7 @@ public class ContentFilterTest extends TestCase {
 		assertEquals(CSS_SPEC_EXAMPLE1, HTMLFilter(CSS_SPEC_EXAMPLE1));
 
 		assertEquals(SPAN_WITH_STYLE, HTMLFilter(SPAN_WITH_STYLE));
-		
+
 		assertEquals(BASE_HREF, HTMLFilter(BASE_HREF));
 		assertEquals(DELETED_BASE_HREF, HTMLFilter(BAD_BASE_HREF));
 		assertEquals(DELETED_BASE_HREF, HTMLFilter(BAD_BASE_HREF2));
@@ -186,19 +186,19 @@ public class ContentFilterTest extends TestCase {
 		assertEquals(DELETED_BASE_HREF, HTMLFilter(BAD_BASE_HREF4));
 		assertEquals(DELETED_BASE_HREF, HTMLFilter(BAD_BASE_HREF5));
 	}
-	
+
 	private static final String META_TIME_ONLY = "<meta http-equiv=\"refresh\" content=\"5\">";
 	private static final String META_TIME_ONLY_WRONG_CASE = "<meta http-equiv=\"RefResH\" content=\"5\">";
 	private static final String META_TIME_ONLY_TOO_SHORT = "<meta http-equiv=\"refresh\" content=\"0\">";
 	private static final String META_TIME_ONLY_NEGATIVE = "<meta http-equiv=\"refresh\" content=\"-5\">";
-	
+
 	private static final String META_TIME_ONLY_BADNUM1 = "<meta http-equiv=\"refresh\" content=\"5.5\">";
 	private static final String META_TIME_ONLY_BADNUM2 = "<meta http-equiv=\"refresh\" content=\"\">";
 	private static final String META_TIME_ONLY_BADNUM_OUT = "<!-- doesn't parse as number in meta refresh -->";
-	
+
 	private static final String META_VALID_REDIRECT = "<meta http-equiv=\"refresh\" content=\"30; url=/KSK@gpl.txt\">";
 	private static final String META_VALID_REDIRECT_NOSPACE = "<meta http-equiv=\"refresh\" content=\"30;url=/KSK@gpl.txt\">";
-	
+
 	private static final String META_BOGUS_REDIRECT1 = "<meta http-equiv=\"refresh\" content=\"30; url=/\">";
 	private static final String META_BOGUS_REDIRECT2 = "<meta http-equiv=\"refresh\" content=\"30; url=/plugins\">";
 	private static final String META_BOGUS_REDIRECT3 = "<meta http-equiv=\"refresh\" content=\"30; url=http://www.google.com\">";
@@ -209,7 +209,7 @@ public class ContentFilterTest extends TestCase {
 	private static final String META_BOGUS_REDIRECT3_OUT = "<meta http-equiv=\"refresh\" content=\"30; url=/external-link/?_CHECKED_HTTP_=http://www.google.com\">";
 	private static final String META_BOGUS_REDIRECT4_OUT = "<!-- GenericReadFilterCallback.deletedURI-->";
 	private static final String META_BOGUS_REDIRECT_NO_URL = "<!-- no url but doesn't parse as number in meta refresh -->";
-	
+
 	public void testMetaRefresh() throws Exception {
 		HTMLFilter.metaRefreshSamePageMinInterval = 5;
 		HTMLFilter.metaRefreshRedirectMinInterval = 30;
@@ -282,7 +282,7 @@ public class ContentFilterTest extends TestCase {
 		FileOutputStream fos;
 		try {
 			ArrayBucket out = new ArrayBucket();
-			filter.readFilter(new ArrayBucket(total).getInputStream(), out.getOutputStream(), "UTF-16", null, null);
+			filter.readFilter(new ArrayBucket(total).getInputStream(), out.getOutputStream(), "UTF-16", null, null, null);
 			fos = new FileOutputStream("output.utf16");
 			fos.write(out.toByteArray());
 			fos.close();
@@ -298,7 +298,7 @@ public class ContentFilterTest extends TestCase {
 		}
 		try {
 			ArrayBucket out = new ArrayBucket();
-			FilterStatus fo = ContentFilter.filter(new ArrayBucket(total).getInputStream(), out.getOutputStream(), "text/html", null, null);
+			FilterStatus fo = ContentFilter.filter(new ArrayBucket(total).getInputStream(), out.getOutputStream(), "text/html", null, null, null);
 			fos = new FileOutputStream("output.filtered");
 			fos.write(out.toByteArray());
 			fos.close();
@@ -340,7 +340,8 @@ public class ContentFilterTest extends TestCase {
 		ArrayBucket output = new ArrayBucket();
 		InputStream inputStream = input.getInputStream();
 		OutputStream outputStream = output.getOutputStream();
-		ContentFilter.filter(inputStream, outputStream, typeName, baseURI, null, null, null);
+		ContentFilter.filter(inputStream, outputStream, typeName, baseURI,
+        null,null, null, null);
 		inputStream.close();
 		outputStream.close();
 		returnValue = output.toString();
@@ -508,7 +509,7 @@ public class ContentFilterTest extends TestCase {
 			assertNull("Input tag with an invalid type", verifier.sanitize(HTMLTag, pc));
 		}
 	}
-	
+
 	public void testLowerCaseExtensions() {
 		for(FilterMIMEType type : ContentFilter.mimeTypesByName.values()) {
 			String ext = type.primaryExtension;

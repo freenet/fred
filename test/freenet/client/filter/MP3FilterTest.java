@@ -111,7 +111,7 @@ public class MP3FilterTest extends TestCase {
         }
 
         try {
-            filter.readFilter(inStream, outStream, "", null, null);
+            filter.readFilter(inStream, outStream, "", null, null, null);
         } catch (Exception e) {
             throw new AssertionError("Unexpected exception in the content filter.", e);
         }

@@ -24,7 +24,7 @@ public class MP3Filter implements ContentDataFilter {
 	// http://www.codeproject.com/KB/audio-video/mpegaudioinfo.aspx
 	// http://www.id3.org/mp3Frame
 	// http://www.mp3-converter.com/mp3codec/
-	
+
 	static final short[] [] [] bitRateIndices = {
 		//Version 2.5
 		{
@@ -88,12 +88,13 @@ public class MP3Filter implements ContentDataFilter {
 	};
 
 	@Override
-	public void readFilter(InputStream input, OutputStream output,
-			String charset, HashMap<String, String> otherParams,
-			FilterCallback cb) throws DataFilterException, IOException {
+	public void readFilter(
+      InputStream input, OutputStream output,
+      String charset, HashMap<String, String> otherParams,
+      String schemeHostAndPort, FilterCallback cb) throws DataFilterException, IOException {
 		filter(input, output);
 	}
-	
+
 	public void filter(InputStream input, OutputStream output) throws DataFilterException, IOException {
 		//FIXME: Add support for free formatted files(highly uncommon)
 		DataInputStream in = new DataInputStream(input);
@@ -235,7 +236,7 @@ public class MP3Filter implements ContentDataFilter {
 				if(totalFrames == 0)
 					throw new DataFilterException(l10n("bogusMP3NoFrames"), l10n("bogusMP3NoFrames"), l10n("bogusMP3NoFramesExplanation"));
 			}
-			
+
 			out.flush();
 			Logger.normal(this, totalFrames+" frames, of which "+totalCRCs+" had a CRC");
 			return;
@@ -245,7 +246,7 @@ public class MP3Filter implements ContentDataFilter {
 	private String l10n(String key) {
 		return NodeL10n.getBase().getString("MP3Filter."+key);
 	}
-	
+
 	public static void main(String[] args) throws DataFilterException, IOException {
 		File f = new File(args[0]);
 		FileInputStream fis = new FileInputStream(f);
@@ -258,7 +259,7 @@ public class MP3Filter implements ContentDataFilter {
 //		fis.read(buf);
 //		fis.read(buf);
 //		fis.read(buf);
-		filter.readFilter(fis, fos, null, null, null);
+		filter.readFilter(fis, fos, null, null, null, null);
 		fis.close();
 		fos.close();
 	}

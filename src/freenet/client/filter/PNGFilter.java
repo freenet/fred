@@ -27,9 +27,9 @@ import freenet.support.io.FileBucket;
 
 /**
  * Content filter for PNG's. Only allows valid chunks (valid CRC, known chunk type).
- * 
+ *
  * It can strip the timestamp and "text(.)*" chunks if asked to
- * 
+ *
  * FIXME: validate chunk contents where possible.
  */
 public class PNGFilter implements ContentDataFilter {
@@ -74,8 +74,9 @@ public class PNGFilter implements ContentDataFilter {
 	}
 
 	@Override
-	public void readFilter(InputStream input, OutputStream output, String charset, HashMap<String, String> otherParams,
-			FilterCallback cb) throws DataFilterException, IOException {
+	public void readFilter(
+			InputStream input, OutputStream output, String charset, HashMap<String, String> otherParams,
+			String schemeHostAndPort, FilterCallback cb) throws DataFilterException, IOException {
 		readFilter(input, output, charset, otherParams, cb, deleteText, deleteTimestamp, checkCRCs);
 		output.flush();
 	}
@@ -219,7 +220,7 @@ public class PNGFilter implements ContentDataFilter {
 					int interlaceMethod = chunkData[12];
 					if(interlaceMethod < 0 || interlaceMethod >1)
 						throwError("Invalid InterlaceMethod", "Invalid InterlaceMethod! "+interlaceMethod);
-					
+
 					if(logMINOR)
 						Logger.minor(this, "Info from IHDR: width="+width+"px height="+height+"px bitDepth="+bitDepth+
 								" colourType="+colourType+" compressionMethod="+compressionMethod+" filterMethod="+
@@ -344,7 +345,7 @@ public class PNGFilter implements ContentDataFilter {
 			Logger.setupStdoutLogging(LogLevel.MINOR, "");
 
 			ContentFilter.filter(inputStream, outputStream, "image/png",
-					new URI("http://127.0.0.1:8888/"), null, null, null);
+					new URI("http://127.0.0.1:8888/"), null, null, null, null);
 		} finally {
 			Closer.close(inputStream);
 			Closer.close(outputStream);

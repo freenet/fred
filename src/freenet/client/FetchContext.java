@@ -5,6 +5,7 @@ package freenet.client;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashSet;
@@ -19,8 +20,8 @@ import freenet.node.RequestScheduler;
 import freenet.support.api.BucketFactory;
 import freenet.support.io.StorageFormatException;
 
-/** Context for a Fetcher. Contains all the settings a Fetcher needs to know 
- * about. FIXME these should be final or private, with getters/setters and 
+/** Context for a Fetcher. Contains all the settings a Fetcher needs to know
+ * about. FIXME these should be final or private, with getters/setters and
  * checking for valid values e.g. maxRecursionLevel >= 1. */
 public class FetchContext implements Cloneable, Serializable {
 
@@ -34,18 +35,18 @@ public class FetchContext implements Cloneable, Serializable {
 	/** Maximum length of data fetched in order to obtain the final data - metadata, containers, etc. */
 	public long maxTempLength;
 	/** 1 = only fetch a single block. 2 = allow one redirect, e.g. metadata
-	 * block pointing to actual data block. Etc. 0 may work sometimes but 
+	 * block pointing to actual data block. Etc. 0 may work sometimes but
 	 * is not recommended. */
 	public int maxRecursionLevel;
 	public int maxArchiveRestarts;
 	/** Maximum number of manifest lookups during a request. A manifest lookup is looking up a part
-	 * of a pathname in a "manifest", which is essentially a directory (folder). Usually manifest 
-	 * lookups are inside containers (archives), which are usually tar files, which may or may not 
-	 * be compressed (compression occurs transparently on a different level). This is not 
+	 * of a pathname in a "manifest", which is essentially a directory (folder). Usually manifest
+	 * lookups are inside containers (archives), which are usually tar files, which may or may not
+	 * be compressed (compression occurs transparently on a different level). This is not
 	 * necessarily the same as the number of slashes in the key after the part for the key itself,
-	 * since keys can redirect to other keys. If you are fetching user-uploaded keys, e.g. in 
-	 * fproxy, especially freesites, you will want this to be non-zero. However if you are using 
-	 * keys only internally, and never upload freesites, you should set this to 0. 
+	 * since keys can redirect to other keys. If you are fetching user-uploaded keys, e.g. in
+	 * fproxy, especially freesites, you will want this to be non-zero. However if you are using
+	 * keys only internally, and never upload freesites, you should set this to 0.
 	 * @see ArchiveContext where this is enforced. */
 	public int maxArchiveLevels;
 	public boolean dontEnterImplicitArchives;
@@ -114,15 +115,18 @@ public class FetchContext implements Cloneable, Serializable {
 	/** Number of attempts before we go into cooldown. Must be less than or equal to
 	 * RequestScheduler.COOLDOWN_RETRIES. */
 	private int cooldownRetries;
-	/** Time period for which we go into cooldown. Must be NO LESS THAN 
+	/** Time period for which we go into cooldown. Must be NO LESS THAN
 	 * RequestScheduler.COOLDOWN_PERIOD, because ULPRs will ensure rapid success
 	 * with that interval or less. */
 	private long cooldownTime;
 
 	/** Ignore USK DATEHINTs */
 	public boolean ignoreUSKDatehints;
-	
-	public FetchContext(long curMaxLength,
+
+  /** scheme, host and port: force the prefix of a URI. Example: https://localhost:1234 */
+  private final String schemeHostAndPort;
+
+  public FetchContext(long curMaxLength,
 			long curMaxTempLength, int maxMetadataSize, int maxRecursionLevel, int maxArchiveRestarts, int maxArchiveLevels,
 			boolean dontEnterImplicitArchives,
 			int maxSplitfileBlockRetries, int maxNonSplitfileRetries, int maxUSKRetries,
@@ -130,8 +134,9 @@ public class FetchContext implements Cloneable, Serializable {
 			boolean filterData, int maxDataBlocksPerSegment, int maxCheckBlocksPerSegment,
 			BucketFactory bucketFactory,
 			ClientEventProducer producer,
-			boolean ignoreTooManyPathComponents, boolean canWriteClientCache, String charset, String overrideMIME) {
-		this.blocks = null;
+			boolean ignoreTooManyPathComponents, boolean canWriteClientCache, String charset, String overrideMIME,
+      String schemeHostAndPort) {
+    this.blocks = null;
 		this.maxOutputLength = curMaxLength;
 		if(maxOutputLength < 0) throw new IllegalArgumentException("Bad max output length");
 		this.maxTempLength = curMaxTempLength;
@@ -170,8 +175,9 @@ public class FetchContext implements Cloneable, Serializable {
 		this.cooldownTime = RequestScheduler.COOLDOWN_PERIOD;
 		this.ignoreUSKDatehints = false; // FIXME
 		hasOwnEventProducer = true;
+    this.schemeHostAndPort = schemeHostAndPort;
 	}
-	
+
 	/** Copy a FetchContext, creating a new EventProducer and not changing the blocks list.
      * @param ctx The old FetchContext to copy.
      * @param maskID Mask mode for the copy operation e.g. SPLITFILE_DEFAULT_BLOCK_MASK.
@@ -183,7 +189,7 @@ public class FetchContext implements Cloneable, Serializable {
 	/** Copy a FetchContext.
 	 * @param ctx The old FetchContext to copy.
 	 * @param maskID Mask mode for the copy operation e.g. SPLITFILE_DEFAULT_BLOCK_MASK.
-	 * @param keepProducer If true, keep the existing EventProducer. Must be false if we are 
+	 * @param keepProducer If true, keep the existing EventProducer. Must be false if we are
 	 * creating a new request. Can be true if we are masking the FetchContext within a single
 	 * request, e.g. to download a container. This is important so that we see the progress updates
 	 * for the request and not for other requests sharing the FetchContext, but also it could break
@@ -227,6 +233,7 @@ public class FetchContext implements Cloneable, Serializable {
 		this.cooldownRetries = ctx.cooldownRetries;
 		this.cooldownTime = ctx.cooldownTime;
 		this.ignoreUSKDatehints = ctx.ignoreUSKDatehints;
+		this.schemeHostAndPort = ctx.schemeHostAndPort;
 
 		if(maskID == IDENTICAL_MASK || maskID == SPLITFILE_DEFAULT_MASK) {
 			// DEFAULT
@@ -277,11 +284,15 @@ public class FetchContext implements Cloneable, Serializable {
 			throw new IllegalArgumentException("Invalid COOLDOWN_PERIOD: Must be >= "+RequestScheduler.COOLDOWN_PERIOD+" since ULPRs will ensure fast response at that level");
 		this.cooldownTime = cooldownTime;
 	}
-	
+
 	public int getCooldownRetries() {
 		return cooldownRetries;
 	}
-	
+
+  public String getSchemeHostAndPort() {
+    return schemeHostAndPort;
+  }
+
 	public long getCooldownTime() {
 		return cooldownTime;
 	}
@@ -333,8 +344,12 @@ public class FetchContext implements Cloneable, Serializable {
         dos.writeInt(cooldownRetries);
         dos.writeLong(cooldownTime);
         dos.writeBoolean(ignoreUSKDatehints);
+        if (schemeHostAndPort != null)
+          dos.writeUTF(schemeHostAndPort);
+        else
+          dos.writeUTF("");
     }
-    
+
     /** Create from a saved form, e.g. for restarting a request from scratch. Will create its own
      * SimpleEventProducer.
      * @param dis
@@ -343,7 +358,7 @@ public class FetchContext implements Cloneable, Serializable {
      */
     public FetchContext(DataInputStream dis) throws StorageFormatException, IOException {
         long magic = dis.readLong();
-        if(magic != CLIENT_DETAIL_MAGIC) 
+        if(magic != CLIENT_DETAIL_MAGIC)
             throw new StorageFormatException("Bad magic for fetch settings (FetchContext)");
         int version = dis.readInt();
         if(version != CLIENT_DETAIL_VERSION)
@@ -404,6 +419,16 @@ public class FetchContext implements Cloneable, Serializable {
         cooldownRetries = dis.readInt();
         cooldownTime = dis.readLong();
         ignoreUSKDatehints = dis.readBoolean();
+        try {
+          s = dis.readUTF();
+        } catch (EOFException e) {
+          // input stream reached EOF, so it must have been and old version without scehmeHostAndPort.
+          s = "";
+        }
+        if(s.equals(""))
+          schemeHostAndPort = null;
+        else
+          schemeHostAndPort = s;
         hasOwnEventProducer = true;
         eventProducer = new SimpleEventProducer();
         blocks = null;
@@ -444,6 +469,7 @@ public class FetchContext implements Cloneable, Serializable {
         result = prime * result + ((prefetchHook == null) ? 0 : prefetchHook.hashCode());
         result = prime * result + (returnZIPManifests ? 1231 : 1237);
         result = prime * result + ((tagReplacer == null) ? 0 : tagReplacer.hashCode());
+        result = prime * result + ((schemeHostAndPort == null) ? 0 : schemeHostAndPort.hashCode());
         return result;
     }
 
@@ -466,7 +492,7 @@ public class FetchContext implements Cloneable, Serializable {
                 return false;
         } else if (!allowedMIMETypes.equals(other.allowedMIMETypes))
             return false;
-        // We *DO* compare on blocks, which means that two FetchContext's can be non-equal even 
+        // We *DO* compare on blocks, which means that two FetchContext's can be non-equal even
         // though the are really the same, until blocks has a proper equals(). FIXME
         if (blocks == null) {
             if (other.blocks != null)
@@ -538,6 +564,11 @@ public class FetchContext implements Cloneable, Serializable {
             if (other.tagReplacer != null)
                 return false;
         } else if (!tagReplacer.equals(other.tagReplacer))
+            return false;
+        if (schemeHostAndPort == null) {
+            if (other.schemeHostAndPort != null)
+                return false;
+        } else if (!schemeHostAndPort.equals(other.schemeHostAndPort))
             return false;
         return true;
     }

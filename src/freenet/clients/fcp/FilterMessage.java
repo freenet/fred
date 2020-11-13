@@ -24,12 +24,12 @@ import freenet.support.io.FileBucket;
 
 /**
  * Message for testing the content filter on a file.  Server will respond with a FilterResultMessage.
- * 
+ *
  * Filter
  * Identifier=filter1 // identifier
  * Operation=BOTH // READ/WRITE/BOTH (ignored for now)
  * MimeType=text/html // required if DataSource=DIRECT
- * 
+ *
  * DataSource=DISK // read a file from disk
  * Filename=/home/bob/file.html // path to the file
  * End
@@ -47,7 +47,7 @@ public class FilterMessage extends DataCarryingMessage {
 	private final String mimeType;
 	private final long dataLength;
 	private final String filename;
-	
+
 	private final BucketFactory bf;
 
 	public FilterMessage(SimpleFieldSet fs, BucketFactory bf) throws MessageInvalidException {
@@ -191,7 +191,7 @@ public class FilterMessage extends DataCarryingMessage {
 		FilterResultMessage response = new FilterResultMessage(identifier, resultCharset, resultMimeType, unsafe, resultBucket);
 		handler.send(response);
 	}
-	
+
 	private FilterStatus applyFilter(InputStream input, OutputStream output, ClientContext clientContext) throws MessageInvalidException, UnsafeContentTypeException, IOException {
 		URI fakeUri;
 		try {
@@ -201,9 +201,9 @@ public class FilterMessage extends DataCarryingMessage {
 			throw new MessageInvalidException(ProtocolErrorMessage.INTERNAL_ERROR, e.toString(), identifier, false);
 		}
 		//TODO: check operation, once ContentFilter supports write filtering
-		return ContentFilter.filter(input, output, mimeType, fakeUri, null, null, null, clientContext.linkFilterExceptionProvider);
+		return ContentFilter.filter(input, output, mimeType, fakeUri, null, null, null, null, clientContext.linkFilterExceptionProvider);
 	}
-	
+
 	private String bestGuessMimeType(String filename)
 	{
 		String guessedMimeType = null;

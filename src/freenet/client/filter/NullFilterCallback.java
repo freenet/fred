@@ -31,7 +31,13 @@ public class NullFilterCallback implements FilterCallback {
 	public String processURI(String uri, String overrideType, boolean noRelative, boolean inline) throws CommentException {
 		return null;
 	}
-	
+
+	@Override
+	public String processURI(String uri, String overrideType, String forceSchemeHostAndPort, boolean inline)
+			throws CommentException {
+		return null;
+	}
+
 	@Override
 	public String processTag(ParsedTag pt) {
 		return null;

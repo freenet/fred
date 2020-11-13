@@ -61,8 +61,9 @@ public class M3UFilter implements ContentDataFilter {
     // { (byte)'#', (byte)'E', (byte)'X', (byte)'T', (byte)'M', (byte)'3', (byte)'U' };
 
     @Override
-    public void readFilter(InputStream input, OutputStream output, String charset, HashMap<String, String> otherParams,
-            FilterCallback cb) throws DataFilterException, IOException {
+    public void readFilter(
+        InputStream input, OutputStream output, String charset, HashMap<String, String> otherParams,
+        String schemeHostAndPort, FilterCallback cb) throws DataFilterException, IOException {
         // TODO: Check the header whether this is an ext m3u.
         // TODO: Check the EXTINF headers instead of killing comments.
         // Check whether the line is a comment
@@ -116,65 +117,63 @@ public class M3UFilter implements ContentDataFilter {
                     if (!isComment) {
                         // remove too long paths
                         if (fileIndex <= MAX_URI_LENGTH) {
-                            String uriold = new String(fileUri, 0, fileIndex, "UTF-8");
-                            // System.out.println(uriold);
-                            // clean up the URL: allow sub-m3us and mp3/ogg/flac (what we can filter)
-                            String filtered;
-                            try {
-                                String subMimetype = ContentFilter.mimeTypeForSrc(uriold);
-                                filtered = cb.processURI(uriold, subMimetype);
-                                // add prefix for the host name
-                                // for absolute path names,
-                                // because otherwise external
-                                // clients could be tricked into
-                                // accessing local files (and some
-                                // just don't work, especially not
-                                // with downloaded files). This
-                                // can however make downloaded
-                                // files leak information about
-                                // the local setup (host and
-                                // port).
+                            boolean lineIsEmpty = fileIndex == 0;
+                            if (!lineIsEmpty) {
+                                String uriold = new String(fileUri, 0, fileIndex, "UTF-8");
+                                // System.out.println(uriold);
+                                // clean up the URL: allow sub-m3us and mp3/ogg/flac (what we can filter)
+                                String filtered;
+                                try {
+                                    String subMimetype = ContentFilter.mimeTypeForSrc(uriold);
+                                    // add prefix for the host name
+                                    // for absolute path names,
+                                    // because otherwise external
+                                    // clients could be tricked into
+                                    // accessing local files (and some
+                                    // just don't work, especially not
+                                    // with downloaded files). This
+                                    // can however make downloaded
+                                    // files leak information about
+                                    // the local setup (host and
+                                    // port).
 
-                                // mirroring tools like `wget -mk`
-                                // strip the absolute path again,
-                                // so mirroring should not be
-                                // impaired.
-                                if (cb instanceof GenericReadFilterCallback) {
-                                    try {
-                                        filtered = ((GenericReadFilterCallback)cb).makeURIAbsolute(filtered);
-                                    } catch (URISyntaxException e) {
-                                        filtered = badUriReplacement;
+                                    // mirroring tools like `wget -mk`
+                                    // strip the absolute path again,
+                                    // so mirroring should not be
+                                    // impaired.
+                                    filtered = cb.processURI(uriold, subMimetype,
+                                        schemeHostAndPort, true);
+                                    // allow transparent pass through
+                                    // for all but the largest files,
+                                    // but not for external
+                                    // links. This check is safe,
+                                    // since false positives will just
+                                    // lead to a file to not be played
+                                    // (players will get progress-bar
+                                    // HTML content instead).
+                                    if (!filtered.contains(ExternalLinkToadlet.PATH)
+                                        && !filtered.contains(ExternalLinkToadlet.magicHTTPEscapeString)) {
+                                        if (filtered.contains("?")) {
+                                            filtered += "&";
+                                        } else {
+                                            filtered += "?";
+                                        }
+                                        filtered += "max-size=" + MAX_LENGTH_NO_PROGRESS;
                                     }
-                                }
-                                // allow transparent pass through
-                                // for all but the largest files,
-                                // but not for external
-                                // links. This check is safe,
-                                // since false positives will just
-                                // lead to a file to not be played
-                                // (players will get progress-bar
-                                // HTML content instead).
-                                if (!filtered.contains(ExternalLinkToadlet.PATH) && !filtered.contains(ExternalLinkToadlet.magicHTTPEscapeString)) {
-                                    if (filtered.contains("?")) {
-                                        filtered += "&";
-                                    } else {
-                                        filtered += "?";
-                                    }
-                                    filtered += "max-size=" + Long.valueOf(MAX_LENGTH_NO_PROGRESS).toString();
-                                }
 
-                            } catch (CommentException e) {
-                                filtered = badUriReplacement;
-                            } catch (Exception e) {
-                                filtered = badUriReplacement;
-                            }
-                            if (filtered == null) {
-                                filtered = badUriReplacement;
-                            }
-                            try {
-                                dos.write(filtered.getBytes("UTF-8"));
-                            } catch (Exception e) {
-                                dos.write(badUriReplacement.getBytes("UTF-8"));
+                                } catch (CommentException e) {
+                                    filtered = badUriReplacement;
+                                } catch (Exception e) {
+                                    filtered = badUriReplacement;
+                                }
+                                if (filtered == null) {
+                                    filtered = badUriReplacement;
+                                }
+                                try {
+                                    dos.write(filtered.getBytes("UTF-8"));
+                                } catch (Exception e) {
+                                    dos.write(badUriReplacement.getBytes("UTF-8"));
+                                }
                             }
                             // write the newline if we're not at EOF
                             if (readcount != -1){

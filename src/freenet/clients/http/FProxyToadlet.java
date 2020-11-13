@@ -15,8 +15,10 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import freenet.client.DefaultMIMETypes;
@@ -81,13 +83,15 @@ public final class FProxyToadlet extends Toadlet implements RequestClient {
 	final ClientContext context;
 	final FProxyFetchTracker fetchTracker;
 
-	static final Set<String> prefetchAllowedTypes = new HashSet<String>();
-	static {
-		// Only valid inlines
-		prefetchAllowedTypes.add("image/png");
-		prefetchAllowedTypes.add("image/jpeg");
-		prefetchAllowedTypes.add("image/gif");
-	}
+	static final Set<String> prefetchAllowedTypes = new HashSet<>(Arrays.asList(
+			"image/png",
+			"image/jpeg",
+			"image/gif",
+			"audio/mp3",
+			"audio/ogg",
+			"video/ogg",
+			"application/ogg"
+	));
 
 	// ?force= links become invalid after 2 hours.
 	private static final long FORCE_GRAIN_INTERVAL = HOURS.toMillis(1);
@@ -517,9 +521,8 @@ public final class FProxyToadlet extends Toadlet implements RequestClient {
                 throw new Error(e);
             }
 		} else if(ks.startsWith("/feed/") || ks.equals("/feed")) {
-			//TODO Better way to find the host. Find if https is used?
-			String host = ctx.getHeaders().get("host");
-			String atom = ctx.getAlertManager().getAtom("http://" + host);
+			String schemeHostAndPort = getSchemeHostAndPort(ctx);
+			String atom = ctx.getAlertManager().getAtom(schemeHostAndPort);
 			byte[] buf = atom.getBytes("UTF-8");
 			ctx.sendReplyHeadersFProxy(200, "OK", null, "application/atom+xml", buf.length);
 			ctx.writeData(buf, 0, buf.length);
@@ -579,7 +582,7 @@ public final class FProxyToadlet extends Toadlet implements RequestClient {
 			return;
 		}
 
-		FetchContext fctx = getFetchContext(maxSize);
+		FetchContext fctx = getFetchContext(maxSize, getSchemeHostAndPort(ctx));
 		// max-size=-1 => use default
 		maxSize = fctx.maxOutputLength;
 
@@ -982,6 +985,52 @@ public final class FProxyToadlet extends Toadlet implements RequestClient {
 			if(fr == null && data != null) data.free();
 			if(fr != null) fr.close();
 		}
+	}
+
+	private String getSchemeHostAndPort(ToadletContext ctx) {
+		MultiValueTable<String, String> headers = ctx.getHeaders();
+		Map<String, String> forwarded = parseForwardedHeader(headers.get("Forwarded"));
+		String uriScheme = ctx.getUri().getScheme();
+		String uriHost = ctx.getUri().getHost();
+		String protocol = forwarded.getOrDefault("proto",
+				headers.containsKey("X-Forwarded-Proto")
+						? headers.get("X-Forwarded-Proto")
+				    : uriScheme != null && !uriScheme.trim().isEmpty() ? uriScheme : "http");
+		String host = forwarded.getOrDefault("host",
+				headers.containsKey("X-Forwarded-Host")
+						? headers.get("X-Forwarded-Host")
+				    : uriHost != null && !uriHost.trim().isEmpty() ? uriHost : headers.get("host"));
+		return protocol + "://" + host;
+	}
+
+	private Map<String, String> parseForwardedHeader(String forwarded) {
+		if (forwarded == null || forwarded.trim().isEmpty()) {
+			return new HashMap<>();
+		}
+		Map<String, String> headerParams = new HashMap<>();
+
+		// if a multi-value header is given, only use the first value.
+		int indexOfComma = forwarded.indexOf(',');
+		if (indexOfComma != -1) {
+			forwarded = forwarded.substring(0, indexOfComma);
+		}
+		boolean hasAtLeastOneKey = forwarded.indexOf('=') != -1;
+		boolean hasMultipleKeys = forwarded.indexOf(';') != -1;
+		String[] fields;
+		if (hasMultipleKeys) {
+			fields = forwarded.split(";");
+		} else if (hasAtLeastOneKey) {
+			fields = new String[]{ forwarded };
+		} else {
+			return headerParams;
+		}
+		for (String field : fields) {
+			if (field.indexOf('=') != 1) {
+				String[] keyAndValue = field.split("=");
+				headerParams.put(keyAndValue[0], keyAndValue[1]);
+			}
+		}
+		return headerParams;
 	}
 
 	private boolean isBrowser(String ua) {

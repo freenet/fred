@@ -125,7 +125,7 @@ public class BMPFilterTest extends TestCase {
 		}
 
 		try {
-			objBMPFilter.readFilter(inStream, outStream, "", null, null);
+			objBMPFilter.readFilter(inStream, outStream, "", null, null, null);
 
 			if(expected != null) {
 				fail("Filter didn't throw expected exception");

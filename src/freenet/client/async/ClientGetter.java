@@ -61,7 +61,7 @@ import freenet.support.io.StorageFormatException;
  * of the request is stored in currentState. The ClientGetState's do most of the work. SingleFileFetcher for
  * example fetches a key, parses the metadata, and if necessary creates other states to e.g. fetch splitfiles.
  */
-public class ClientGetter extends BaseClientGetter 
+public class ClientGetter extends BaseClientGetter
 implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -105,7 +105,7 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
 	private SnoopBucket snoopBucket;
 	private HashResult[] hashes;
 	private final Bucket initialMetadata;
-	/** If set, and filtering is enabled, the MIME type we filter with must 
+	/** If set, and filtering is enabled, the MIME type we filter with must
 	 * be compatible with this extension. */
 	final String forceCompatibleExtension;
 	private transient boolean resumedFetcher;
@@ -136,7 +136,7 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
 			FreenetURI uri, FetchContext ctx, short priorityClass, Bucket returnBucket, BinaryBlobWriter binaryBlobWriter, boolean dontFinalizeBlobWriter, Bucket initialMetadata) {
 		this(client, uri, ctx, priorityClass, returnBucket, binaryBlobWriter, dontFinalizeBlobWriter, initialMetadata, null);
 	}
-	
+
 	/**
 	 * Fetch a key.
 	 * @param client The callback we will call when it is completed.
@@ -167,7 +167,7 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
 		archiveRestarts = 0;
 		this.forceCompatibleExtension = forceCompatibleExtension;
 	}
-	
+
 	/** Required because we implement {@link Serializable}. */
 	protected ClientGetter() {
 	    clientCallback = null;
@@ -273,7 +273,7 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
 			return;
 		}
 		String mimeType = clientMetadata == null ? null : clientMetadata.getMIMEType();
-		
+
 		if(forceCompatibleExtension != null && ctx.filterData) {
 		    if(mimeType == null) {
 		        onFailure(new FetchException(FetchExceptionMode.MIME_INCOMPATIBLE_WITH_EXTENSION, "No MIME type but need specific extension \""+forceCompatibleExtension+"\""), null, context);
@@ -291,7 +291,7 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
 			finished = true;
 			currentState = null;
 			expectedMIME = mimeType;
-				
+
 		}
 		// Rest of method does not need to be synchronized.
 		// Variables will be updated on exit of method, and the only thing that is
@@ -320,7 +320,7 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
         if(maxLen == -1) {
             maxLen = Math.max(ctx.maxTempLength, ctx.maxOutputLength);
         }
-        
+
 		FetchException ex = null; // set on failure
 		try {
 			if(returnBucket == null) finalResult = context.getBucketFactory(persistent()).makeBucket(maxLen);
@@ -338,7 +338,7 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
 
 			output = finalResult.getOutputStream();
 			if(ctx.overrideMIME != null) mimeType = ctx.overrideMIME;
-			worker = new ClientGetWorkerThread(new BufferedInputStream(dataInput), output, uri, mimeType, hashes, ctx.filterData, ctx.charset, ctx.prefetchHook, ctx.tagReplacer, context.linkFilterExceptionProvider);
+			worker = new ClientGetWorkerThread(new BufferedInputStream(dataInput), output, uri, mimeType, ctx.getSchemeHostAndPort(), hashes, ctx.filterData, ctx.charset, ctx.prefetchHook, ctx.tagReplacer, context.linkFilterExceptionProvider);
 			worker.start();
 			try {
 				streamGenerator.writeTo(dataOutput, context);
@@ -350,7 +350,7 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
 			}
 
 			// An error will propagate backwards, so wait for the worker first.
-			
+
 			if(logMINOR) Logger.minor(this, "Waiting for hashing, filtration, and writing to finish");
 			worker.waitFinished();
 
@@ -410,7 +410,7 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
 		context.getJobRunner(persistent()).setCheckpointASAP();
 		clientCallback.onSuccess(result, ClientGetter.this);
 	}
-	
+
     @Override
     public void onSuccess(File tempFile, long length, ClientMetadata metadata,
             ClientGetState state, ClientContext context) {
@@ -438,36 +438,36 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
             raf.setLength(length);
             InputStream is = new BufferedInputStream(new FileInputStream(raf.getFD()));
             // Check hashes...
-            
+
             DecompressorThreadManager decompressorManager = null;
             ClientGetWorkerThread worker = null;
 
-            worker = new ClientGetWorkerThread(is, new NullOutputStream(), uri, null, hashes, false, null, ctx.prefetchHook, ctx.tagReplacer, context.linkFilterExceptionProvider);
+            worker = new ClientGetWorkerThread(is, new NullOutputStream(), uri, null, ctx.getSchemeHostAndPort(), hashes, false, null, ctx.prefetchHook, ctx.tagReplacer, context.linkFilterExceptionProvider);
             worker.start();
-            
+
             if(logMINOR) Logger.minor(this, "Waiting for hashing, filtration, and writing to finish");
             worker.waitFinished();
-            
+
             is.close();
             is = null;
             raf = null; // FD is closed.
-            
+
             // We are still here so it worked.
-            
+
             if(!FileUtil.renameTo(tempFile, completionFile))
                 throw new FetchException(FetchExceptionMode.BUCKET_ERROR, "Failed to rename from temp file "+tempFile);
-            
+
             // Success!
-            
+
             synchronized(this) {
                 finished = true;
                 currentState = null;
                 expectedMIME = metadata.getMIMEType();
                 expectedSize = length;
             }
-            
+
             result = new FetchResult(metadata, returnBucket);
-            
+
         } catch (IOException e) {
             Logger.error(this, "Failed while completing via truncation: "+e, e);
             ex = new FetchException(FetchExceptionMode.BUCKET_ERROR, e);
@@ -519,7 +519,7 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
 		ClientGetState oldState = null;
 		if(expectedSize > 0 && (e.expectedSize <= 0 || finalBlocksTotal != 0))
 			e.expectedSize = expectedSize;
-		
+
 		context.getJobRunner(persistent()).setCheckpointASAP();
 
 		if(e.mode == FetchExceptionMode.TOO_BIG && ctx.filterData) {
@@ -538,7 +538,7 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
 				}
 			}
 		}
-		
+
 		while(true) {
 			if(e.mode == FetchExceptionMode.ARCHIVE_RESTART) {
 				int ar;
@@ -677,7 +677,7 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
                 ctx.eventProducer.produceEvent(new SendingToNetworkEvent(), context);
                 return false;
             }
-	        
+
 	    });
 	}
 
@@ -774,7 +774,7 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
 		return binaryBlobWriter != null;
 	}
 
-	/** Called when we know the MIME type of the final data 
+	/** Called when we know the MIME type of the final data
 	 * @throws FetchException */
 	@Override
 	public void onExpectedMIME(ClientMetadata clientMetadata, ClientContext context) throws FetchException {
@@ -807,7 +807,7 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
                 ctx.eventProducer.produceEvent(new ExpectedMIMEEvent(mime), context);
                 return false;
             }
-		    
+
 		});
 	}
 
@@ -833,7 +833,7 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
                 ctx.eventProducer.produceEvent(new ExpectedFileSizeEvent(size), context);
                 return false;
             }
-		    
+
 		});
 	}
 
@@ -847,12 +847,12 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
 	public boolean finalizedMetadata() {
 		return finalizedMetadata;
 	}
-	
+
 	/** @return The expected MIME type, if we know it. */
 	public synchronized String expectedMIME() {
 	    return expectedMIME;
 	}
-	
+
 	/** @return The expected size of the returned data, if we know it. Could change. */
 	public synchronized long expectedSize() {
 	    return expectedSize;
@@ -891,7 +891,7 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
 
 	private int finalBlocksRequired;
 	private int finalBlocksTotal;
-	
+
 	@Override
 	public void onExpectedTopSize(long size, long compressed, int blocksReq, int blocksTotal, ClientContext context) {
 		if(finalBlocksRequired != 0 || finalBlocksTotal != 0) return;
@@ -903,9 +903,9 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
 	}
 
 	@Override
-	public void onSplitfileCompatibilityMode(final CompatibilityMode min, 
-	        final CompatibilityMode max, final byte[] customSplitfileKey, 
-	        final boolean dontCompress, final boolean bottomLayer, final boolean definitiveAnyway, 
+	public void onSplitfileCompatibilityMode(final CompatibilityMode min,
+	        final CompatibilityMode max, final byte[] customSplitfileKey,
+	        final boolean dontCompress, final boolean bottomLayer, final boolean definitiveAnyway,
 	        ClientContext context) {
 	    context.getJobRunner(persistent()).queueNormalOrDrop(new PersistentJob() {
 
@@ -914,7 +914,7 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
                 ctx.eventProducer.produceEvent(new SplitfileCompatibilityModeEvent(min, max, customSplitfileKey, dontCompress, bottomLayer || definitiveAnyway), context);
                 return false;
             }
-	        
+
 	    });
 	}
 
@@ -938,7 +938,7 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
                 ctx.eventProducer.produceEvent(new ExpectedHashesEvent(h), context);
                 return false;
             }
-		    
+
 		});
 	}
 
@@ -965,15 +965,15 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
 	public Bucket getBlobBucket() {
 		return binaryBlobWriter.getFinalBucket();
 	}
-	
+
     public byte[] getClientDetail(ChecksumChecker checker) throws IOException {
         if(clientCallback instanceof PersistentClientCallback) {
             return getClientDetail((PersistentClientCallback)clientCallback, checker);
         } else
             return new byte[0];
     }
-    
-    /** Called for a persistent request after startup. 
+
+    /** Called for a persistent request after startup.
      * @throws ResumeFailedException */
     @Override
     public void innerOnResume(ClientContext context) throws ResumeFailedException {
@@ -999,11 +999,11 @@ implements WantsCooldownCallback, FileGetCompletionCallback, Serializable {
         return clientCallback;
     }
 
-    /** If the request is simple, e.g. a single, final splitfile fetch, then write enough 
+    /** If the request is simple, e.g. a single, final splitfile fetch, then write enough
      * information to continue the request. Otherwise write a marker indicating that this is not
      * true, and return false. We don't need to write the expected MIME type, hashes etc, as the
      * caller will write them.
-     * @throws IOException 
+     * @throws IOException
      */
     public boolean writeTrivialProgress(DataOutputStream dos) throws IOException {
         if(!(this.binaryBlobWriter == null && this.snoopBucket == null && this.snoopMeta == null && initialMetadata == null)) {
