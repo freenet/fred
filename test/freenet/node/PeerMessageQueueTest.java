@@ -8,7 +8,7 @@ import junit.framework.TestCase;
 public class PeerMessageQueueTest extends TestCase {
 	public void testUrgentTimeEmpty() {
 		PeerMessageQueue pmq = new PeerMessageQueue();
-		assertEquals(Long.MAX_VALUE, pmq.getNextUrgentTime(Long.MAX_VALUE, System.currentTimeMillis()));
+		assertEquals(Long.MAX_VALUE, pmq.getNextUrgentTime(System.currentTimeMillis()));
 	}
 
 	public void testUrgentTime() {
@@ -22,7 +22,7 @@ public class PeerMessageQueueTest extends TestCase {
 		pmq.queueAndEstimateSize(item, 1024);
 
 		//The timeout for item should be within (start + 100) and (end + 100)
-		long urgentTime = pmq.getNextUrgentTime(Long.MAX_VALUE, System.currentTimeMillis());
+		long urgentTime = pmq.getNextUrgentTime(System.currentTimeMillis());
 		if(!((urgentTime >= (start + 100)) && (urgentTime <= (end + 100)))) {
 			fail("Timeout not in expected range. Expected: " + (start + 100) + "->" + (end + 100) + ", actual: " + urgentTime);
 		}
@@ -54,7 +54,7 @@ public class PeerMessageQueueTest extends TestCase {
 
 		//getNextUrgentTime() should return the timeout of itemUrgent, which is within (start + 100)
 		//and (end + 100)
-		long urgentTime = pmq.getNextUrgentTime(Long.MAX_VALUE, System.currentTimeMillis());
+		long urgentTime = pmq.getNextUrgentTime(System.currentTimeMillis());
 		if(!((urgentTime >= (start + 100)) && (urgentTime <= (end + 100)))) {
 			fail("Timeout not in expected range. Expected: " + (start + 100) + "->" + (end + 100) + ", actual: " + urgentTime);
 		}

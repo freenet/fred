@@ -34,7 +34,14 @@ public class PeerMessageQueue {
 		});
 	}
 
+	/* WARNING: you must invalidate or update cachedNextUrgentTime and cachedQueueSize when any of queuesByPriority[] changed */
 	private final PrioQueue[] queuesByPriority;
+
+	private long cachedNextUrgentTime = Long.MAX_VALUE; // cached getNextUrgentTime; Long.MIN_VALUE if invalid; Long.MAX_VALUE for empty queue (initial value); uses "synchronized(this)" lock
+	private int cachedQueueSize = 0; // lower bound for queue size; -1 if invalid; 0 for empty queue (initial value)
+	private boolean cachedQueueSizeIsComplete = true; // true if cachedQueueSize covers full queue (otherwise cachedQueueSize is only lower bound); ignored when cachedQueueSize is invalid (-1)
+
+	private static final int MESSAGE_OVERHEAD = 2;
 	
 	private boolean mustSendLoadRT;
 	private boolean mustSendLoadBulk;
@@ -424,16 +431,14 @@ public class PeerMessageQueue {
 		public int addSize(int length, int maxSize) {
 			if(itemsNonUrgent != null) {
 				for(MessageItem item : itemsNonUrgent) {
-					int thisLen = item.getLength();
-					length += thisLen;
+					length += item.getLength() + MESSAGE_OVERHEAD;
 					if(length > maxSize) return length;
 				}
 			}
 			if(nonEmptyItemsWithID != null) {
 				for(Items list : nonEmptyItemsWithID) {
 					for(MessageItem item : list.items) {
-						int thisLen = item.getLength();
-						length += thisLen;
+						length += item.getLength() + MESSAGE_OVERHEAD;
 						if(length > maxSize) return length;
 					}
 				}
@@ -735,35 +740,42 @@ public class PeerMessageQueue {
 	 */
 	public synchronized int queueAndEstimateSize(MessageItem item, int maxSize) {
 		enqueuePrioritizedMessageItem(item);
-		int x = 0;
-		for(PrioQueue pq : queuesByPriority) {
-			if(pq.itemsNonUrgent != null) {
-				for(MessageItem it : pq.itemsNonUrgent) {
-					x += it.getLength() + 2;
-					if(x > maxSize)
-						break;
-				}
-			}
-			if(pq.nonEmptyItemsWithID != null) {
-				for(PrioQueue.Items q : pq.nonEmptyItemsWithID)
-					for(MessageItem it : q.items) {
-						x += it.getLength() + 2;
-						if(x > maxSize)
-							break;
-					}
+		if (cachedQueueSize >= 0) {
+			if (cachedQueueSizeIsComplete || cachedQueueSize > maxSize) {
+				return cachedQueueSize;
 			}
 		}
+		int x = 0;
+		for(PrioQueue pq : queuesByPriority) {
+			x = pq.addSize(x, maxSize);
+			if (x > maxSize) {
+				cachedQueueSize = Math.max(cachedQueueSize, x);
+				cachedQueueSizeIsComplete = false;
+				return x;
+			}
+		}
+		cachedQueueSize = cachedQueueSize;
+		cachedQueueSizeIsComplete = true;
 		return x;
 	}
 
 	public synchronized long getMessageQueueLengthBytes() {
+		if (cachedQueueSize>=0 && cachedQueueSizeIsComplete) {
+			return cachedQueueSize;
+		}
 		long x = 0;
 		for(PrioQueue pq : queuesByPriority) {
+			if(pq.itemsNonUrgent != null) {
+				for(MessageItem item : pq.itemsNonUrgent)
+					x += item.getLength() + MESSAGE_OVERHEAD;
+			}
 			if(pq.nonEmptyItemsWithID != null)
 				for(PrioQueue.Items q : pq.nonEmptyItemsWithID)
 					for(MessageItem it : q.items)
-						x += it.getLength() + 2;
+						x += it.getLength() + MESSAGE_OVERHEAD;
 		}
+		cachedQueueSize = x > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)x;
+		cachedQueueSizeIsComplete = !(x > Integer.MAX_VALUE);
 		return x;
 	}
 
@@ -771,6 +783,16 @@ public class PeerMessageQueue {
 		//Assume it goes on the end, both the common case
 		short prio = addMe.getPriority();
 		queuesByPriority[prio].addLast(addMe);
+		/* adjust cache */
+		cachedNextUrgentTime = Math.min(cachedNextUrgentTime, addMe.submitted + queuesByPriority[prio].timeout); // won't change value if was "invalid" before
+		if (cachedQueueSize >= 0) {
+			// adjust cached value
+			cachedQueueSize += addMe.getLength() + MESSAGE_OVERHEAD;
+		} else {
+			// initial estimation (covers only just-added MessageItem)
+			cachedQueueSize = addMe.getLength() + MESSAGE_OVERHEAD;
+			cachedQueueSizeIsComplete = false;
+		}
 		if(addMe.sendLoadRT)
 			mustSendLoadRT = true;
 		if(addMe.sendLoadBulk)
@@ -787,6 +809,16 @@ public class PeerMessageQueue {
 		//Assume it goes on the front
 		short prio = addMe.getPriority();
 		queuesByPriority[prio].addFirst(addMe);
+		// adjust cache
+		cachedNextUrgentTime = Math.min(cachedNextUrgentTime, addMe.submitted + queuesByPriority[prio].timeout); // won't change value if was invalid before
+		if (cachedQueueSize >= 0) {
+			// adjust cached value
+			cachedQueueSize += addMe.getLength() + MESSAGE_OVERHEAD;
+		} else {
+			// initial estimation (covers only just-added MessageItem)
+			cachedQueueSize = addMe.getLength() + MESSAGE_OVERHEAD;
+			cachedQueueSizeIsComplete = false;
+		}
 		if(addMe.sendLoadRT)
 			mustSendLoadRT = true;
 		if(addMe.sendLoadBulk)
@@ -803,6 +835,10 @@ public class PeerMessageQueue {
 			ptr = queue.addTo(output, ptr);
 			queue.clear();
 		}
+		/* reset cache to initial state */
+		cachedNextUrgentTime = Long.MAX_VALUE;
+		cachedQueueSize = 0;
+		cachedQueueSizeIsComplete = true;
 		return output;
 	}
 
@@ -810,19 +846,27 @@ public class PeerMessageQueue {
 	 * Get the time at which the next message must be sent. If any message is
 	 * overdue, we will return a value less than now, which may not be completely
 	 * accurate.
-	 * @param t The current next urgent time. The return value will be no greater
-	 * than this.
 	 * @param returnIfBefore The current time. If the next urgent time is less than 
 	 * this we return immediately rather than computing an accurate past value. 
 	 * Set to Long.MAX_VALUE if you want an accurate value.
 	 * @return The next urgent time, but can be too high if it is less than now.
 	 */
-	public synchronized long getNextUrgentTime(long t, long returnIfBefore) {
+	public synchronized long getNextUrgentTime(long returnIfBefore) {
+		if (cachedNextUrgentTime > Long.MIN_VALUE) {
+			return cachedNextUrgentTime;
+		}
+		long t = Long.MAX_VALUE;
 		for(PrioQueue queue: queuesByPriority) {
-			t = Math.min(t, queue.getNextUrgentTime(t, returnIfBefore));
+			t = queue.getNextUrgentTime(t, returnIfBefore);
 			if(t <= returnIfBefore) return t; // How much in the past doesn't matter, as long as it's in the past.
 		}
+		cachedNextUrgentTime = t;
 		return t;
+	}
+
+	@Deprecated
+	public long getNextUrgentTime(long t, long stopIfBeforeTime) {
+		return Math.min(t, getNextUrgentTime(stopIfBeforeTime));
 	}
 
 	/**
@@ -833,7 +877,7 @@ public class PeerMessageQueue {
 	 * <code>now</code>
 	 */
 	public boolean mustSendNow(long now) {
-		return getNextUrgentTime(Long.MAX_VALUE, now) <= now;
+		return getNextUrgentTime(now) <= now;
 	}
 
 	/**
@@ -845,11 +889,25 @@ public class PeerMessageQueue {
 	 * messages in this queue is greater than <code>maxSize</code>
 	 */
 	public synchronized boolean mustSendSize(int minSize, int maxSize) {
+		if (cachedQueueSize >= 0) {
+			if (minSize + cachedQueueSize > maxSize) {
+				return true;
+			}
+			if (cachedQueueSizeIsComplete) {
+				return false;
+			}
+		}
 		int length = minSize;
 		for(PrioQueue items : queuesByPriority) {
 			length = items.addSize(length, maxSize);
-			if(length > maxSize) return true;
+			if(length > maxSize) {
+				cachedQueueSize = Math.max(cachedQueueSize, length - minSize);
+				cachedQueueSizeIsComplete = false;
+				return true;
+			}
 		}
+		cachedQueueSize = length - minSize;
+		cachedQueueSizeIsComplete = true;
 		return false;
 	}
 
@@ -865,9 +923,15 @@ public class PeerMessageQueue {
 		
 		addPeerLoadStatsRT.value = true;
 		addPeerLoadStatsBulk.value = true;
+
+		long savedNextUrgentTime = cachedNextUrgentTime;
+		int savedQueueSize = cachedQueueSize;
+
+		/* queuesByPriority is expected to be modified, invalidate cache */
+		cachedNextUrgentTime = Long.MIN_VALUE;
+		cachedQueueSize = -1;
 		
-		for(int i=0;i<DMT.PRIORITY_REALTIME_DATA;i++) {
-			if(i < minPriority) continue;
+		for(int i=minPriority;i<DMT.PRIORITY_REALTIME_DATA;i++) {
 			if(logMINOR) Logger.minor(this, "Adding from priority "+i);
 			MessageItem ret = queuesByPriority[i].addPriorityMessages(now, addPeerLoadStatsRT, addPeerLoadStatsBulk);
 			if(ret != null) return ret;
@@ -885,10 +949,13 @@ public class PeerMessageQueue {
 			tryRealtimeFirst = false;
 		} else if(queuesByPriority[DMT.PRIORITY_BULK_DATA].isEmpty()) {
 			tryRealtimeFirst = true;
-		} else if(queuesByPriority[DMT.PRIORITY_BULK_DATA].getNextUrgentTime(Long.MAX_VALUE, 0) >= queuesByPriority[DMT.PRIORITY_REALTIME_DATA].getNextUrgentTime(Long.MAX_VALUE, 0)) {
-			tryRealtimeFirst = true;
 		} else {
-			tryRealtimeFirst = false;
+			long rtNextUrgentTime = queuesByPriority[DMT.PRIORITY_REALTIME_DATA].getNextUrgentTime(Long.MAX_VALUE, 0);
+			if(queuesByPriority[DMT.PRIORITY_BULK_DATA].getNextUrgentTime(Long.MAX_VALUE, rtNextUrgentTime) >= rtNextUrgentTime) {
+				tryRealtimeFirst = true;
+			} else {
+				tryRealtimeFirst = false;
+			}
 		}
 		
 		// FIXME token bucket?
@@ -915,6 +982,9 @@ public class PeerMessageQueue {
 			MessageItem ret = queuesByPriority[i].addPriorityMessages(now, addPeerLoadStatsRT, addPeerLoadStatsBulk);
 			if(ret != null) return ret;
 		}
+		// MessageItem was not removed from queues, restore cache (was not changed)
+		cachedNextUrgentTime = savedNextUrgentTime;
+		cachedQueueSize = savedQueueSize;
 		// Nothing to send.
 		return null;
 	}
@@ -923,6 +993,18 @@ public class PeerMessageQueue {
 		synchronized(this) {
 			short prio = message.getPriority();
 			if(!queuesByPriority[prio].removeMessage(message)) return false;
+			if (cachedNextUrgentTime == message.submitted + queuesByPriority[prio].timeout) {
+				// invalidate cache only if removed message had same urgentTime as cached
+				// TODO investigate if condition is not practically always true (by then, it is more efficient to unconditionally invalidate cache)
+				cachedNextUrgentTime = Long.MIN_VALUE;
+			}
+			if (cachedQueueSize >= 0 && cachedQueueSizeIsComplete) {
+				// adjust cached queue size
+				cachedQueueSize -= message.getLength() + MESSAGE_OVERHEAD;
+			} else {
+				// cached size covers only part of queue, removed message might be not included -> invalidate cache
+				cachedQueueSize = -1;
+			}
 		}
 		message.onFailed();
 		return true;
@@ -932,6 +1014,7 @@ public class PeerMessageQueue {
 		for(PrioQueue queue : queuesByPriority) {
 			queue.removeUIDs(list);
 		}
+		/* queue.removeUIDs() only purges emptyItemsWithID; cachedQueueSize and cachedNextUrgentTime remain valid */
 	}
 }
 
