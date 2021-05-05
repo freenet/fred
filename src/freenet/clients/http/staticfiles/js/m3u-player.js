@@ -139,7 +139,34 @@ function updateSrc(mediaTag, callback) {
         ? URL.createObjectURL(prefetchedTracks.get(trackUrl))
         : trackUrl : trackUrl;
     const oldUrl = mediaTag.getAttribute("src");
+    // prevent size flickering by setting height before src change
+    const canvas = document.createElement("canvas");
+    if (!isNaN(mediaTag.duration)) { // already loaded a valid file so the size should fit
+      // fix height to the height of the current video. Re-run after setting the source.
+      mediaTag.height = (mediaTag.clientWidth * mediaTag.videoHeight) / mediaTag.videoWidth;
+      // take screenshot of video and overlay it to mask short-term flicker.
+      canvas.width = mediaTag.clientWidth;
+      canvas.height = mediaTag.clientHeight;
+      const context = canvas.getContext("2d");
+      context.scale(mediaTag.clientWidth / mediaTag.videoWidth, mediaTag.clientHeight / mediaTag.videoHeight);
+      context.drawImage(mediaTag, 0, 0);
+      canvas.hidden = true;
+      mediaTag.parentNode.insertBefore(canvas, mediaTag.nextSibling);
+      canvas.style.position = "absolute";
+      canvas.style.marginLeft = "-" + mediaTag.clientWidth + "px";
+      canvas.hidden = false;
+    }
     mediaTag.setAttribute("src", url);
+    mediaTag.oncanplaythrough = () => {
+      if (!isNaN(mediaTag.duration)) { // already loaded a valid file
+        // fix height to the height of the current video. Re-run after setting the source.
+        mediaTag.height = (mediaTag.clientWidth * mediaTag.videoHeight) / mediaTag.videoWidth;
+      }
+      // remove overlay
+      canvas.hidden = true;
+      canvas.remove(); // to allow garbage collection
+    };
+    setTimeout(() => canvas.remove(), 300); // fallback
     // replace the url when done, because a blob from an xhr request
     // is more reliable in the media tag; 
     // the normal URL caused jumping prematurely to the next track.
