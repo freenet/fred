@@ -91,7 +91,6 @@ public class Bzip2Compressor extends AbstractCompressor {
 				bz2os.flush();
 				bz2os.close();
 			}
-
 		}
 	}
 

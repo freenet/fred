@@ -150,6 +150,7 @@ task copyResourcesToClasses2 {
             include 'freenet/l10n/*properties'
             include 'freenet/l10n/iso-*.tab'
             include 'freenet/clients/http/staticfiles/**'
+            include 'freenet/clients/http/templates/**'
             include '../dependencies.properties'
         }
         copy {
@@ -227,6 +228,7 @@ dependencies {
     compile "net.java.dev.jna:jna:4.5.2"
     compile "net.java.dev.jna:jna-platform:4.5.2"
     compile "org.freenetproject:freenet-ext:29"
+    compile "io.pebbletemplates:pebble:3.1.0"
 
     testCompile 'junit:junit:4.12'
     testCompile "org.mockito:mockito-core:1.9.5"

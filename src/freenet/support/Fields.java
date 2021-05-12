@@ -770,19 +770,28 @@ public abstract class Fields {
 			}
 			String multiplier = s.substring(0, x + 1).trim();
 			if(multiplier.indexOf('.') > -1 || multiplier.indexOf('E') > -1) {
-				res *= Double.parseDouble(multiplier);
+				double m = Double.parseDouble(multiplier);
+				checkLongOverflowWhenMultiply(res, m);
+				res *= m;
 				if(logMINOR)
 					Logger.minor(Fields.class, "Parsed " + multiplier + " of " + s + " as double: " + res);
 			} else {
-				res *= Long.parseLong(multiplier);
+				long m = Long.parseLong(multiplier);
+				checkLongOverflowWhenMultiply(res, m);
+				res *= m;
 				if(logMINOR)
 					Logger.minor(Fields.class, "Parsed " + multiplier + " of " + s + " as long: " + res);
 			}
 		} catch(ArithmeticException e) {
-			res = Long.MAX_VALUE;
 			throw new NumberFormatException(e.getMessage());
 		}
 		return res;
+	}
+
+	private static void checkLongOverflowWhenMultiply(long a, Number b) {
+		if (a != 0 && Math.abs(b.longValue()) > Long.MAX_VALUE / a) {
+			throw new NumberFormatException("Long overflow");
+		}
 	}
 
 	public static String longToString(long val, boolean isSize) {

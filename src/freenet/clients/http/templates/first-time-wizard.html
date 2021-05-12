@@ -1,0 +1,115 @@
+<div style="margin: 30px;">
+    <form method="post">
+        <input name="formPassword" type="hidden" value="{{ formPassword }}">
+        <fieldset>
+            <legend>{{ l10n("networkSecurityPageTitle") }}</legend>
+            <input id="knowSomeone" name="knowSomeone" type="checkbox" {{ knowSomeone }}>
+            <label for="knowSomeone">{{ l10n("networkSecurityIKnowSomeoneWhoRunsFreenet") }}</label>
+            <div id="noDarknet">
+                <p>{{ l10n("networkSecurityFreenetWillConnectToStrangers") }}</p>
+            </div>
+            <div id="checkDarknet" hidden="hidden">
+                <p>
+                    <input id="connectToStrangers" name="connectToStrangers" type="checkbox" {{ connectToStrangers }}>
+                    <label for="connectToStrangers">{{ l10n("networkSecurityIWantToConnectToUntrustedStrangers") }}</label>
+                </p>
+            </div>
+        </fieldset>
+        <fieldset>
+            <legend>{{ l10n("bandwidth") }}</legend>
+            <input id="haveMonthlyLimit" name="haveMonthlyLimit" type="checkbox" {{ haveMonthlyLimit }}>
+            <label for="haveMonthlyLimit">{{ l10n("bandwidthMonthlyLimitTitle") }}</label>
+            <div id="monthlyLimitChecked" hidden="hidden">
+                <p>
+                    {% if errors.bandwidthMonthlyLimitError is not null %}
+                        <div class="error">{{ errors.bandwidthMonthlyLimitError }}</div>
+                    {% endif %}
+                    {{ l10n("bandwidthMonthlyLimit") }}
+                    <input id="monthlyLimit" value="{{ bandwidthMonthlyLimit }}" name="monthlyLimit" type="number" min="{{ minBandwidthMonthlyLimit }}" max="999999999" step=".01">
+                    {{ l10n("bandwidthMonthlyLimitBaseUnit") }}.
+                </p>
+            </div>
+            <div id="monthlyLimitUnchecked">
+                <p>
+                    {% if errors.downloadLimitError is not null %}
+                        <div class="error">{{ errors.downloadLimitError }}</div>
+                    {% endif %}
+                    {% if errors.uploadLimitError is not null %}
+                        <div class="error">{{ errors.uploadLimitError }}</div>
+                    {% endif %}
+                    <input id="downLimit" name="downLimit" type="number" min="0" value="{{ downloadLimit }}">
+                    {{ l10n("bandwidthDownLimitBaseUnit") }}.
+                    <input id="upLimit" name="upLimit" type="number" min="0" value="{{ uploadLimit }}">
+                    {{ l10n("bandwidthUpLimitBaseUnit") }}.
+                <p>
+                <h4>{{ l10n("bandwidthCommonInternetConnectionSpeeds") }}</h4>
+                <table>
+                    <tr>
+                        <th>{{ l10n("bandwidthCommonInternetConnectionSpeedsConnectionType") }}</th>
+                        <th>{{ l10n("bandwidthCommonInternetConnectionSpeedsDownloadLimit") }}</th>
+                        <th>{{ l10n("bandwidthCommonInternetConnectionSpeedsUploadLimit") }}</th>
+                    </tr>
+                    <tr>
+                        <td>{{ l10n("bandwidthCommonInternetConnectionSpeedsDetected") }}</td>
+                        <td>{{ downloadLimitDetected }} {{ l10n("bandwidthCommonInternetConnectionSpeedsKibps") }}</td>
+                        <td>{{ uploadLimitDetected }} {{ l10n("bandwidthCommonInternetConnectionSpeedsKibps") }}</td>
+                    </tr>
+                    <!-- TODO: This will be a template loop over a container of common speeds provided by the node. .type, .down, .up per row. -->
+                    <tr>
+                        <td>{{ l10n("bandwidthCommonInternetConnectionSpeeds4Mbit") }}</td>
+                        <td>256 {{ l10n("bandwidthCommonInternetConnectionSpeedsKibps") }}
+                            (2 {{ l10n("bandwidthCommonInternetConnectionSpeedsMibs") }})
+                        </td>
+                        <td>16 {{ l10n("bandwidthCommonInternetConnectionSpeedsKibps") }}</td>
+                    </tr>
+                    <tr>
+                        <td>{{ l10n("bandwidthCommonInternetConnectionSpeeds6Mbit") }}</td>
+                        <td>384 {{ l10n("bandwidthCommonInternetConnectionSpeedsKibps") }}
+                            (3 {{ l10n("bandwidthCommonInternetConnectionSpeedsMibs") }})
+                        </td>
+                        <td>16 {{ l10n("bandwidthCommonInternetConnectionSpeedsKibps") }}</td>
+                    </tr>
+                </table>
+                </p>
+                </p>
+            </div>
+        </fieldset>
+        <fieldset>
+            <legend>{{ l10n("storage") }}</legend>
+            <p>
+                {% if errors.storageLimitError is not null %}
+                    <div class="error">{{ errors.storageLimitError }}</div>
+                {% endif %}
+                Give
+                <!-- TODO: Populated by the node with some percentage of free space. -->
+                <!-- TODO: Possibly attach this number with a slider of percentage of free space. -->
+                <input id="storage" value="{{ storageLimit }}" name="storage" type="number" min="0" max="999999999" step=".001">
+                {{ l10n("storageLimitDescription") }}
+            </p>
+            {% if setPassword is not null %}
+            <input id="setPassword" name="setPassword" type="checkbox" {{ setPassword }}>
+            <label for="setPassword">{{ l10n("requirePassword") }}</label>
+            <div id="passwordboxcontainer">
+                <div id="givePassword" hidden="hidden">
+                    <div class="give-password-wrap">
+                        <p>
+                            {% if errors.passwordError is not null %}
+                                <div class="error">{{ errors.passwordError }}</div>
+                            {% endif %}
+                            <label for="password">{{ l10n("password") }}</label>
+                            <input id="password" name="password" type="password">
+                        </p>
+                        <p>
+                            <label for="confirmPassword">{{ l10n("confirmPassword") }}</label>
+                            <input id="confirmPassword" name="confirmPassword" type="password">
+                        </p>
+
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </fieldset>
+        <input type="submit" value="Save">
+    </form>
+</div>
+<script src="/static/js/firsttimewizard.js"></script>

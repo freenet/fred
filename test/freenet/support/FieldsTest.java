@@ -454,4 +454,12 @@ public class FieldsTest extends TestCase {
 		assertEquals(0, Fields.compareVersion(a, b));
 	}
 
+	public void testStringToLongOverflow() {
+		try {
+			Fields.parseLong("9999999999GiB");
+			fail("Missing overflow exception");
+		} catch (NumberFormatException e) {
+			assertEquals("Long overflow", e.getMessage());
+		}
+	}
 }

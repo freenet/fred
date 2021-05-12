@@ -3,16 +3,16 @@ package freenet.clients.http.wizardsteps;
 import freenet.clients.http.FirstTimeWizardToadlet;
 import freenet.config.Config;
 import freenet.config.ConfigException;
+import freenet.config.InvalidConfigValueException;
 import freenet.config.Option;
 import freenet.l10n.NodeL10n;
-import freenet.node.Node;
 import freenet.node.NodeClientCore;
-import freenet.node.NodeStarter;
 import freenet.support.Fields;
 import freenet.support.HTMLNode;
 import freenet.support.Logger;
 import freenet.support.SizeUtil;
 import freenet.support.api.HTTPRequest;
+import freenet.support.io.DatastoreUtil;
 
 /**
  * Allows the user to select datastore size, considering available storage space when offering options.
@@ -37,7 +37,7 @@ public class DATASTORE_SIZE implements Step {
 		HTMLNode bandwidthForm = helper.addFormChild(bandwidthInfoboxContent, ".", "dsForm");
 		HTMLNode result = bandwidthForm.addChild("select", "name", "ds");
 
-		long maxSize = maxDatastoreSize();
+		long maxSize = DatastoreUtil.maxDatastoreSize();
 
 		long autodetectedSize = canAutoconfigureDatastoreSize();
 		if(maxSize < autodetectedSize) autodetectedSize = maxSize;
@@ -94,8 +94,19 @@ public class DATASTORE_SIZE implements Step {
 	}
 
 	private void _setDatastoreSize(String selectedStoreSize) {
+		setDatastoreSize(selectedStoreSize, config, this);
+	}
+
+	public static void setDatastoreSize(String selectedStoreSize, Config config, Object callback) {
 		try {
 			long size = Fields.parseLong(selectedStoreSize);
+
+			long maxDatastoreSize = DatastoreUtil.maxDatastoreSize();
+			if (size > maxDatastoreSize) {
+				throw new InvalidConfigValueException("Attempting to set DatastoreSize (" + size
+						+ ") larger than maxDatastoreSize (" + maxDatastoreSize + ")");
+			}
+
 			// client cache: 10% up to 200MB
 			long clientCacheSize = Math.min(size / 10, 200*1024*1024);
 			// recent requests cache / slashdot cache / ULPR cache
@@ -127,67 +138,13 @@ public class DATASTORE_SIZE implements Step {
 			config.get("node").set("slashdotCacheSize", Fields.longToString(slashdotCacheSize, true));
 
 
-			Logger.normal(this, "The storeSize has been set to " + selectedStoreSize);
+			Logger.normal(callback, "The storeSize has been set to " + selectedStoreSize);
 		} catch(ConfigException e) {
-			Logger.error(this, "Should not happen, please report!" + e, e);
+			Logger.error(callback, "Should not happen, please report!" + e, e);
 		}
 	}
 
-	private long maxDatastoreSize() {
-		long maxMemory = NodeStarter.getMemoryLimitBytes();
-		if(maxMemory == Long.MAX_VALUE) return 1024*1024*1024; // Treat as don't know.
-		if(maxMemory < 128*1024*1024) return 1024*1024*1024; // 1GB default if don't know or very small memory.
-		// Don't use the first 100MB for slot filters.
-		long available = maxMemory - 100*1024*1024;
-		// Don't use more than 50% of available memory for slot filters.
-		available = available / 2;
-		// Slot filters are 4 bytes per slot.
-		long slots = available / 4;
-		// There are 3 types of keys. We want the number of { SSK, CHK, pubkey } i.e. the number of slots in each store.
-		slots /= 3;
-		// We return the total size, so we don't need to worry about cache vs store or even client cache.
-		// One key of all 3 types combined uses Node.sizePerKey bytes on disk. So we get a size.
-		return slots * Node.sizePerKey;
+	private long canAutoconfigureDatastoreSize() {
+		return DatastoreUtil.autodetectDatastoreSize(core, config);
 	}
-
-    private long canAutoconfigureDatastoreSize() {
-        if (!config.get("node").getOption("storeSize").isDefault())
-            return -1;
-
-        long freeSpace = core.node.getStoreDir().getUsableSpace();
-
-        if (freeSpace <= 0) {
-            return -1;
-        } else {
-            long shortSize;
-            long oneGiB = 1024 * 1024 * 1024L;
-            // Maximum for Freenet: 256GB. That's a 128MiB bloom filter.
-            long bloomFilter128MiBMax = 256 * oneGiB;
-            // Maximum to suggest to keep Disk I/O managable. This
-            // value might need revisiting when hardware or
-            // filesystems change.
-            long diskIoMax = 20 * oneGiB;
-
-            // Choose a suggested store size based on available free space.
-            if (freeSpace > 50 * oneGiB) {
-                // > 50 GiB: Use 10% free space; minimum 10 GiB. Limited by
-                // bloom filters and disk I/O.
-                shortSize = Math.max(10 * oneGiB,
-                                     Math.min(freeSpace / 10,
-                                              Math.min(diskIoMax,
-                                                       bloomFilter128MiBMax)));
-            } else if (freeSpace > 5 * oneGiB) {
-                // > 5 GiB: Use 20% free space, minimum 2 GiB.
-                shortSize = Math.max(freeSpace / 5, 2 * oneGiB);
-            } else if (freeSpace > 2 * oneGiB) {
-                // > 2 GiB: 512 MiB.
-                shortSize = 512 * (1024 * 1024);
-            } else {
-                // <= 2 GiB: 256 MiB.
-                shortSize = 256 * (1024 * 1024);
-            }
-
-            return shortSize;
-        }
-    }
 }

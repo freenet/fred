@@ -1,0 +1,8 @@
+.give-password-wrap {
+    text-align: right;
+    display: inline-block;
+}
+
+.error {
+    color: red;
+}

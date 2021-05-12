@@ -479,6 +479,17 @@ public class BaseL10n {
 	}
 
 	/**
+	 * Get a localized string. Return "" (empty string) if it doesn't exist.
+	 * @param key Key to search for.
+	 * @param replacementValue Replacement value for all ${*}.
+	 * @return String
+	 */
+	public String getString(String key, String replacementValue) {
+		String string = getStrings(key).iterator().next();
+		return string.replaceAll("\\$\\{.*}", replacementValue);
+	}
+
+	/**
 	 * Get a localized string.
 	 * @param key Key to search for.
 	 * @param returnNullIfNotFound If this is true, will return null if the key is not found.
