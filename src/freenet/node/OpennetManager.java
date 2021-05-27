@@ -18,11 +18,17 @@ import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
+import freenet.clients.http.geoip.IPConverter;
+import freenet.clients.http.geoip.IPConverter.Country;
+import freenet.config.SubConfig;
 import freenet.crypt.Util;
 import freenet.io.comm.ByteCounter;
 import freenet.io.comm.DMT;
@@ -50,6 +56,7 @@ import freenet.support.Logger;
 import freenet.support.Logger.LogLevel;
 import freenet.support.SimpleFieldSet;
 import freenet.support.TimeSortedHashtable;
+import freenet.support.api.StringCallback;
 import freenet.support.io.ByteArrayRandomAccessBuffer;
 import freenet.support.io.Closer;
 import freenet.support.io.FileUtil;
@@ -172,6 +179,7 @@ public class OpennetManager {
 	public static final long MIN_TIME_BETWEEN_OFFERS = SECONDS.toMillis(30);
 
 	private static volatile boolean logMINOR;
+	private Set<String> excludedCountries = new HashSet<>();
 
 	static {
 		Logger.registerLogThresholdCallback(new LogThresholdCallback(){
@@ -286,6 +294,41 @@ public class OpennetManager {
 		    peersLRUByDistance.put(l, new LRUQueue<OpennetPeerNode>());
 		oldPeers = new LRUQueue<OpennetPeerNode>();
 		announcer = (enableAnnouncement ? new Announcer(this) : null);
+
+		int sortOrder = 0;
+		final SubConfig sConfig = node.config.get("node.opennet");
+
+		sConfig.register("excludedCountries",  "", sortOrder++, false, false, "Node.opennetExcludedCountriesShort","Node.opennetExcludedCountriesLong",
+		new StringCallback() {
+
+			@Override
+			public String get() {
+				StringBuilder joined = new StringBuilder();
+				for (String excludedCountry : excludedCountries) {
+					if (joined.length() > 0) {
+						joined.append(',');
+					}
+					joined.append(excludedCountry);
+				}
+				return joined.toString();
+			}
+
+			@Override
+			public void set(String newValue) /* throws InvalidConfigValueException, NodeNeedRestartException*/ {
+				excludedCountries.clear();
+				if ((newValue != null) && !newValue.equals("")) {
+					for (String excludedCountry : newValue.split(",")) {
+						excludedCountries.add(excludedCountry.toUpperCase());
+					}
+				}
+			}
+		});
+		String initialExcludedCountries = sConfig.getString("excludedCountries");
+		excludedCountries.clear();
+		if (initialExcludedCountries != null && !initialExcludedCountries.equals("")) {
+			Collections.addAll(excludedCountries, initialExcludedCountries.split(","));
+		}
+
 	}
 
 	public void writeFile() {
@@ -552,6 +595,39 @@ public class OpennetManager {
 			if(tooManyOutdatedPeers()) {
 				if(logMINOR) Logger.minor(this, "Rejecting TOO OLD peer from "+connectionType+" (too many already): "+nodeToAddNow);
 				return false;
+			}
+		}
+		// Don't connect to peers in excluded countries
+		if (nodeToAddNow != null) {
+			Peer[] handshakeIPs = nodeToAddNow.getHandshakeIPs();
+			if (handshakeIPs != null) {
+				for (Peer peer : handshakeIPs) {
+					if (peer == null) {
+						continue;
+					}
+					FreenetInetAddress address = peer.getFreenetAddress();
+					if (address == null) {
+						continue;
+					}
+					InetAddress inetAddress = address.getAddress(false);
+
+					IPConverter ipConverter = IPConverter.getInstance(NodeFile.IPv4ToCountry.getFile(node));
+					try {
+						Country country = ipConverter.locateIP(inetAddress.getAddress());
+						if (country != null) {
+							if (excludedCountries.contains(country.toString().toUpperCase())) {
+								Logger.error(this, "Not connecting to Opennet peer " + inetAddress.toString() + " in country " + country.toString());
+								return false;
+							}
+						} else {
+							Logger.error(this, "Unable to locate country based on IP " + inetAddress.toString());
+						}
+					} catch (Exception e) {
+						Logger.error(this, "wantPeer error ", e);
+					}
+				}
+			} else {
+				Logger.error(this, "Handshake IPs are null");
 			}
 		}
 		if(nodeToAddNow != null && crypto.config.oneConnectionPerAddress()) {
