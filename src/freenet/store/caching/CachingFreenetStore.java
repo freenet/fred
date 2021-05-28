@@ -33,6 +33,7 @@ public class CachingFreenetStore<T extends StorableBlock> extends ProxyFreenetSt
 	 * True if close() has been called
 	 */
 	private AtomicBoolean closeCalled = new AtomicBoolean(false);
+
 	private final LRUMap<ByteArrayWrapper, Block<T>> blocksByRoutingKey;
 	private final StoreCallback<T> callback;
 	private final boolean collisionPossible;
