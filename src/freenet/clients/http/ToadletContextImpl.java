@@ -185,7 +185,7 @@ public class ToadletContextImpl implements ToadletContext {
 	
 	public void sendReplyHeaders(int code, String desc, MultiValueTable<String,String> mvt, String mimeType, long length, boolean forceDisableJavascript) throws ToadletContextClosedException, IOException {
 	    boolean enableJavascript = (!forceDisableJavascript) && container.isFProxyJavascriptEnabled();
-	    sendReplyHeaders(code, desc, mvt, mimeType, length, null, false, false, enableJavascript);
+	    sendReplyHeaders(code, desc, mvt, mimeType, length, null, false, true, enableJavascript);
 	}
 
 	@Deprecated
@@ -206,7 +206,7 @@ public class ToadletContextImpl implements ToadletContext {
 	    boolean enableJavascript = false;
 	    if(container.isFProxyWebPushingEnabled() && container.isFProxyJavascriptEnabled())
 	        enableJavascript = true;
-	    sendReplyHeaders(replyCode, replyDescription, mvt, mimeType, contentLength, null, false, true, enableJavascript);
+	    sendReplyHeaders(replyCode, replyDescription, mvt, mimeType, contentLength, null, false, false, enableJavascript);
 	}
 	
 	private void sendReplyHeaders(int replyCode, String replyDescription, MultiValueTable<String,String> mvt, String mimeType, long contentLength, Date mTime, boolean isOutlinkConfirmationPage, boolean allowFrames, boolean enableJavascript) throws ToadletContextClosedException, IOException {
