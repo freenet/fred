@@ -2,12 +2,16 @@ package freenet.clients.http;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.management.*;
 import java.net.URI;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.*;
 
 import freenet.client.HighLevelSimpleClient;
 import freenet.client.async.PersistenceDisabledException;
@@ -29,6 +33,8 @@ import freenet.node.PeerManager;
 import freenet.node.PeerNodeStatus;
 import freenet.node.RequestTracker;
 import freenet.node.Version;
+import freenet.node.diagnostics.*;
+import freenet.node.diagnostics.threads.*;
 import freenet.node.stats.DataStoreInstanceType;
 import freenet.node.stats.DataStoreStats;
 import freenet.node.stats.StatsNotAvailableException;
@@ -410,17 +416,65 @@ public class DiagnosticToadlet extends Toadlet {
 		textBuilder.append("\n");
 
 		// drawThreadPriorityStatsBox
-		textBuilder.append("Threads:\n");
-		int[] activeThreadsByPriority = stats.getActiveThreadsByPriority();
-		int[] waitingThreadsByPriority = stats.getWaitingThreadsByPriority();
-		for(int i=0; i<activeThreadsByPriority.length; i++) {
-			textBuilder.append(l10n("running")).append(": ").append(String.valueOf(activeThreadsByPriority[i])).append(" (").append(String.valueOf(i+1)).append(")\n");
-			textBuilder.append(l10n("waiting")).append(": ").append(String.valueOf(waitingThreadsByPriority[i])).append(" (").append(String.valueOf(i+1)).append(")\n");
+		if (node.isNodeDiagnosticsEnabled()) {
+			textBuilder.append(threadsStats());
+			textBuilder.append("\n");
 		}
-		textBuilder.append("\n");
 		}
 
 		this.writeTextReply(ctx, 200, "OK", textBuilder.toString());
+	}
+
+	/**
+	 * Retrieves ThreadDiagnostics (through NodeDiagnostics) to display
+	 * thread information (id, name, group, % cpu, etc).
+	 * @return Thread information in tab separated format.
+	 */
+	private StringBuilder threadsStats() {
+		StringBuilder sb = new StringBuilder();
+
+		ThreadDiagnostics threadDiagnostics = node
+			.getNodeDiagnostics()
+			.getThreadDiagnostics();
+
+		NodeThreadSnapshot threadSnapshot = threadDiagnostics.getThreadSnapshot();
+
+		double wallTime = TimeUnit.MILLISECONDS.toNanos(
+			threadSnapshot.getInterval()
+		);
+
+		List<NodeThreadInfo> threads = threadSnapshot.getThreads();
+		threads.sort(Comparator.comparing(NodeThreadInfo::getCpuTime).reversed());
+
+		sb.append(String.format("Threads (%d):%n", threads.size()));
+
+		// ID, Name, Priority, Group (system, main), Status, % CPU
+		sb.append(
+			String.format(
+				"%5s %-60s %5s %10s %-20s %-5s%n",
+				"ID",
+				"Name",
+				"Prio.",
+				"Group",
+				"Status",
+				"% CPU"
+			)
+		);
+
+		for (NodeThreadInfo thread : threads) {
+			String line = String.format(
+				"%5s %-60s %5s %10s %-20s %.2f%n",
+				thread.getId(),
+				thread.getName().substring(0, Math.min(60, thread.getName().length())),
+				thread.getPrio(),
+				thread.getGroupName().substring(0, Math.min(10, thread.getGroupName().length())),
+				thread.getState(),
+				thread.getCpuTime() / wallTime * 100
+			);
+			sb.append(line);
+		}
+
+		return sb;
 	}
 
 	private int getPeerStatusCount(PeerNodeStatus[] peerNodeStatuses, int status) {
