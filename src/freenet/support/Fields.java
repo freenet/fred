@@ -7,6 +7,7 @@ import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.List;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 
@@ -391,6 +392,8 @@ public abstract class Fields {
 		return 0;
 	}
 
+	/** @deprecated Use {@link Arrays#equals(byte[], byte[])} */
+	@Deprecated
 	public static boolean byteArrayEqual(byte[] a, byte[] b) {
 		if(a.length != b.length)
 			return false;
@@ -423,16 +426,21 @@ public abstract class Fields {
 			return compareBytes(o1, o2);
 		}
 	}
-
-	// could add stuff like IntegerComparator, LongComparator etc.
-	// if we need it
+	
+	/** @deprecated Use {@link Arrays#hashCode(byte[])} */
+	@Deprecated
 	public static int hashCode(byte[] b) {
 		return hashCode(b, 0, b.length);
 	}
 
 	/**
 	 * A generic hashcode suited for byte arrays that are more or less random.
+	 * @deprecated
+	 *     Use {@link Arrays#asList(Object...) Arrays.asList(array)}
+	 *     .{@link List#subList(int, int) subList(from, to)}
+	 *     .{@link List#hashCode() hashCode()}
 	 */
+	@Deprecated
 	public static int hashCode(byte[] b, int ptr, int length) {
 		int h = 0;
 		for(int i = length - 1; i >= 0; --i) {
@@ -444,14 +452,16 @@ public abstract class Fields {
 
 	/**
 	 * Long version of above Not believed to be secure in any sense of the word :)
-	 */
+	 * @deprecated Not used by fred. Give plugins some time to migrate before removing it. */
+	@Deprecated
 	public static long longHashCode(byte[] b) {
 		return longHashCode(b, 0, b.length);
 	}
 
 	/**
 	 * Long version of above Not believed to be secure in any sense of the word :)
-	 */
+	 * @deprecated Not used by fred. Give plugins some time to migrate before removing it. */
+	@Deprecated
 	public static long longHashCode(byte[] b, int offset, int length) {
 		long h = 0;
 		for(int i = length - 1; i >= 0; --i) {
@@ -951,21 +961,33 @@ public abstract class Fields {
 		return 0;
 	}
 	
-	/** Avoid issues with overflow, 2's complement. E.g. 0-Integer.MIN_VALUE = Integer.MIN_VALUE-0. */
+	/**
+	 * Avoid issues with overflow, 2's complement. E.g. 0-Integer.MIN_VALUE = Integer.MIN_VALUE-0.
+	 * @deprecated Use {@link Integer#compare(int, int)} */
+	@Deprecated
 	public static final int compare(int x, int y) {
 		if(x > y) return 1;
 		if(y > x) return -1;
 		return 0;
 	}
 	
-	/** Avoid issues with overflow, 2's complement. */
+	/**
+	 * Avoid issues with overflow, 2's complement.
+	 * @deprecated Use {@link Long#compare(long, long)} */
+	@Deprecated
 	public static final int compare(long x, long y) {
 		if(x > y) return 1;
 		if(y > x) return -1;
 		return 0;
 	}
 
-	/** Avoid issues with NaN's. */
+	/**
+	 * Avoid issues with NaN's.
+	 * @deprecated
+	 *     Use {@link Double#compare(double, double)}. Notice: It may behave differently with
+	 *     regards to special values (e.g. -0.0). Check its source code if you need precisely
+	 *     the same behavior. */
+	@Deprecated
 	public static final int compare(double x, double y) {
 		if(Double.isNaN(x)) {
 			if(Double.isNaN(y)) {
@@ -984,7 +1006,13 @@ public abstract class Fields {
 		return 0;
 	}
 
-	/** Avoid issues with NaN's. */
+	/**
+	 * Avoid issues with NaN's.
+	 * @deprecated
+	 *     Use {@link Float#compare(float, float)}. Notice: It may behave differently with
+	 *     regards to special values (e.g. -0.0). Check its source code if you need precisely
+	 *     the same behavior. */
+	@Deprecated
 	public static final int compare(float x, float y) {
 		if(Float.isNaN(x)) {
 			if(Float.isNaN(y)) {
