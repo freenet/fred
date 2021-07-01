@@ -119,14 +119,6 @@ public class CHKInsertHandler implements PrioRunnable, ByteCounter {
 			return;
 		}
 		
-		if(tag.shouldSlowDown()) {
-			try {
-				source.sendAsync(DMT.createFNPRejectedOverload(uid, false, false, realTimeFlag), null, this);
-			} catch (NotConnectedException e) {
-				// Ignore.
-			}
-		}
-		
         // Source will send us a DataInsert
         
         MessageFilter mf;

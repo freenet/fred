@@ -715,6 +715,9 @@ public class NodeStats implements Persistable, BlockTimeCallback {
 	 * actually happens) - but this should be very rare. */
 	static final double MIN_NON_OVERHEAD = 0.5;
 	
+	/** Start sending slow-down messages, without actually rejecting requests, at 75% utilisation */
+	static final double EARLY_WARNING = 0.75;
+	
 	// FIXME slowdown
 //	/** Proportion of the thread limit we can use without triggering slow-down messages */
 //	private static final double SOFT_REJECT_MAX_THREAD_USAGE = 0.9;
@@ -1125,7 +1128,13 @@ public class NodeStats implements Persistable, BlockTimeCallback {
 	 * etc. */
 	static final int TRANSFER_OUT_IN_OVERHEAD = 256;
 	
-	static class RejectReason {
+	static abstract class AcceptStatus {
+	    public abstract boolean accept();
+
+        public abstract boolean slowDown();
+	}
+	
+	static class RejectReason extends AcceptStatus {
 		public final String name;
 		/** If true, rejected because of preemptive bandwidth limiting, i.e. "soft", at least somewhat predictable, can be retried.
 		 * If false, hard rejection, should backoff and not retry. */
@@ -1138,6 +1147,29 @@ public class NodeStats implements Persistable, BlockTimeCallback {
 		public String toString() {
 			return (soft ? "SOFT" : "HARD") + ":" + name;
 		}
+		@Override
+		public boolean accept() {
+		    return false;
+		}
+        @Override
+        public boolean slowDown() {
+            return false;
+        }
+	}
+	
+	static class Accept extends AcceptStatus {
+	    public final boolean slowDown;
+	    Accept(boolean slow) {
+	        slowDown = slow;
+	    }
+	    @Override
+	    public boolean accept() {
+	        return true;
+	    }
+        @Override
+        public boolean slowDown() {
+            return slowDown;
+        }
 	}
 	
 	private final Object serializeShouldRejectRequest = new Object();
@@ -1179,7 +1211,7 @@ public class NodeStats implements Persistable, BlockTimeCallback {
 	 * separately.
 	 * @return The reason for rejecting it, or null to accept it.
 	 */
-	public RejectReason shouldRejectRequest(boolean canAcceptAnyway, boolean isInsert, boolean isSSK, boolean isLocal, boolean isOfferReply, PeerNode source, boolean hasInStore, boolean preferInsert, boolean realTimeFlag, UIDTag tag) {
+	public AcceptStatus shouldRejectRequest(boolean canAcceptAnyway, boolean isInsert, boolean isSSK, boolean isLocal, boolean isOfferReply, PeerNode source, boolean hasInStore, boolean preferInsert, boolean realTimeFlag, UIDTag tag) {
 		// Serialise shouldRejectRequest.
 		// It's not always called on the same thread, and things could be problematic if they interfere with each other.
 		synchronized(serializeShouldRejectRequest) {
@@ -1282,25 +1314,19 @@ public class NodeStats implements Persistable, BlockTimeCallback {
 		
 		// Check bandwidth-based limits, with fair sharing.
 		
-		String ret = checkBandwidthLiability(getOutputBandwidthUpperLimit(limit, nonOverheadFraction), requestsSnapshot, peerRequestsSnapshot, false, limit,
+		AcceptStatus r = checkBandwidthLiability(getOutputBandwidthUpperLimit(limit, nonOverheadFraction), requestsSnapshot, peerRequestsSnapshot, false, limit,
 				source, isLocal, isSSK, isInsert, isOfferReply, hasInStore, transfersPerInsert, realTimeFlag, maxOutputTransfers, maxTransfersOutPeerLimit, tag);  
-		if(ret != null) {
-			return new RejectReason(ret, true);
-		}
+		if(r != null) return r;
 		
-		ret = checkBandwidthLiability(getInputBandwidthUpperLimit(limit), requestsSnapshot, peerRequestsSnapshot, true, limit,
-				source, isLocal, isSSK, isInsert, isOfferReply, hasInStore, transfersPerInsert, realTimeFlag, maxOutputTransfers, maxTransfersOutPeerLimit, tag);  
-		if(ret != null) {
-			return new RejectReason(ret, true);
-		}
+		r = checkBandwidthLiability(getInputBandwidthUpperLimit(limit), requestsSnapshot, peerRequestsSnapshot, true, limit,
+				source, isLocal, isSSK, isInsert, isOfferReply, hasInStore, transfersPerInsert, realTimeFlag, maxOutputTransfers, maxTransfersOutPeerLimit, tag);
+		if(r != null) return r;
 		
 		// Check transfer-based limits, with fair sharing.
 		
-		ret = checkMaxOutputTransfers(maxOutputTransfers, maxTransfersOutUpperLimit, maxTransfersOutLowerLimit, maxTransfersOutPeerLimit,
+		r = checkMaxOutputTransfers(maxOutputTransfers, maxTransfersOutUpperLimit, maxTransfersOutPeerLimit, maxTransfersOutPeerLimit,
 				requestsSnapshot, peerRequestsSnapshot, isLocal, realTimeFlag, isInsert, isSSK, isOfferReply, tag);
-		if(ret != null) {
-			return new RejectReason(ret, true);
-		}
+		if(r != null) return r;
 		
 		// Message queues - when the link level has far more queued than it
 		// can transmit in a reasonable time, don't accept requests.
@@ -1327,7 +1353,7 @@ public class NodeStats implements Persistable, BlockTimeCallback {
 		if(tag != null) tag.setAccepted();
 		
 		// Accept
-		return null;
+		return new Accept(false);
 		}
 	}
 	
@@ -1340,7 +1366,11 @@ public class NodeStats implements Persistable, BlockTimeCallback {
 //	}
 
 	private int getLimitSeconds(boolean realTimeFlag) {
-		return realTimeFlag ? BANDWIDTH_LIABILITY_LIMIT_SECONDS_REALTIME : BANDWIDTH_LIABILITY_LIMIT_SECONDS_BULK;
+		int x = realTimeFlag ? BANDWIDTH_LIABILITY_LIMIT_SECONDS_REALTIME : BANDWIDTH_LIABILITY_LIMIT_SECONDS_BULK;
+		// Increase the limit to compensate for the early warning threshold. We want and expect load to 
+		// average around the threshold, so we target that.
+		x = (int) ((double)x / EARLY_WARNING);
+		return x;
 	}
 
 	public int calculateMaxTransfersOut(PeerNode peer, boolean realTime,
@@ -1449,7 +1479,7 @@ public class NodeStats implements Persistable, BlockTimeCallback {
 	 * request.
 	 * @return A string explaining why, or null if we can accept the request.
 	 */
-	private String checkBandwidthLiability(double bandwidthAvailableOutputUpperLimit,
+	private AcceptStatus checkBandwidthLiability(double bandwidthAvailableOutputUpperLimit,
 			RunningRequestsSnapshot requestsSnapshot, RunningRequestsSnapshot peerRequestsSnapshot, boolean input, long limit,
 			PeerNode source, boolean isLocal, boolean isSSK, boolean isInsert, boolean isOfferReply, boolean hasInStore, int transfersPerInsert, boolean realTimeFlag, int maxOutputTransfers, int maxOutputTransfersPeerLimit, UIDTag tag) {
 		String name = input ? "Input" : "Output";
@@ -1481,6 +1511,23 @@ public class NodeStats implements Persistable, BlockTimeCallback {
 			Logger.warning(this, "Above upper limit. Not rejecting as this can occasionally happen due to reassigns: upper limit "+bandwidthAvailableOutputUpperLimit+" usage is "+bandwidthLiabilityOutput);
 		}
 		
+		/* Behaviour depends on both overall node usage and the peer's individual usage of its
+		 * "fair share". Slow-downs are sent to try to get originators to reduce their sending
+		 * rate without actually rejecting requests (to limit misrouting).
+		 * OVERALL: 0 to 50%:
+		 * - All requests accepted.
+		 * - Peers over their guaranteed bandwidth get slow-downs based on *the overall usage of
+		 *   the node*. I.e. slow-down if node capacity is over 37.5%.
+		 * OVERALL: 50%+: Enforce peer allocations:
+		 * - Peer above 100% of its allocation: Reject requests.
+		 * - Peer above 75% of its allocation: Accept requests, but slow-down sent.
+		 * - Peer below 75% of its allocation: Accept requests, no slow-down.
+		 * OVERALL: 100%: Reject everything. (Shouldn't happen unless something drastic changes)
+		 * 
+		 * Obviously this isn't entirely smooth, and there will be some oscillation. But it should
+		 * be an improvement on the situation previously where we only sent a slow-down when we
+		 * rejected a request. */
+        double peerUsedBytes = getPeerBandwidthLiability(peerRequestsSnapshot, source, isSSK, transfersPerInsert, input);
 		if(bandwidthLiabilityOutput > bandwidthAvailableOutputLowerLimit) {
 			
 			// Bandwidth is scarce (we are over the lower limit i.e. more than half our capacity is used).
@@ -1489,34 +1536,29 @@ public class NodeStats implements Persistable, BlockTimeCallback {
 			if(logMINOR)
 				Logger.minor(this, "Allocation ("+name+") for "+source+" is "+thisAllocation+" total usage is "+bandwidthLiabilityOutput+" of lower limit"+bandwidthAvailableOutputLowerLimit+" upper limit is "+bandwidthAvailableOutputUpperLimit+" for "+name);
 			
-			double peerUsedBytes = getPeerBandwidthLiability(peerRequestsSnapshot, source, isSSK, transfersPerInsert, input);
 			if(peerUsedBytes > thisAllocation) {
+			    // Peer is over 100% of its limit. Reject.
 				rejected(name+" bandwidth liability: fairness between peers", isLocal, isInsert, isSSK, isOfferReply, realTimeFlag);
-				return name+" bandwidth liability: fairness between peers (peer "+source+" used "+peerUsedBytes+" allowed "+thisAllocation+")";
-			// FIXME slowdown
-//			} else {
-//				double slowDownLimit = thisAllocation * SOFT_REJECT_MAX_BANDWIDTH_USAGE;
-//				// Allow any node to use one request of each type. They'll just have to get backed off if necessary.
-//				slowDownLimit = Math.max(slowDownLimit, requestsSnapshot.calculateMinimum(input, ignoreLocalVsRemoteBandwidthLiability, transfersPerInsert));
-//				if(peerUsedBytes > slowDownLimit) {
-//					// Sender should slow down if we are using more than 80% of our fair share of capacity.
-//					slowDown(name+" bandwidth liability: fairness between peers", isLocal, isInsert, isSSK, isOfferReply, realTimeFlag, tag);
-//				}
+				return new RejectReason(name+" bandwidth liability: fairness between peers (peer "+source+" used "+peerUsedBytes+" allowed "+thisAllocation+")", true);
+			} else {
+			    // Send slowdown if the peer is over 75% of its individual limit.
+			    return new Accept(peerUsedBytes >= EARLY_WARNING * thisAllocation);
 			}
-			
 		} else {
-			
-			// Plenty of bandwidth available, allow one peer to use up to the lower limit (about half the total).
-			
-			// slowDown() is unnecessary, we do NOT want to keep the total below the lower limit.
-			
-			if(logMINOR)
-				Logger.minor(this, "Total usage is "+bandwidthLiabilityOutput+" below lower limit "+bandwidthAvailableOutputLowerLimit+" for "+name);
+		    // We are below 50% overall (the lower limit).
+		    if(peerUsedBytes <= thisAllocation) {
+		        // Peer is within its allocation. Accept it without slowdown.
+		        // When the overall capacity moves over 50%, we may have to send slowdowns.
+		        return new Accept(false);
+		    } else {
+		        // Peer is above its allocation.
+		        // Slowdown if the overall usage is over 37.5%.
+		        return new Accept(bandwidthLiabilityOutput >= EARLY_WARNING * bandwidthAvailableOutputLowerLimit);
+		    }
 		}
-		return null;
 	}
 	
-	private String checkMaxOutputTransfers(int maxOutputTransfers,
+	private AcceptStatus checkMaxOutputTransfers(int maxOutputTransfers,
 			int maxTransfersOutUpperLimit, int maxTransfersOutLowerLimit,
 			int maxTransfersOutPeerLimit,
 			RunningRequestsSnapshot requestsSnapshot,
@@ -1526,10 +1568,14 @@ public class NodeStats implements Persistable, BlockTimeCallback {
 				" upper "+maxTransfersOutUpperLimit+" lower "+maxTransfersOutLowerLimit+" peer "+maxTransfersOutPeerLimit+" "+(realTime ? "(rt)" : "(bulk)"));
 		int peerOutTransfers = peerRequestsSnapshot.totalOutTransfers();
 		int totalOutTransfers = requestsSnapshot.totalOutTransfers();
+		if(totalOutTransfers > maxOutputTransfers) {
+		    rejected("TooManyTransfers: Over upper limit", isLocal, isInsert, isSSK, isOfferReply, realTime);
+		    return new RejectReason("TooManyTransfers: Over upper limit", true);
+		}
 		if(peerOutTransfers > maxOutputTransfers && !isLocal) {
 			// Can't handle that many transfers with current bandwidth.
 			rejected("TooManyTransfers: Congestion control", isLocal, isInsert, isSSK, isOfferReply, realTime);
-			return "TooManyTransfers: Congestion control";
+			return new RejectReason("TooManyTransfers: Congestion control", true);
 		}
 		if(totalOutTransfers <= maxTransfersOutLowerLimit) {
 			// If the total is below the lower limit, then fine, go for it.
@@ -1543,10 +1589,10 @@ public class NodeStats implements Persistable, BlockTimeCallback {
 //			if(peerOutTransfers > Math.max(1, maxTransfersOutPeerLimit * SOFT_REJECT_MAX_BANDWIDTH_USAGE))
 //				// Send slow-down's if we are using more than 80% of our peer limit.
 //				slowDown("TooManyTransfers: Fair sharing between peers", isLocal, isInsert, isSSK, isOfferReply, realTime, tag);
-			return null;
+			return new Accept(peerOutTransfers >= EARLY_WARNING * maxTransfersOutPeerLimit);
 		}
 		rejected("TooManyTransfers: Fair sharing between peers", isLocal, isInsert, isSSK, isOfferReply, realTime);
-		return "TooManyTransfers: Fair sharing between peers";
+		return new RejectReason("TooManyTransfers: Fair sharing between peers", true);
 	}
 
 

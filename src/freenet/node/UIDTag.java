@@ -35,7 +35,6 @@ public abstract class UIDTag {
 	protected final RequestTracker tracker;
 	protected boolean accepted;
 	protected boolean sourceRestarted;
-	private boolean slowDown;
 	
 	/** Nodes we have routed to at some point */
 	private HashSet<PeerNode> routedTo = null;
@@ -469,15 +468,5 @@ public abstract class UIDTag {
 	
 	public synchronized boolean isWaitingForSlot() {
 		return waitingForSlot;
-	}
-
-	/** Set a flag indicating the originator should slow down. Only used at the shouldRejectRequest stage. */
-	synchronized void slowDown() {
-		slowDown = true;
-	}
-
-	/** Query the slow-down flag. Should be checked after shouldRejectRequest. */
-	synchronized boolean shouldSlowDown() {
-		return slowDown;
 	}
 }

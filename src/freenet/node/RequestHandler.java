@@ -165,14 +165,6 @@ public class RequestHandler implements PrioRunnable, ByteCounter, RequestSenderL
 		Message accepted = DMT.createFNPAccepted(uid);
 		source.sendAsync(accepted, null, this);
 		
-		if(tag.shouldSlowDown()) {
-			try {
-				source.sendAsync(DMT.createFNPRejectedOverload(uid, false, false, realTimeFlag), null, this);
-			} catch (NotConnectedException e) {
-				// Ignore.
-			}
-		}
-		
 		Object o;
 		if(passedInKeyBlock != null) {
 			tag.setServedFromDatastore();

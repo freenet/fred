@@ -21,6 +21,8 @@ import freenet.keys.Key;
 import freenet.keys.KeyBlock;
 import freenet.keys.NodeCHK;
 import freenet.keys.NodeSSK;
+import freenet.node.NodeStats.Accept;
+import freenet.node.NodeStats.AcceptStatus;
 import freenet.node.NodeStats.PeerLoadStats;
 import freenet.node.NodeStats.RejectReason;
 import freenet.node.probe.Probe;
@@ -353,9 +355,10 @@ public class NodeDispatcher implements Dispatcher, Runnable {
 		boolean needPubKey;
 		try {
 		needPubKey = m.getBoolean(DMT.NEED_PUB_KEY);
-		RejectReason reject = 
+		AcceptStatus status = 
 			nodeStats.shouldRejectRequest(true, false, isSSK, false, true, source, false, false, realTimeFlag, tag);
-		if(reject != null) {
+		if(status != null && !status.accept()) {
+		    RejectReason reject = (RejectReason) status;
 			Logger.normal(this, "Rejecting FNPGetOfferedKey from "+source+" for "+key+" : "+reject);
 			Message rejected = DMT.createFNPRejectedOverload(uid, true, true, realTimeFlag);
 			if(reject.soft)
@@ -369,6 +372,15 @@ public class NodeDispatcher implements Dispatcher, Runnable {
 			return true;
 		}
 		
+        if(status != null && status.slowDown()) {
+            Message rejected = DMT.createFNPRejectedOverload(uid, false, true, realTimeFlag);
+            try {
+                source.sendAsync(rejected, null, node.failureTable.senderCounter);
+            } catch (NotConnectedException e) {
+                // Ignore
+            }
+        }
+        
 		} catch (Error e) {
 			tag.unlockHandler();
 			throw e;
@@ -378,6 +390,8 @@ public class NodeDispatcher implements Dispatcher, Runnable {
 		} // Otherwise, sendOfferedKey is responsible for unlocking. 
 		
 		// Accept it.
+		
+
 		
 		try {
 			node.failureTable.sendOfferedKey(key, isSSK, needPubKey, uid, source, tag,realTimeFlag);
@@ -513,8 +527,9 @@ public class NodeDispatcher implements Dispatcher, Runnable {
 		if(block != null)
 			tag.setNotRoutedOnwards();
 		
-		RejectReason rejectReason = nodeStats.shouldRejectRequest(!isSSK, false, isSSK, false, false, source, block != null, false, realTimeFlag, tag);
-		if(rejectReason != null) {
+		AcceptStatus status = nodeStats.shouldRejectRequest(!isSSK, false, isSSK, false, false, source, block != null, false, realTimeFlag, tag);
+		if(status != null && !status.accept()) {
+		    RejectReason rejectReason = (RejectReason) status;
 			// can accept 1 CHK request every so often, but not with SSKs because they aren't throttled so won't sort out bwlimitDelayTime, which was the whole reason for accepting them when overloaded...
 			Logger.normal(this, "Rejecting "+(isSSK ? "SSK" : "CHK")+" request from "+source.getPeer()+" preemptively because "+rejectReason);
 			Message rejected = DMT.createFNPRejectedOverload(id, true, true, realTimeFlag);
@@ -532,6 +547,14 @@ public class NodeDispatcher implements Dispatcher, Runnable {
 			// failure table even though we didn't accept any of them.
 			return;
 		}
+        if(status != null && status.slowDown()) {
+            Message rejected = DMT.createFNPRejectedOverload(id, false, true, realTimeFlag);
+            try {
+                source.sendAsync(rejected, null, node.failureTable.senderCounter);
+            } catch (NotConnectedException e) {
+                // Ignore
+            }
+        }
 		nodeStats.reportIncomingRequestLocation(key.toNormalizedDouble());
 		//if(!node.lockUID(id)) return false;
 		boolean needsPubKey = false;
@@ -579,8 +602,9 @@ public class NodeDispatcher implements Dispatcher, Runnable {
 		if(preference != null)
 			preferInsert = preference.getBoolean(DMT.PREFER_INSERT);
 		// SSKs don't fix bwlimitDelayTime so shouldn't be accepted when overloaded.
-		RejectReason rejectReason = nodeStats.shouldRejectRequest(!isSSK, true, isSSK, false, false, source, false, preferInsert, realTimeFlag, tag);
-		if(rejectReason != null) {
+		AcceptStatus status = nodeStats.shouldRejectRequest(!isSSK, true, isSSK, false, false, source, false, preferInsert, realTimeFlag, tag);
+		if(status != null && !status.accept()) {
+		    RejectReason rejectReason = (RejectReason) status;
 			Logger.normal(this, "Rejecting insert from "+source.getPeer()+" preemptively because "+rejectReason);
 			Message rejected = DMT.createFNPRejectedOverload(id, true, true, realTimeFlag);
 			if(rejectReason.soft)
@@ -593,6 +617,14 @@ public class NodeDispatcher implements Dispatcher, Runnable {
 			tag.unlockHandler(rejectReason.soft);
 			return;
 		}
+        if(status != null && status.slowDown()) {
+            Message rejected = DMT.createFNPRejectedOverload(id, false, true, realTimeFlag);
+            try {
+                source.sendAsync(rejected, null, node.failureTable.senderCounter);
+            } catch (NotConnectedException e) {
+                // Ignore
+            }
+        }
 		long now = System.currentTimeMillis();
 		if(m.getSpec().equals(DMT.FNPSSKInsertRequest)) {
 			NodeSSK key = (NodeSSK) m.getObject(DMT.FREENET_ROUTING_KEY);
