@@ -5,6 +5,7 @@ import java.net.URI;
 
 import freenet.clients.http.PageMaker.RenderParameters;
 import freenet.l10n.NodeL10n;
+import freenet.node.Node;
 import freenet.support.HTMLNode;
 import freenet.support.api.HTTPRequest;
 
@@ -37,8 +38,8 @@ public class StartupToadlet extends Toadlet {
 			HTMLNode contentNode = page.content;
 
 			if(!isPRNGReady) {
-				HTMLNode prngInfoboxContent = ctx.getPageMaker().getInfobox("infobox-error", NodeL10n.getBase().getString("StartupToadlet.entropyErrorTitle"), contentNode, null, true);
-				prngInfoboxContent.addChild("#", NodeL10n.getBase().getString("StartupToadlet.entropyErrorContent"));
+				HTMLNode prngInfoboxContent = ctx.getPageMaker().getInfobox("infobox-error", Node.getEntropyErrorDetailedText(), contentNode, null, true);
+				Node.getEntropyErrorDetailedText(prngInfoboxContent.addChild("#"));
 			}
 
 			HTMLNode infoboxContent = ctx.getPageMaker().getInfobox("infobox-error", desc, contentNode, null, true);

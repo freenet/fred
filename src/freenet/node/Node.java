@@ -1039,14 +1039,8 @@ public class Node implements TimeSkewDetectorCallback {
 				}
 				if(isPRNGReady)
 					return;
-				System.out.println("Not enough entropy available.");
-				System.out.println("Trying to gather entropy (randomness) by reading the disk...");
-				if(File.separatorChar == '/') {
-					if(new File("/dev/hwrng").exists())
-						System.out.println("/dev/hwrng exists - have you installed rng-tools?");
-					else
-						System.out.println("You should consider installing a better random number generator e.g. haveged.");
-				}
+				System.out.println(getEntropyErrorTitle());
+				System.out.println(getEntropyErrorDetailedText());
 				extendTimeouts();
 				for(File root : File.listRoots()) {
 					if(isPRNGReady)
@@ -3277,7 +3271,7 @@ public class Node implements TimeSkewDetectorCallback {
 		return jvmHasGCJCharConversionBug; // should be initialized on early startup
 	}
 
-	private String l10n(String key) {
+	private static String l10n(String key) {
 		return NodeL10n.getBase().getString("Node."+key);
 	}
 
@@ -4870,6 +4864,38 @@ public class Node implements TimeSkewDetectorCallback {
 		if(peers.getPeerNodeStatusSize(PeerManager.PEER_NODE_STATUS_TOO_NEW, true) > PeerManager.OUTDATED_MIN_TOO_NEW_DARKNET)
 			return true;
 		return false;
+	}
+	
+	public static String getEntropyErrorTitle() {
+		return l10n("entropyErrorTitle");
+	}
+	
+	public static String getEntropyErrorDetailedText() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(l10n("entropyError"));
+		sb.append("\n");
+		sb.append(l10n("entropyReadingDisk"));
+		if(File.separatorChar == '/') {
+			sb.append("\n");
+			if(new File("/dev/hwrng").exists())
+				sb.append(l10n("entropyLinuxHWRNG"));
+			else {
+				sb.append(l10n("entropyLinuxNeedBetterRNG"));
+			}
+		}
+		return sb.toString();
+	}
+
+	public static void getEntropyErrorDetailedText(HTMLNode div) {
+		div.addChild("p", l10n("entropyError"));
+		div.addChild("p", l10n("entropyReadingDisk"));
+		if(File.separatorChar == '/') {
+			if(new File("/dev/hwrng").exists())
+				div.addChild("p", l10n("entropyLinuxHWRNG"));
+			else {
+				div.addChild("p", l10n("entropyLinuxNeedBetterRNG"));
+			}
+		}
 	}
 
 
