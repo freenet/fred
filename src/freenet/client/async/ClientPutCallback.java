@@ -10,6 +10,15 @@ import freenet.support.api.Bucket;
 /** Internal callback interface for inserts (including site inserts). Methods are called on the 
  * database thread if the request is persistent, otherwise on whatever thread completed the request 
  * (therefore with a null container).
+ * <br/><br/>
+ * <i>NOTICE: This interface provides onGeneratedURI, onGeneratedMetadata, onFetchable, onSuccess 
+ * and onFailure methods for getting notified about the progress of the insert process. <br/>
+ * If you want to get more detailed progress notifications you have to also implement {@link ClientEventListener} 
+ * interface and subscribe your callback to the {@link ClientEventProducer} of the putter's
+ * {@link InsertContext} using event producer's addEventListener method. <br/>
+ * This way your callback will be able to receive the following events during the insert: 
+ * {@link ExpectedHashesEvent}, {@link StartedCompressionEvent}, {@link FinishedCompressionEvent} 
+ * and {@link SplitfileProgressEvent}.</i>
  */
 public interface ClientPutCallback extends ClientBaseCallback {
 	/**
