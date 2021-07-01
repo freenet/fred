@@ -1,8 +1,12 @@
+/* This code is part of Freenet. It is distributed under the GNU General
+ * Public License, version 2 (or at your option any later version). See
+ * http://www.gnu.org/ for further details of the GPL. */
 package freenet.crypt;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.security.MessageDigest;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.Arrays;
@@ -19,13 +23,19 @@ public class HashResult implements Comparable<HashResult>, Cloneable, Serializab
 	private final byte[] result;
 	/** Cached HashType.values(). Never modify or pass this array to outside code! */
 	private static final HashType[] HashType_values = HashType.values();
-	
+
 	public HashResult(HashType hashType, byte[] bs) {
+		this(hashType, bs, false);
+	}
+
+	// Protected constructor for unit testing
+	protected HashResult(HashType hashType, byte[] bs, boolean testing) {
 		this.type = hashType;
 		this.result = bs;
-		assert(bs.length == type.hashLength);
+		if(!testing)
+			assert(bs.length == type.hashLength);
 	}
-	
+
 	protected HashResult() {
         // For serialization.
 	    type = null;
@@ -135,7 +145,7 @@ public class HashResult implements Comparable<HashResult>, Cloneable, Serializab
 		}
 		return out;
 	}
-	
+
 	@Override
 	public HashResult clone() {
 		try {
@@ -147,6 +157,30 @@ public class HashResult implements Comparable<HashResult>, Cloneable, Serializab
 
 	public String hashAsHex() {
 		return HexUtil.bytesToHex(result);
+	}
+
+	@Override
+	public boolean equals(Object otherObject){
+	    if(!(otherObject instanceof HashResult)){
+	        return false;
+	    }
+
+	    HashResult otherHash = (HashResult) otherObject;
+	    if(type != otherHash.type){
+	        return false;
+	    }
+
+	    return MessageDigest.isEqual(result, otherHash.result);
+	}
+
+	@Override
+	public int hashCode(){
+	    int hash = 1;
+
+	    hash *= 31 + type.hashCode();
+	    hash *= 31 + result.hashCode();
+
+	    return hash;
 	}
 
 }
