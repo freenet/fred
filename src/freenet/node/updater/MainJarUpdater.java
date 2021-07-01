@@ -447,4 +447,9 @@ public class MainJarUpdater extends NodeUpdater implements Deployer {
         }
     }
 
+    @Override
+    public File getNodeDir() {
+        return node.getNodeDir();
+    }
+
 }

@@ -872,4 +872,19 @@ final public class FileUtil {
         return true;
     }
 
+    /** Get the filename extension, including the leading ".". If the file does not have an
+     * extension, return the empty string. */
+    public static String getExtension(File filename) {
+        return getExtension(filename.getName());
+    }
+    
+    /** Get the filename extension, including the leading ".". If the file does not have an
+     * extension, return the empty string.
+     * @param name The filename (only the last part of the path!). */
+    public static String getExtension(String name) {
+        String[] split = name.split(".");
+        if(split.length == 1) return "";
+        return "." + split[split.length-1];
+    }
+
 }
