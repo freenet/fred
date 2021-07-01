@@ -43,7 +43,6 @@ public class SSKInsertHandler implements PrioRunnable, ByteCounter {
     private SSKInsertSender sender;
     private byte[] data;
     private byte[] headers;
-    private boolean canCommit;
     final InsertTag tag;
     private final boolean canWriteDatastore;
 	private final boolean forkOnCacheable;
@@ -66,12 +65,12 @@ public class SSKInsertHandler implements PrioRunnable, ByteCounter {
         this.canWriteDatastore = canWriteDatastore;
         byte[] pubKeyHash = key.getPubKeyHash();
         pubKey = node.getPubKey.getKey(pubKeyHash, false, false, null);
-        canCommit = false;
         logMINOR = Logger.shouldLog(LogLevel.MINOR, this);
         this.forkOnCacheable = forkOnCacheable;
         this.preferInsert = preferInsert;
         this.ignoreLowBackoff = ignoreLowBackoff;
         this.realTimeFlag = realTimeFlag;
+        if(data != null && headers != null) collided = true;
     }
     
     @Override
@@ -203,22 +202,11 @@ public class SSKInsertHandler implements PrioRunnable, ByteCounter {
 		SSKBlock storedBlock = node.fetch(key, false, false, false, canWriteDatastore, false, null);
 		
 		if((storedBlock != null) && !storedBlock.equals(block)) {
-			try {
-				RequestHandler.sendSSK(storedBlock.getRawHeaders(), storedBlock.getRawData(), false, pubKey, source, uid, this, realTimeFlag);
-			} catch (NotConnectedException e1) {
-				if(logMINOR) Logger.minor(this, "Lost connection to source on "+uid);
-				return;
-			} catch (WaitedTooLongException e1) {
-				Logger.error(this, "Took too long to send ssk datareply to "+uid+" (because of throttling)");
-				return;
-			} catch (PeerRestartedException e) {
-				if(logMINOR) Logger.minor(this, "Source restarted on "+uid);
-				return;
-			} catch (SyncSendWaitedTooLongException e) {
-				Logger.error(this, "Took too long to send ssk datareply to "+uid);
-				return;
-			}
-			block = storedBlock;
+            block = storedBlock;
+            data = block.getRawData();
+            headers = block.getRawHeaders();
+            collided = true;
+		    sendCollision();
 		}
 		
 		if(logMINOR) Logger.minor(this, "Got block for "+key+" for "+uid);
@@ -262,21 +250,7 @@ public class SSKInsertHandler implements PrioRunnable, ByteCounter {
 					// Is verified elsewhere...
 					throw new Error("Impossible: " + e1, e1);
 				}
-				try {
-					RequestHandler.sendSSK(headers, data, false, pubKey, source, uid, this, realTimeFlag);
-				} catch (NotConnectedException e1) {
-					if(logMINOR) Logger.minor(this, "Lost connection to source on "+uid);
-					return;
-				} catch (WaitedTooLongException e1) {
-					Logger.error(this, "Took too long to send ssk datareply to "+uid+" because of bwlimiting");
-					return;
-				} catch (PeerRestartedException e) {
-					Logger.error(this, "Peer restarted on "+uid);
-					return;
-				} catch (SyncSendWaitedTooLongException e) {
-					Logger.error(this, "Took too long to send ssk datareply to "+uid);
-					return;
-				}
+        		sendCollision();
             }
             
             int status = sender.getStatus();
@@ -285,12 +259,36 @@ public class SSKInsertHandler implements PrioRunnable, ByteCounter {
            		continue;
             }
             
+            /* As in CHKInsertHandler, the correct order is:
+             * - Commit the data to disk (FIXME and check for a collision!).
+             * - Unlock the handler.
+             * - Send the completion message.
+             * 
+             * This is because:
+             * 1) When the InsertReply reaches the originator, this should indicate
+             * that the data has been cached on all the nodes on the path. This is
+             * the most logical, consistent semantics, and anything else will cause 
+             * problems with simulations and possibly with RecentlyFailed.
+             * 2) Bug #3338 i.e. security: We want to commit, and therefore trigger
+             * ULPRs, at the destination first. Then getting an offer for a popular
+             * key doesn't give away anything.
+             * 3) We have to unlock the handler before sending the completion 
+             * message, because the originator will assume it can send another
+             * request. If it's wrong, bad things can happen (mandatory backoff etc).
+             * 4) We should check for collision before sending InsertReply.
+             * FIXME this does not happen currently!
+             */
+            
             // Local RejectedOverload's (fatal).
             // Internal error counts as overload. It'd only create a timeout otherwise, which is the same thing anyway.
             // We *really* need a good way to deal with nodes that constantly R_O!
             if((status == SSKInsertSender.TIMED_OUT) ||
             		(status == SSKInsertSender.GENERATED_REJECTED_OVERLOAD) ||
             		(status == SSKInsertSender.INTERNAL_ERROR)) {
+                // Might as well store it anyway.
+                if((status == SSKInsertSender.TIMED_OUT) ||
+                        (status == SSKInsertSender.GENERATED_REJECTED_OVERLOAD))
+                    commit();
             	// Unlock early for originator, late for target; see UIDTag comments.
             	tag.unlockHandler();
                 Message msg = DMT.createFNPRejectedOverload(uid, true, true, realTimeFlag);
@@ -303,15 +301,12 @@ public class SSKInsertHandler implements PrioRunnable, ByteCounter {
 					Logger.error(this, "Took too long to send "+msg+" to "+source);
 					return;
 				}
-                // Might as well store it anyway.
-                if((status == SSKInsertSender.TIMED_OUT) ||
-                		(status == SSKInsertSender.GENERATED_REJECTED_OVERLOAD))
-                	canCommit = true;
                 finish(status);
                 return;
             }
             
             if((status == SSKInsertSender.ROUTE_NOT_FOUND) || (status == SSKInsertSender.ROUTE_REALLY_NOT_FOUND)) {
+                commit();
             	// Unlock early for originator, late for target; see UIDTag comments.
             	tag.unlockHandler();
                 Message msg = DMT.createFNPRouteNotFound(uid, sender.getHTL());
@@ -323,12 +318,12 @@ public class SSKInsertHandler implements PrioRunnable, ByteCounter {
 				} catch (SyncSendWaitedTooLongException e) {
 					Logger.error(this, "Took too long to send "+msg+" to source");
 				}
-                canCommit = true;
                 finish(status);
                 return;
             }
             
             if(status == SSKInsertSender.SUCCESS) {
+                commit();
             	// Unlock early for originator, late for target; see UIDTag comments.
             	tag.unlockHandler();
             	Message msg = DMT.createFNPInsertReply(uid);
@@ -340,7 +335,6 @@ public class SSKInsertHandler implements PrioRunnable, ByteCounter {
 				} catch (SyncSendWaitedTooLongException e) {
 					Logger.error(this, "Took too long to send "+msg+" to "+source);
 				}
-                canCommit = true;
                 finish(status);
                 return;
             }
@@ -362,16 +356,27 @@ public class SSKInsertHandler implements PrioRunnable, ByteCounter {
         }
     }
 
-    /**
-     * If canCommit, and we have received all the data, and it
-     * verifies, then commit it.
-     */
+    private void sendCollision() {
+        try {
+            RequestHandler.sendSSK(headers, data, false, pubKey, source, uid, this, realTimeFlag);
+        } catch (NotConnectedException e1) {
+            if(logMINOR) Logger.minor(this, "Lost connection to source on "+uid);
+            return;
+        } catch (WaitedTooLongException e1) {
+            Logger.error(this, "Took too long to send ssk datareply to "+uid+" because of bwlimiting");
+            return;
+        } catch (PeerRestartedException e) {
+            Logger.error(this, "Peer restarted on "+uid);
+            return;
+        } catch (SyncSendWaitedTooLongException e) {
+            Logger.error(this, "Took too long to send ssk datareply to "+uid);
+            return;
+        }
+    }
+
+    /** Update statistics etc */
     private void finish(int code) {
     	if(logMINOR) Logger.minor(this, "Finishing");
-    	
-    	if(canCommit) {
-    		commit();
-    	}
     	
         if(code != SSKInsertSender.TIMED_OUT && code != SSKInsertSender.GENERATED_REJECTED_OVERLOAD &&
         		code != SSKInsertSender.INTERNAL_ERROR && code != SSKInsertSender.ROUTE_REALLY_NOT_FOUND) {
@@ -394,11 +399,32 @@ public class SSKInsertHandler implements PrioRunnable, ByteCounter {
     }
 
     private void commit() {
-		try {
-			node.store(block, node.shouldStoreDeep(key, source, sender == null ? new PeerNode[0] : sender.getRoutedTo()), collided, false, canWriteDatastore, false);
-		} catch (KeyCollisionException e) {
-			Logger.normal(this, "Collision on "+this);
-		}
+        boolean deep = node.shouldStoreDeep(key, source, sender == null ? new PeerNode[0] : sender.getRoutedTo());
+        try {
+            node.store(block, deep, collided, false, canWriteDatastore, false);
+        } catch (KeyCollisionException e) {
+            Logger.normal(this, "Late collision on "+this);
+            SSKBlock oldBlock = node.fetch(key, true, false, false, canWriteDatastore, false, null);
+            if(oldBlock == null) {
+                // Argh. :(
+                // FIXME We can get rid of much of this complexity when we get rid of 
+                // the pubkey store. At that point we can have KeyCollisionException
+                // include the colliding block.
+                Logger.warning(this, "Key collision but data not in store for "+this);
+                try {
+                    node.store(block, deep, true, false, canWriteDatastore, false);
+                } catch (KeyCollisionException e1) {
+                    // Impossible.
+                }
+            } else {
+                collided = true;
+                this.block = oldBlock;
+                this.data = oldBlock.getRawData();
+                this.headers = oldBlock.getRawHeaders();
+                // Send the collision, but we may still want to send the InsertReply.
+                sendCollision();
+            }
+        }
 	}
 
 	private final Object totalBytesSync = new Object();
